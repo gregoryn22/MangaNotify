@@ -1,15 +1,17 @@
+# Standard library
 import io
 import json
 import os
-import requests
 import threading
 import tkinter as tk
-from pathlib import Path
-from tkinter import ttk, messagebox
-from typing import Dict, Any, Iterable, Optional, List
-from dotenv import load_dotenv
+from tkinter import messagebox, ttk
+from typing import Any, Dict, Iterable, List, Optional
+
+# Third-party
+import requests
 from PIL import Image, ImageTk
 
+# Optional third-party
 try:
     from dotenv import load_dotenv
 except ImportError:
