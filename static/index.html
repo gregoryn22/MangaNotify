@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>MangaNotify · WebUI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --bg: #0b1020;
+    --bg-soft: rgba(255,255,255,.06);
+    --card: rgba(255,255,255,.08);
+    --border: rgba(255,255,255,.12);
+    --text: #e7e9f3;
+    --muted: #9aa3b2;
+    --accent: #7c9cff;
+    --accent-strong: #4e75ff;
+    --shadow: 0 10px 30px rgba(0,0,0,.35);
+    --radius: 14px;
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg:#f7f8fb; --bg-soft:#ffffffcf; --card:#ffffffd6; --border:#e6e8ee;
+      --text:#111827; --muted:#5b6472; --accent:#375dfb; --accent-strong:#2147f0;
+      --shadow: 0 10px 28px rgba(17,23,39,.08);
+    }
+  }
+  [data-theme="light"]{
+    --bg:#f7f8fb; --bg-soft:#ffffffcf; --card:#ffffffd6; --border:#e6e8ee;
+    --text:#111827; --muted:#5b6472; --accent:#375dfb; --accent-strong:#2147f0;
+    --shadow: 0 10px 28px rgba(17,23,39,.08);
+  }
+  [data-theme="dark"]{
+    --bg: #0b1020; --bg-soft: rgba(255,255,255,.06); --card: rgba(255,255,255,.08);
+    --border: rgba(255,255,255,.12); --text:#e7e9f3; --muted:#9aa3b2; --accent:#7c9cff; --accent-strong:#4e75ff;
+    --shadow: 0 10px 30px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; color:var(--text); background: radial-gradient(1200px 800px at 10% -10%, #4f46e5 0%, transparent 60%),
+                                      radial-gradient(1000px 700px at 90% 0%, #06b6d4 0%, transparent 55%),
+                                      var(--bg);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    letter-spacing:.2px;
+  }
+
+  /* Layout */
+  .wrap{max-width:1200px; margin:0 auto; padding:28px 20px 60px}
+
+  /* Header */
+  .header{
+    position: sticky; top:0; z-index:30;
+    backdrop-filter: saturate(120%) blur(10px);
+    background: linear-gradient(to bottom, var(--bg-soft), transparent);
+  }
+  .head-inner{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 20px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .logo{
+    width:36px;height:36px;border-radius:12px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+    box-shadow: var(--shadow);
+    display:grid;place-items:center;color:white;font-weight:700;
+  }
+  .brand h1{margin:0;font-size:18px;letter-spacing:.4px}
+  .actions{display:flex;gap:8px;align-items:center}
+
+  /* Controls */
+  .pill{
+    border:1px solid var(--border); background:var(--card); color:var(--text);
+    padding:10px 12px; border-radius:999px; display:flex; gap:10px; align-items:center;
+    box-shadow: var(--shadow);
+  }
+  .input{
+    background:transparent;border:none;outline:none;color:inherit;min-width:220px;
+    font-size:14px;
+  }
+  .btn{
+    border:1px solid var(--border); background:var(--card); color:var(--text);
+    padding:10px 14px;border-radius:12px;cursor:pointer;transition:all .12s ease;
+    box-shadow: var(--shadow);
+  }
+  .btn:hover{transform:translateY(-1px)}
+  .btn:active{transform:translateY(0); filter:saturate(110%)}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-strong)); color:#fff; border-color:transparent}
+  .btn.ghost{background:transparent}
+  .muted{color:var(--muted)}
+  .status{font-size:13px;margin-left:8px}
+
+  /* Content grid */
+  .panel{margin-top:18px;background:color-mix(in oklab, var(--card) 88%, transparent);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;padding:16px}
+
+  .card{
+    border:1px solid var(--border); border-radius:16px; overflow:hidden; background:var(--bg-soft);
+    box-shadow: var(--shadow); transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+    display:flex; flex-direction:column;
+  }
+  .card:hover{transform:translateY(-2px); border-color: color-mix(in oklab, var(--accent) 50%, var(--border)); box-shadow:0 18px 40px rgba(0,0,0,.18)}
+  .cover{position:relative; aspect-ratio:2/3; background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02))}
+  .cover img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; display:block; border-bottom:1px solid var(--border)}
+  .shimmer{background:linear-gradient(90deg, rgba(255,255,255,.06), rgba(255,255,255,.15), rgba(255,255,255,.06)); background-size:200% 100%; animation:sh 1.1s infinite}
+  @keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  .meta{padding:10px 12px 12px; display:flex; flex-direction:column; gap:8px}
+  .title{font-weight:700; font-size:14px; line-height:1.25; margin:0}
+  .subline{font-size:12px; color:var(--muted)}
+  .row{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+
+  /* Watchlist */
+  .watch{padding:10px 12px}
+  .watch-item{
+    display:flex; gap:12px; align-items:center; justify-content:space-between;
+    padding:10px 12px; border:1px solid var(--border); border-radius:12px; background:var(--bg-soft)
+  }
+  .watch-list{display:grid; gap:10px; padding:0 12px 14px}
+
+  /* Pagination */
+  .pager{display:flex; gap:10px; justify-content:center; padding:12px}
+  .chip{border:1px solid var(--border); padding:6px 10px; border-radius:999px; font-size:12px; color:var(--muted)}
+
+  /* Toast */
+  .toast{position:fixed; right:18px; bottom:18px; background:#111827; color:#fff; padding:12px 14px; border-radius:12px; box-shadow:0 18px 40px rgba(0,0,0,.35); opacity:0; transform:translateY(8px); pointer-events:none; transition:opacity .15s, transform .15s; font-size:14px; z-index:50}
+  .toast.show{opacity:1; transform:translateY(0); pointer-events:auto}
+
+  /* Footer */
+  footer{opacity:.8; font-size:12px; text-align:center; margin-top:22px; color:var(--muted)}
+  a{color:var(--accent)}
+
+  /* Utility hide on small */
+  @media (max-width:520px){ .hide-sm{display:none} }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="head-inner wrap" style="padding-inline:20px;">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">MN</div>
+        <h1>MangaNotify</h1>
+      </div>
+      <div class="actions">
+        <div class="pill" style="gap:8px;">
+          <!-- search icon -->
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M21 21l-3.6-3.6M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          <input id="q" class="input" placeholder="Search series…" />
+          <button id="go" class="btn primary">Search</button>
+        </div>
+        <button id="theme" class="btn hide-sm" title="Toggle theme">Theme</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+
+    <div class="row" style="margin-top:10px; align-items:baseline">
+      <div class="chip" id="status">Ready</div>
+      <div class="chip hide-sm" id="result-info"></div>
+    </div>
+
+    <!-- Results -->
+    <section class="panel" id="results-panel" hidden>
+      <div id="results" class="grid"></div>
+      <div class="pager" id="pager" hidden>
+        <button class="btn" id="prev">‹ Prev</button>
+        <div class="chip" id="page-indicator"></div>
+        <button class="btn" id="next">Next ›</button>
+      </div>
+    </section>
+
+    <!-- Notifications -->
+    <section class="panel" style="margin-top:16px; overflow:hidden">
+      <div class="row" style="justify-content:space-between; padding:12px 12px 0 12px">
+        <h2 style="margin:0">Notifications</h2>
+        <div class="row">
+          <button id="notify-test" class="btn">Send test</button>
+          <button id="debug-toggle" class="btn ghost">Debug</button>
+        </div>
+      </div>
+      <div id="notify-debug" style="display:none; padding:10px 12px 14px; color:var(--muted); font-size:13px"></div>
+    </section>
+
+    <!-- Watchlist -->
+    <section class="panel" style="margin-top:16px;">
+      <div class="watch">
+        <div class="row" style="justify-content:space-between; align-items:center">
+          <h2 style="margin:0">Watchlist</h2>
+          <div class="chip" id="watch-count">0 items</div>
+        </div>
+      </div>
+      <div id="watchlist" class="watch-list"></div>
+    </section>
+
+    <footer>Built with ❤️ for reading. API: /api/search, /api/series/:id, /api/watchlist, /api/notify/test</footer>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+<script>
+/* ===== Helpers ===== */
+const $ = (s)=>document.querySelector(s);
+const state = { q:"", page:1, limit:20, pagination:null };
+
+function toast(msg, ms=2200){
+  const t=$("#toast"); t.textContent=msg; t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"), ms);
+}
+function setStatus(text){ $("#status").textContent = text || "—"; }
+
+/* ===== Theme toggle ===== */
+(function initTheme(){
+  const saved = localStorage.getItem("mn-theme");
+  if(saved){ document.documentElement.setAttribute("data-theme", saved); }
+  $("#theme").onclick = ()=>{
+    const cur = document.documentElement.getAttribute("data-theme");
+    const next = cur === "light" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", next);
+    localStorage.setItem("mn-theme", next);
+  };
+})();
+
+/* ===== Search & render ===== */
+async function search(q, page=1, limit=20){
+  state.q=q; state.page=page; state.limit=limit;
+  setStatus("Searching…");
+  $("#results-panel").hidden=false;
+  $("#results").innerHTML = Array.from({length:8}).map(()=>`
+    <div class="card">
+      <div class="cover shimmer"></div>
+      <div class="meta">
+        <div class="title shimmer" style="height:16px;border-radius:6px"></div>
+        <div class="subline shimmer" style="height:12px;border-radius:6px;width:70%"></div>
+      </div>
+    </div>`).join("");
+
+  try{
+    const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&page=${page}&limit=${limit}`);
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const js = await res.json();
+    renderResults(js);
+  }catch(e){
+    $("#results").innerHTML = `<div style="padding:18px" class="subline">Search failed. ${e}</div>`;
+    setStatus("Search failed");
+  }
+}
+
+function renderResults(js){
+  const items = js.data || js.results || [];
+  const p = js.pagination || null;
+  state.pagination = p;
+
+  const info = p ? `Page ${p.page} · ${p.count} result${p.count===1?"":"s"}` :
+                   `${items.length} result${items.length===1?"":"s"}`;
+  setStatus("Done");
+  $("#result-info").textContent = info;
+
+  const box=$("#results");
+  box.innerHTML="";
+  if(!items.length){
+    box.innerHTML = `<div style="padding:18px" class="subline">No results.</div>`;
+    $("#pager").hidden=true;
+    return;
+  }
+
+  for(const it of items){
+    const el=document.createElement("div");
+    el.className="card";
+    const title = it.title || "(no title)";
+    const cover = (it.cover && (it.cover.small || it.cover.default || it.cover.raw)) || "";
+    const authors=(it.authors||[]).join(", ");
+    const total = it.total_chapters ?? "—";
+
+    el.innerHTML = `
+      <div class="cover ${cover ? "" : "shimmer"}">${cover ? `<img src="${cover}" alt="${title}" loading="lazy" decoding="async">` : ""}</div>
+      <div class="meta">
+        <h3 class="title">${title}</h3>
+        <div class="subline">ID: ${it.id}${authors ? ` · ${authors}` : ""} · Chapters: ${total}</div>
+        <div class="row">
+          <button class="btn" data-add="${it.id}">Watch</button>
+          <button class="btn" data-open="${it.id}">Open</button>
+        </div>
+      </div>`;
+    box.appendChild(el);
+
+    const img = el.querySelector("img");
+    if(img){
+      img.addEventListener("load", ()=> el.querySelector(".cover").classList.remove("shimmer"));
+      img.addEventListener("error", ()=> el.querySelector(".cover").classList.add("shimmer"));
+    }
+
+    el.querySelector(`[data-add="${it.id}"]`).onclick = async ()=>{
+      const r = await fetch("/api/watchlist", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({ id: it.id, title, total_chapters: total })
+      });
+      if(r.ok){ toast("Added to watchlist"); loadWatchlist(); }
+      else { toast("Failed to add", 2600); }
+    };
+    el.querySelector(`[data-open="${it.id}"]`).onclick = ()=> window.open(`https://mangabaka.dev/${it.id}`, "_blank");
+  }
+
+  if(p){
+    $("#pager").hidden=false;
+    $("#page-indicator").textContent = `Page ${p.page}`;
+    $("#prev").disabled = !p.previous;
+    $("#next").disabled = !p.next;
+  }else{
+    $("#pager").hidden=true;
+  }
+}
+
+/* ===== Watchlist ===== */
+async function loadWatchlist(){
+  const res = await fetch("/api/watchlist");
+  const js = await res.json();
+  const list = js.data || [];
+  $("#watch-count").textContent = `${list.length} item${list.length===1?"":"s"}`;
+  const box = $("#watchlist");
+  box.innerHTML = "";
+  if(!list.length){
+    box.innerHTML = `<div class="subline" style="padding:0 12px 16px">Nothing here yet. Add items from the search results.</div>`;
+    return;
+  }
+  for(const it of list){
+    const row=document.createElement("div");
+    row.className="watch-item";
+    row.innerHTML=`
+      <div style="min-width:0">
+        <div style="font-weight:700">${it.title || "(no title)"}</div>
+        <div class="subline">ID: ${it.id} · Chapters: ${it.total_chapters ?? "—"} ${it.last_checked ? `· Last checked: ${it.last_checked}` : ""}</div>
+      </div>
+      <div class="row">
+        <button class="btn" data-remove="${it.id}" title="Remove">
+          <!-- trash icon -->
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4 7h16M9 3h6m-8 4 1 13a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2l1-13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>`;
+    row.querySelector(`[data-remove="${it.id}"]`).onclick = async ()=>{
+      const r = await fetch(`/api/watchlist/${it.id}`, { method:"DELETE" });
+      if(r.ok){ toast("Removed"); loadWatchlist(); } else { toast("Failed to remove", 2600); }
+    };
+    box.appendChild(row);
+  }
+}
+
+/* ===== Notifications ===== */
+async function refreshNotifyDebug(){
+  const el=$("#notify-debug");
+  try{
+    const res=await fetch("/api/notify/debug");
+    if(!res.ok){ el.textContent="(debug endpoint not reachable)"; return; }
+    const js=await res.json();
+    el.innerHTML = `
+      <div>has_token: <b>${js.has_token}</b> (${js.token_preview||""})</div>
+      <div>has_user: <b>${js.has_user}</b> (${js.user_preview||""})</div>
+      <div class="subline" style="margin-top:6px">${js.notes||""}</div>`;
+  }catch{ el.textContent="(debug fetch failed)"; }
+}
+
+/* ===== Wiring ===== */
+$("#go").onclick = ()=>{ const q=$("#q").value.trim(); if(q) search(q, 1, state.limit); };
+$("#q").addEventListener("keydown", e=>{ if(e.key==="Enter") $("#go").click(); });
+$("#prev").onclick = ()=>{ if(state.pagination?.previous){ search(state.q, (state.page-1)||1, state.limit); } };
+$("#next").onclick = ()=>{ if(state.pagination?.next){ search(state.q, state.page+1, state.limit); } };
+
+$("#notify-test").onclick = async ()=>{
+  const btn=$("#notify-test"); btn.disabled=true;
+  try{
+    const res = await fetch("/api/notify/test", { method:"POST" });
+    const text = await res.text(); let js={}; try{ js=JSON.parse(text);}catch{}
+    if(res.ok && js.ok){ toast("✅ Test notification sent!"); }
+    else{
+      const detail=(js.errors&&js.errors.join("; "))||js.message||text||`HTTP ${res.status}`;
+      toast(`❌ Notification failed: ${detail}`, 5000);
+      console.warn("notify/test response:", {status:res.status, body:text});
+    }
+  }catch(e){ toast("❌ Network error calling /api/notify/test", 4200); }
+  finally{ btn.disabled=false; }
+};
+
+$("#debug-toggle").onclick = ()=>{
+  const el=$("#notify-debug");
+  const showing = el.style.display !== "none";
+  el.style.display = showing ? "none" : "block";
+  if(!showing) refreshNotifyDebug();
+};
+
+/* ===== Init ===== */
+setStatus("Ready");
+loadWatchlist();
+</script>
+</body>
+</html>
