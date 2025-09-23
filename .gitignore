@@ -187,3 +187,4 @@ fabric.properties
 # project ignore
 /watchlist.json
 /.img_cache/
+/data/watchlist.json
