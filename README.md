@@ -35,7 +35,15 @@ docker pull ghcr.io/gregoryn22/manganotify:latest
 
 **Run a container**
 ```bash
-docker run -d --name manganotify   -p 8999:8999   -e MANGABAKA_BASE=https://api.mangabaka.dev   -e POLL_INTERVAL_SEC=1800   -e PUSHOVER_APP_TOKEN=xxx   -e PUSHOVER_USER_KEY=yyy   -e DATA_DIR=/data   -v $PWD/data:/data   ghcr.io/gregoryn22/manganotify:latest
+docker run -d --name manganotify \
+  -p 8999:8999 \
+  -e MANGABAKA_BASE=https://api.mangabaka.dev \
+  -e POLL_INTERVAL_SEC=1800 \
+  -e PUSHOVER_APP_TOKEN=xxx \
+  -e PUSHOVER_USER_KEY=yyy \
+  -e DATA_DIR=/data \
+  -v $PWD/data:/data \
+  ghcr.io/gregoryn22/manganotify:latest
 ```
 
 Then open [http://localhost:8999](http://localhost:8999).
