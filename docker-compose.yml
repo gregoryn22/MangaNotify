@@ -34,4 +34,4 @@ services:
 
     labels:
       net.unraid.docker.webui: "http://[IP]:[PORT:8999]/"
-      net.unraid.docker.icon: "https://raw.githubusercontent.com/gregoryn22/MangaNotify/refs/heads/master/manganotify_logo.png"
+      net.unraid.docker.icon: "https://raw.githubusercontent.com/gregoryn22/MangaNotify/refs/heads/master/images/manganotify_logo.png"
