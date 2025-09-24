@@ -185,6 +185,63 @@ async def poll_watchlist_loop(app: FastAPI) -> None:
             pass
 
         await asyncio.sleep(interval)
+async def process_watchlist_once(app: FastAPI, *, now: Optional[datetime] = None) -> dict:
+    """
+    Single iteration of the watchlist check.
+    Returns dict with summary for tests:
+      {"checked": N, "updated": M, "notified": K}
+    """
+    client: httpx.AsyncClient = app.state.client
+    push = getattr(app.state, "push_func", pushover)
+
+    wl = load_watchlist()
+    checked = updated = notified = 0
+
+    for item in wl:
+        sid = item.get("id")
+        if not sid:
+            continue
+        checked += 1
+        try:
+            data = await api_series_by_id(client, sid)
+            series = data.get("data") or data
+
+            def to_int(v):
+                try:
+                    return int(v) if v is not None else None
+                except Exception:
+                    return None
+
+            new_total = to_int(series.get("total_chapters"))
+            old_total = to_int(item.get("total_chapters"))
+
+            if new_total is not None and old_total is not None and new_total > old_total:
+                # notify
+                res = await push(
+                    client,
+                    title=f"New chapter(s): {item.get('title','(unknown)')}",
+                    message=f"{item.get('title','(unknown)')} has {new_total} chapters (was {old_total}).",
+                )
+                if isinstance(res, dict) and res.get("ok"):
+                    notified += 1
+
+            # store freshest values
+            item["title"] = series.get("title") or item.get("title")
+            if new_total is not None:
+                item["total_chapters"] = new_total
+
+            now_dt = now or datetime.now(timezone.utc)
+            # standardize to Z suffix
+            item["last_checked"] = now_dt.isoformat().replace("+00:00", "Z")
+            updated += 1
+        except Exception:
+            # swallow per-item errors to keep the loop resilient
+            continue
+
+    if updated:
+        save_watchlist(wl)
+
+    return {"checked": checked, "updated": updated, "notified": notified}
 
 
 # ------------------------------------------------------------
@@ -194,6 +251,7 @@ async def poll_watchlist_loop(app: FastAPI) -> None:
 async def lifespan(app: FastAPI):
     app.state.client = httpx.AsyncClient(timeout=20.0)
     app.state.poller_task = None
+    app.state.push_func = pushover  # <— allow tests to override
 
     if POLL_INTERVAL_SEC > 0:
         app.state.poller_task = asyncio.create_task(poll_watchlist_loop(app))
@@ -206,6 +264,7 @@ async def lifespan(app: FastAPI):
             with contextlib.suppress(Exception):
                 await app.state.poller_task
         await app.state.client.aclose()
+
 
 
 app = FastAPI(title="MangaNotify", version="0.2", lifespan=lifespan)
@@ -319,8 +378,7 @@ def notify_debug():
 
 @router.post("/api/notify/test")
 async def notify_test(request: Request):
-    client: httpx.AsyncClient = request.app.state.client
-
+    # gate early if creds missing (also keeps request.app.state.client unused here)
     if not PUSHOVER_APP_TOKEN or not PUSHOVER_USER_KEY:
         return JSONResponse(
             status_code=500,
@@ -331,8 +389,12 @@ async def notify_test(request: Request):
             },
         )
 
+    # safe to use client now
+    client: httpx.AsyncClient = request.app.state.client
     result = await pushover(client, "MangaNotify", "✅ MangaNotify test notification")
     status = 200 if result.get("ok") else 502
+
+    # add masked who block (JSON-safe dict)
     result["who"] = {
         "token": env_mask(PUSHOVER_APP_TOKEN),
         "user": env_mask(PUSHOVER_USER_KEY),
