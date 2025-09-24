@@ -188,4 +188,3 @@ fabric.properties
 /watchlist.json
 /.img_cache/
 /data/watchlist.json
-docker-compose.yml
