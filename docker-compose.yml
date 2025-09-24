@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   manganotify:
     build: .
@@ -13,27 +11,27 @@ services:
       # API base (can override if needed)
       MANGABAKA_BASE: ${MANGABAKA_BASE:-https://api.mangabaka.dev}
 
-      # Flask/Gunicorn port inside container (keep at 8999 unless you change app config)
+      # App port inside container (keep at 8999 unless you change app config)
       PORT: "8999"
+
+      # Data dir used by server.py (watchlist lives here)
+      DATA_DIR: /data
+
+      # Poll interval in seconds (default 10 minutes)
+      POLL_INTERVAL_SEC: ${POLL_INTERVAL_SEC:-600}
 
       # Optional: Pushover credentials
       PUSHOVER_USER_KEY: ${PUSHOVER_USER_KEY:-}
       PUSHOVER_APP_TOKEN: ${PUSHOVER_APP_TOKEN:-}
 
-      # Watchlist location (inside container)
-      WATCHLIST_FILE: ${WATCHLIST_FILE:-/data/watchlist.json}
-
-      # Poll interval (minutes)
-      WATCH_POLL_MINUTES: ${WATCH_POLL_MINUTES:-10}
-
     volumes:
-      - ./data:/data                # persist watchlist, logs, etc
-      - ./static:/app/static        # optional: live-edit HTML/CSS/JS
-      - ./templates:/app/templates  # optional: override Jinja templates
+      - ./data:/data                # persist watchlist, logs, etc (must be writable)
+      - ./static:/app/static:ro     # live-edit HTML/CSS/JS (read-only is fine)
+
+    user: "${PUID:-1000}:${PGID:-1000}"
 
     restart: unless-stopped
 
     labels:
-      # Unraid-friendly labels (optional)
       net.unraid.docker.webui: "http://[IP]:[PORT:8999]/"
       net.unraid.docker.icon: "https://raw.githubusercontent.com/gregoryn22/MangaNotify/refs/heads/master/manganotify_logo.png"
