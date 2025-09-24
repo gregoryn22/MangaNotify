@@ -32,7 +32,7 @@ jobs:
 
       - name: Run pytest
         env:
-          # keep tests offline; override if you mock network
+          PYTHONPATH: ${{ github.workspace }}
           MANGABAKA_BASE: "https://api.mangabaka.dev"
           POLL_INTERVAL_SEC: "0"
         run: pytest -q
