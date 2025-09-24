@@ -50,13 +50,13 @@ Then open [http://localhost:8999](http://localhost:8999).
 
 #### Environment Variables
 
-| Variable              | Default                     | Description                          |
-|------------------------|-----------------------------|--------------------------------------|
-| `MANGABAKA_BASE`       | `https://api.mangabaka.dev` | Base API endpoint                    |
-| `DATA_DIR`             | `./data` (local) / `/data` | Storage for watchlist + state        |
-| `POLL_INTERVAL_SEC`    | `1800` (30 min)            | Poll interval for new chapters       |
-| `PUSHOVER_APP_TOKEN`   | *(none)*                   | [Pushover](https://pushover.net) app token |
-| `PUSHOVER_USER_KEY`    | *(none)*                   | Pushover user key                    |
+| Variable             | Default                     | Description                                |
+|----------------------|-----------------------------|--------------------------------------------|
+| `MANGABAKA_BASE`     | `https://api.mangabaka.dev` | Base API endpoint                          |
+| `DATA_DIR`           | `./data` (local) / `/data`  | Storage for watchlist + state              |
+| `POLL_INTERVAL_SEC`  | `1800` (30 min)             | Poll interval for new chapters             |
+| `PUSHOVER_APP_TOKEN` | *(none)*                    | [Pushover](https://pushover.net) app token |
+| `PUSHOVER_USER_KEY`  | *(none)*                    | Pushover user key                          |
 
 ---
 
