@@ -11,7 +11,7 @@ services:
       PORT: "8999"
       # Pushover (optional, uncomment below for use.
       # PUSHOVER_USER_KEY: "YOUR_PUSHOVER_USER_KEY_HERE"
-      # PUSHOVER_APP_TOKEN: "YOUR_PUSHOVER_APP_TOKEN_HERE"
+      # PUSHOVER_APP_TOKEN: "YOUR_PUSHOVER_APP_TOKENHERE"
       # Where the app will save the watchlist
       WATCHLIST_FILE: "/data/watchlist.json"
     volumes:
