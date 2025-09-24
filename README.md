@@ -33,7 +33,7 @@ Then visit [https://localhost:8999](https://localhost:8999)
 
 ### Local Startup
 **Requirements:** Python 3.13+
-```
+```bash
 git clone https://github.com/gregoryn22/MangaNotify
 cd MangaNotify
 python -m venv .venv
