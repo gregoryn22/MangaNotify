@@ -16,6 +16,9 @@ I wanted a way to get notified when new chapters drop without relying on specifi
 - Lightweight UI for search and watchlist
 - Run as a Python script or Docker container
 
+![img.png](images/search_screenshot.png)
+![img.png](images/watchlist_screenshot.png)
+
 ## Installation
 
 ### Container Startup
