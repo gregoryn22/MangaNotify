@@ -23,11 +23,9 @@ I wanted a way to get notified when new chapters drop without relying on specifi
 ```bash
 git clone https://github.com/gregoryn22/MangaNotify
 cd MangaNotify
-mv docker-compose.example.yml docker-compose.yml
+mv .env.example .env # if you want pushover notifications, or to edit other parameters, run this command and fill in the env as specified
+docker-compose up
 ````
-If you would like Pushover notifications, update your credentials and uncomment those lines in the docker-compose.yml file.
-
-`docker-compose up`
 
 Then visit [https://localhost:8999](https://localhost:8999)
 
