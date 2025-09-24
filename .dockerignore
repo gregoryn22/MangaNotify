@@ -1,14 +1,29 @@
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.env
+# Git & VCS
 .git
 .gitignore
-.vscode
-.idea
+
+# Python caches
+__pycache__/
+*.py[cod]
+*.egg-info/
+.build/
 dist/
 build/
-node_modules/
+
+# Local env & IDE
+.venv/
+.env
+.env.*
+.pytest_cache/
+.mypy_cache/
+coverage.*
+htmlcov/
+.idea/
+.vscode/
+
+# Local data & logs
 data/
-.env.example
+logs/
+
+# Node/other (future-proof)
+node_modules/
