@@ -13,7 +13,15 @@ This project is still under construction.
 
 At this time, the project notifies via Pushover, as that is a service I am familiar with, using it for notification consolidation across several programs. I understand that nowadays this is something most people do through Discord, so at some point I'd like to add that.
 
-The project currently runs as a local python script, needing to stay open. The goal is deployment through a container so that you can run this and forget about its existence until you get your notifications. I'd be surprised, but I could also see someone preferring it to exist as an application living in your system tray.
+The project currently runs both as a local python script that needs to stay open, or in a container. The local version is mostly just for testing/novelty.
+
+### Container Startup
+
+1. run `git clone https://github.com/gregoryn22/MangaNotify`
+2. run `cd MangaNotify`
+3. change the name of `docker-compose.example.yml` to `docker-compose.yml`
+4. run `docker-compose up`
+5. using a web browser, navigate to `https://localhost:8999`
 
 ## Current Functionality
 
@@ -25,9 +33,9 @@ Right now, you can add your Pushover credentials via settings.
 1. No logging
 2. UI is pretty ugly
 
-## What's Next?
-The next thing I'll probably tackle will be updating this to exist in a container. From there, it shouldn't take that much work to make it look a little better and add some backend logging.
 
-Thank you for reading. I hope that this project has inspired you to attempt something similar.
+# What's next?
 
-I just want to have my phone buzz when a chapter releases!
+Thank you for reading. I hope that this project has inspired you to attempt something similar. If I don't know what I'm doing and can make something at least 20% functional, just imagine what you can accomplish!
+
+# I just want to have my phone buzz when a chapter releases!
