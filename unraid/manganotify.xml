@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<Container>
+  <Name>MangaNotify</Name>
+  <Repository>ghcr.io/gregoryn22/manganotify:latest</Repository>
+  <Registry>https://github.com/gregoryn22/MangaNotify/pkgs/container/manganotify</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>bash</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/gregoryn22/MangaNotify</Support>
+  <Project>https://github.com/gregoryn22/MangaNotify</Project>
+  <Overview>
+    Lightweight FastAPI service that monitors manga updates from the MangaBaka API
+    and sends push notifications via Pushover.
+  </Overview>
+  <Category>MediaServer:Tools</Category>
+
+  <WebUI>http://[IP]:[PORT:8999]</WebUI>
+
+  <Config Name="AppData Config Path" Target="/data" Default="/mnt/user/appdata/manganotify" Mode="rw" Description="App storage" Type="Path" Display="always" Required="true" Mask="false"/>
+  <Config Name="Web Port" Target="8999" Default="8999" Mode="tcp" Description="Web UI Port" Type="Port" Display="always" Required="true" Mask="false"/>
+  <Config Name="Pushover User Key" Target="PUSHOVER_USER_KEY" Default="" Mode="" Description="Your Pushover User Key" Type="Variable" Display="always" Required="false" Mask="true"/>
+  <Config Name="Pushover App Token" Target="PUSHOVER_APP_TOKEN" Default="" Mode="" Description="Your Pushover App Token" Type="Variable" Display="always" Required="false" Mask="true"/>
+  <Config Name="Poll Interval" Target="POLL_INTERVAL_SEC" Default="1800" Mode="" Description="Polling interval in seconds (0 disables)" Type="Variable" Display="always" Required="false" Mask="false"/>
+</Container>
