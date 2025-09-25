@@ -38,11 +38,20 @@
   *{box-sizing:border-box}
   html,body{height:100%}
   body{
-    margin:0; color:var(--text); background: radial-gradient(1200px 800px at 10% -10%, #4f46e5 0%, transparent 60%),
-                                      radial-gradient(1000px 700px at 90% 0%, #06b6d4 0%, transparent 55%),
-                                      var(--bg);
+    margin:0; color:var(--text); background: var(--bg);
     font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
     letter-spacing:.2px;
+  }
+  /* big fixed glow so we never see edges while scrolling */
+  body::before{
+    content:"";
+    position:fixed; inset:0; z-index:-1; pointer-events:none;
+    background:
+      radial-gradient(120vmax 80vmax at 10% -10%, color-mix(in oklab, var(--accent) 25%, transparent) 0%, transparent 60%),
+      radial-gradient(100vmax 70vmax at 90% 0%, color-mix(in oklab, #06b6d4 22%, transparent) 0%, transparent 55%),
+      var(--bg);
+    background-attachment: fixed,fixed,fixed;
+    filter: saturate(110%);
   }
 
   /* Layout */
@@ -128,21 +137,22 @@
 
   /* Utility hide on small */
   @media (max-width:520px){ .hide-sm{display:none} }
-  .badge{
-  display:inline-flex; align-items:center; gap:6px;
-  font-size:12px; padding:4px 8px; border-radius:999px;
-  border:1px solid var(--border); background:var(--bg-soft); color:var(--muted);
-}
-.badge.ok{ color:#16a34a; border-color:#16a34a33; }
-.badge.warn{ color:#ef4444; border-color:#ef444433; }
 
-.input-mini{
-  width:84px; padding:8px 10px; font-size:13px;
-  background:transparent; border:1px solid var(--border);
-  border-radius:10px; color:var(--text);
-}
-.controls .btn{ padding:8px 10px; }
-.controls{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .badge{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:12px; padding:4px 8px; border-radius:999px;
+    border:1px solid var(--border); background:var(--bg-soft); color:var(--muted);
+  }
+  .badge.ok{ color:#16a34a; border-color:#16a34a33; }
+  .badge.warn{ color:#ef4444; border-color:#ef444433; }
+
+  .input-mini{
+    width:84px; padding:8px 10px; font-size:13px;
+    background:transparent; border:1px solid var(--border);
+    border-radius:10px; color:var(--text);
+  }
+  .controls .btn{ padding:8px 10px; }
+  .controls{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
 </style>
 </head>
 <body>
@@ -221,6 +231,18 @@ function toast(msg, ms=2200){
   setTimeout(()=>t.classList.remove("show"), ms);
 }
 function setStatus(text){ $("#status").textContent = text || "—"; }
+
+/* parse decimal-friendly progress safely */
+function parseProgress(v){
+  const n = parseFloat(String(v).replace(",", "."));
+  return Number.isFinite(n) ? Math.max(0, n) : 0;
+}
+/* unread uses whole chapters beyond floor(last_read) */
+function unreadCount(total, lastRead){
+  const t = Number(total) || 0;
+  const r = parseProgress(lastRead);
+  return Math.max(0, t - Math.floor(r));
+}
 
 /* ===== Theme toggle ===== */
 (function initTheme(){
@@ -340,9 +362,9 @@ async function loadWatchlist(){
 
   for(const it of list){
     const total = Number.isFinite(+it.total_chapters) ? +it.total_chapters : null;
-    const lastRead = Number.isFinite(+it.last_read) ? +it.last_read : 0;
-    const unread = Number.isFinite(+it.unread) ? +it.unread : Math.max((total ?? 0) - lastRead, 0);
-    const behind = !!it.is_behind || unread > 0;
+    const lastRead = parseProgress(it.last_read ?? 0);
+    const unread = total!==null ? unreadCount(total, lastRead) : 0;
+    const behind = total!==null ? unread > 0 : false;
 
     const row = document.createElement("div");
     row.className = "watch-item";
@@ -359,14 +381,14 @@ async function loadWatchlist(){
           <span class="badge ${behind ? "warn":"ok"}" title="Unread chapters">
             ${behind ? "Unread" : "Up to date"}${total!==null ? `: ${unread}` : ""}
           </span>
-          ${total!==null ? `<span class="badge">Read: ${lastRead}/${total}</span>` : ""}
+          ${total!==null ? `<span class="badge">Read: ${String(lastRead).replace(/\.0$/,"")}/${total}</span>` : ""}
         </div>
       </div>
 
       <div class="controls">
         ${total!==null ? `
           <input class="input-mini" type="number" min="0" ${total!==null ? `max="${total}"`:""}
-                 step="1" value="${lastRead}" aria-label="Last read chapter" data-lr="${it.id}" />
+                 step="0.1" value="${String(lastRead).replace(/\.0$/,"")}" aria-label="Last read chapter" data-lr="${it.id}" />
           <button class="btn" data-set="${it.id}" title="Set last read">Set</button>
           <button class="btn" data-next="${it.id}" title="Mark next read">+1</button>
           <button class="btn" data-latest="${it.id}" title="Mark latest">Mark latest</button>
@@ -379,7 +401,6 @@ async function loadWatchlist(){
       </div>
     `;
 
-    // wire up actions
     const id = it.id;
 
     // remove
@@ -388,13 +409,12 @@ async function loadWatchlist(){
       if(r.ok){ toast("Removed"); loadWatchlist(); } else { toast("Failed to remove", 2600); }
     };
 
-    // set explicit last_read
+    // set explicit last_read (accepts decimals)
     const inp = row.querySelector(`[data-lr="${id}"]`);
     const btnSet = row.querySelector(`[data-set="${id}"]`);
     if(btnSet && inp){
       btnSet.onclick = async ()=>{
-        const val = parseInt(inp.value, 10);
-        if(Number.isNaN(val) || val < 0){ toast("Enter a valid chapter number"); return; }
+        const val = parseProgress(inp.value);
         const r = await fetch(`/api/watchlist/${id}/progress`, {
           method:"PATCH",
           headers:{ "Content-Type":"application/json" },
@@ -405,9 +425,9 @@ async function loadWatchlist(){
       };
     }
 
-    // +1 next
+    // +1 next (bumps by 1.0, keeps decimals if present)
     const btnNext = row.querySelector(`[data-next="${id}"]`);
-    if(btnNext){
+    if(btnNext && inp){
       btnNext.onclick = async ()=>{
         const r = await fetch(`/api/watchlist/${id}/read/next`, { method:"POST" });
         if(r.ok){ toast("+1 read"); loadWatchlist(); }
