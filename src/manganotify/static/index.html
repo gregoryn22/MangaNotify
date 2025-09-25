@@ -818,13 +818,42 @@ $("#import-file").addEventListener("change", e=>{
   e.target.value = "";
 });
 
-/* Keyboard shortcuts */
-document.addEventListener("keydown", (e)=>{
-  if (e.key === "/" && document.activeElement !== $("#q")){
-    e.preventDefault(); $("#q").focus(); return;
+/* Keyboard shortcuts — safe around inputs */
+function isEditable(el) {
+  return !!el && (
+    el.tagName === "INPUT" ||
+    el.tagName === "TEXTAREA" ||
+    el.isContentEditable
+  );
+}
+
+document.addEventListener("keydown", (e) => {
+  // If user is typing or holding a modifier, bail.
+  if (isEditable(e.target) || e.metaKey || e.ctrlKey || e.altKey) return;
+
+  // Focus search on "/" (only when not typing in an input already)
+  if (e.key === "/") {
+    e.preventDefault();
+    const q = document.getElementById("q");
+    if (q) q.focus();
+    return;
   }
-  if (e.key.toLowerCase() === "t"){ e.preventDefault(); $("#theme").click(); }
-  if (e.key.toLowerCase() === "r"){ e.preventDefault(); $("#refresh").click(); }
+
+  // Theme toggle (t)
+  if (e.key.toLowerCase() === "t") {
+    e.preventDefault();
+    const themeBtn = document.getElementById("theme");
+    if (themeBtn) themeBtn.click();
+    return;
+  }
+
+  // Refresh (r)
+  if (e.key.toLowerCase() === "r") {
+    e.preventDefault();
+    const refreshBtn = document.getElementById("refresh");
+    if (refreshBtn) refreshBtn.click();
+    return;
+  }
 });
 
 /* apply saved UI on load */
