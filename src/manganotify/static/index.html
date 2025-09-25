@@ -1,9 +1,11 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8" />
 <title>MangaNotify · WebUI</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="dark light" />
+<meta name="description" content="Track manga updates, watchlist, and notifications." />
 
 <!-- Favicons -->
 <link rel="icon" href="/images/favicon.ico">
@@ -22,6 +24,7 @@
     --accent-strong: #4e75ff;
     --shadow: 0 10px 30px rgba(0,0,0,.35);
     --radius: 14px;
+    --focus: 2px solid color-mix(in oklab, var(--accent) 65%, #fff);
   }
   @media (prefers-color-scheme: light){
     :root{
@@ -48,7 +51,13 @@
     font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
     letter-spacing:.2px;
   }
-  /* big fixed glow so we never see edges while scrolling */
+
+  /* Respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+
+  /* big fixed glow */
   body::before{
     content:"";
     position:fixed; inset:0; z-index:-1; pointer-events:none;
@@ -78,11 +87,7 @@
     display:grid; place-items:center;
     overflow: hidden;
   }
-  .logo img{
-    width: 100%; height: 100%;
-    object-fit: contain;
-    display: block;
-  }
+  .logo img{width: 100%; height: 100%; object-fit: contain; display: block;}
   .brand h1{margin:0;font-size:18px;letter-spacing:.4px}
   .actions{display:flex;gap:8px;align-items:center}
 
@@ -96,13 +101,19 @@
     background:transparent;border:none;outline:none;color:inherit;min-width:220px;
     font-size:14px;
   }
+  .input:focus-visible, .btn:focus-visible, select:focus-visible, .input-mini:focus-visible {
+    outline: var(--focus);
+    outline-offset: 2px;
+    border-radius: 10px;
+  }
   .btn{
     border:1px solid var(--border); background:var(--card); color:var(--text);
-    padding:10px 14px;border-radius:12px;cursor:pointer;transition:all .12s ease;
+    padding:10px 14px;border-radius:12px;cursor:pointer;transition:transform .12s ease, filter .12s ease;
     box-shadow: var(--shadow);
   }
   .btn:hover{transform:translateY(-1px)}
   .btn:active{transform:translateY(0); filter:saturate(110%)}
+  .btn[disabled]{opacity:.6; cursor:not-allowed}
   .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-strong)); color:#fff; border-color:transparent}
   .btn.ghost{background:transparent}
   .muted{color:var(--muted)}
@@ -195,42 +206,42 @@
 </style>
 </head>
 <body>
-  <div class="header">
+  <header class="header" role="banner">
     <div class="head-inner wrap" style="padding-inline:20px;">
-      <div class="brand">
-        <div class="logo">
-          <img src="/images/manganotify_logo.png" alt="MangaNotify logo">
+      <div class="brand" aria-label="App brand">
+        <div class="logo" aria-hidden="true">
+          <img src="/images/manganotify_logo.png" alt="" decoding="async">
         </div>
-        <h1>MangaNotify</h1>
+        <h1 aria-label="MangaNotify">MangaNotify</h1>
       </div>
-      <div class="actions">
+      <div class="actions" role="search">
         <div class="pill" style="gap:8px;">
-          <!-- search icon -->
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M21 21l-3.6-3.6M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
           </svg>
-          <input id="q" class="input" placeholder="Search series…" />
-          <button id="go" class="btn primary">Search</button>
+          <input id="q" class="input" placeholder="Search series…" autocomplete="off" aria-label="Search series" />
+          <button id="go" class="btn primary" aria-label="Run search">Search</button>
         </div>
-        <button id="theme" class="btn hide-sm" title="Toggle theme">Theme</button>
+        <button id="theme" class="btn hide-sm" title="Toggle theme (t)">Theme</button>
       </div>
     </div>
-  </div>
+  </header>
 
-  <div class="wrap">
-
+  <main class="wrap" id="main" tabindex="-1">
     <div class="row" style="margin-top:10px; align-items:baseline">
-      <div class="chip" id="status">Ready</div>
+      <div class="chip" id="status" aria-live="polite">Ready</div>
       <div class="chip hide-sm" id="result-info"></div>
+      <div class="chip" id="net" title="Network status">Online</div>
+      <div class="chip" id="last-refresh" title="Auto-refresh clock" aria-live="polite" hidden>—</div>
     </div>
 
     <!-- Results -->
-    <section class="panel" id="results-panel" hidden>
-      <div id="results" class="grid"></div>
+    <section class="panel" id="results-panel" aria-label="Search results" hidden>
+      <div id="results" class="grid" role="list"></div>
       <div class="pager" id="pager" hidden>
-        <button class="btn" id="prev">‹ Prev</button>
-        <div class="chip" id="page-indicator"></div>
-        <button class="btn" id="next">Next ›</button>
+        <button class="btn" id="prev" aria-label="Previous page">‹ Prev</button>
+        <div class="chip" id="page-indicator" aria-live="polite"></div>
+        <button class="btn" id="next" aria-label="Next page">Next ›</button>
       </div>
     </section>
 
@@ -240,28 +251,31 @@
         <h2 style="margin:0">Notifications</h2>
         <div class="row">
           <button id="notify-test" class="btn">Send test</button>
-          <button id="debug-toggle" class="btn ghost">Debug</button>
+          <button id="debug-toggle" class="btn ghost" aria-expanded="false" aria-controls="notify-debug">Debug</button>
         </div>
       </div>
       <div id="notify-debug" style="display:none; padding:10px 12px 14px; color:var(--muted); font-size:13px"></div>
     </section>
 
     <!-- Watchlist -->
-    <section class="panel" style="margin-top:16px;">
+    <section class="panel" style="margin-top:16px;" aria-label="Watchlist">
       <div class="watch">
         <div class="row" style="justify-content:space-between; align-items:center">
           <h2 style="margin:0">Watchlist</h2>
-          <div class="chip" id="watch-count">0 items</div>
+          <div class="row" style="gap:8px; align-items:center">
+            <div class="chip" id="watch-count">0 items</div>
+            <div class="chip hide-sm" id="watch-unread-count" title="Unread across visible items">Unread: 0</div>
+          </div>
         </div>
       </div>
 
       <!-- toolbar -->
       <div class="toolbar">
         <div class="left-tools">
-          <button id="refresh" class="btn" title="Refresh watchlist">↻ Refresh</button>
+          <button id="refresh" class="btn" title="Refresh watchlist (r)">↻ Refresh</button>
 
           <label class="subline" for="sort-by">Sort</label>
-          <select id="sort-by" class="btn" style="padding:8px 10px">
+          <select id="sort-by" class="btn" style="padding:8px 10px" aria-label="Sort by">
             <option value="title">Title (A→Z)</option>
             <option value="unread">Unread chapters (high→low)</option>
             <option value="chapters">Total chapters (high→low)</option>
@@ -269,13 +283,29 @@
             <option value="added_at">Added (new→old)</option>
           </select>
           <button id="sort-dir" class="btn" title="Toggle sort direction">⬆︎</button>
+
+          <label class="subline" for="auto-refresh">Auto-refresh</label>
+          <select id="auto-refresh" class="btn" style="padding:8px 10px" aria-label="Auto-refresh interval">
+            <option value="0">Off</option>
+            <option value="60">1 min</option>
+            <option value="300">5 min</option>
+            <option value="900">15 min</option>
+          </select>
         </div>
 
         <div class="right-tools">
-          <label class="checkbox">
+          <label class="checkbox" title="Only show series with unread chapters">
             <input id="unread-only" type="checkbox">
             Show unread only
           </label>
+          <label class="checkbox" title="Toggle cover images in list (saves bandwidth)">
+            <input id="show-covers" type="checkbox" checked>
+            Show covers
+          </label>
+          <button id="bulk-mark-latest" class="btn" title="Mark visible items as latest">Mark all latest (visible)</button>
+          <button id="export" class="btn" title="Export watchlist to JSON">Export</button>
+          <label class="btn" for="import-file" title="Import watchlist from JSON" style="cursor:pointer">Import</label>
+          <input id="import-file" type="file" accept="application/json" style="display:none" />
         </div>
       </div>
 
@@ -283,40 +313,38 @@
     </section>
 
     <footer>Built with ❤️ for reading. API: /api/search, /api/series/:id, /api/watchlist, /api/notify/test</footer>
-  </div>
+  </main>
 
-  <div id="toast" class="toast"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <script>
-/* ===== Helpers ===== */
-const $ = (s)=>document.querySelector(s);
-const state = { q:"", page:1, limit:20, pagination:null };
+/* ===== Helpers / State ===== */
+const $  = (s)=>document.querySelector(s);
+const $$ = (s)=>Array.from(document.querySelectorAll(s));
+const state = {
+  q:"", page:1, limit:20, pagination:null,
+  sortBy: localStorage.getItem("mn-sort-by")  || "title",
+  sortDir: localStorage.getItem("mn-sort-dir") || "asc",
+  unreadOnly: localStorage.getItem("mn-unread-only") === "true",
+  showCovers: localStorage.getItem("mn-show-covers") !== "false",
+  autoRefresh: +(localStorage.getItem("mn-auto-refresh") || "0"),
+  autoTimer: null,
+  lastRefreshTs: null,
+  online: navigator.onLine
+};
 
-/* Toast + status */
 function toast(msg, ms=2200){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), ms); }
 function setStatus(text){ $("#status").textContent = text || "—"; }
-
-/* parse decimal-friendly progress safely */
 function parseProgress(v){ const n = parseFloat(String(v ?? "").replace(",", ".")); return Number.isFinite(n) ? Math.max(0, n) : 0; }
-/* unread uses whole chapters beyond floor(last_read) */
 function unreadCount(total, lastRead){ const t=Number(total)||0; const r=parseProgress(lastRead); return Math.max(0, t - Math.floor(r)); }
-
-/* local date & "time ago" */
 const dtFormatter = new Intl.DateTimeFormat(undefined, { year:"numeric", month:"short", day:"2-digit", hour:"2-digit", minute:"2-digit", hour12:false, timeZoneName:"short" });
 function formatLocal(iso){ try{ return dtFormatter.format(new Date(iso)); } catch { return iso || ""; } }
 function timeAgo(iso){
   try{
-    const then = new Date(iso).getTime();
-    if(!Number.isFinite(then)) return "";
+    const then = new Date(iso).getTime(); if(!Number.isFinite(then)) return "";
     const s = Math.max(0, (Date.now() - then) / 1000);
-    const units = [
-      ["yr", 365*24*3600], ["mo", 30*24*3600], ["d", 24*3600],
-      ["h", 3600], ["m", 60], ["s", 1],
-    ];
-    for(const [label, secs] of units){
-      const v = Math.floor(s / secs);
-      if(v >= 1) return `${v}${label} ago`;
-    }
+    const units = [["yr", 365*24*3600], ["mo", 30*24*3600], ["d", 24*3600], ["h", 3600], ["m", 60], ["s", 1]];
+    for(const [label, secs] of units){ const v=Math.floor(s/secs); if(v>=1) return `${v}${label} ago`; }
     return "just now";
   }catch{ return ""; }
 }
@@ -333,13 +361,29 @@ function timeAgo(iso){
   };
 })();
 
+/* ===== Network status ===== */
+function updateNet(){
+  state.online = navigator.onLine;
+  $("#net").textContent = state.online ? "Online" : "Offline";
+  $("#net").style.color = state.online ? "#16a34a" : "#ef4444";
+  // disable actions when offline (kept minimal)
+  ["go","refresh","notify-test","bulk-mark-latest","export"].forEach(id=>{
+    const el = $("#"+id); if(el) el.disabled = !state.online && id!=="export";
+  });
+}
+window.addEventListener("online",  updateNet);
+window.addEventListener("offline", updateNet);
+
+/* ===== Debounce ===== */
+function debounce(fn, ms=350){ let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); }; }
+
 /* ===== Search & render ===== */
 async function search(q, page=1, limit=20){
   state.q=q; state.page=page; state.limit=limit;
   setStatus("Searching…");
   $("#results-panel").hidden=false;
   $("#results").innerHTML = Array.from({length:8}).map(()=>`
-    <div class="card">
+    <div class="card" role="listitem" aria-busy="true">
       <div class="cover shimmer"></div>
       <div class="meta">
         <div class="title shimmer" style="height:16px;border-radius:6px"></div>
@@ -352,6 +396,7 @@ async function search(q, page=1, limit=20){
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     const js = await res.json();
     renderResults(js);
+    setStatus("Done");
   }catch(e){
     $("#results").innerHTML = `<div style="padding:18px" class="subline">Search failed. ${e}</div>`;
     setStatus("Search failed");
@@ -363,7 +408,6 @@ function renderResults(js){
   state.pagination = p;
 
   const info = p ? `Page ${p.page} · ${p.count} result${p.count===1?"":"s"}` : `${items.length} result${items.length===1?"":"s"}`;
-  setStatus("Done");
   $("#result-info").textContent = info;
 
   const box=$("#results");
@@ -377,19 +421,21 @@ function renderResults(js){
   for(const it of items){
     const el=document.createElement("div");
     el.className="card";
+    el.setAttribute("role","listitem");
     const title = it.title || "(no title)";
     const cover = (it.cover && (it.cover.small || it.cover.default || it.cover.raw)) || "";
     const authors=(it.authors||[]).join(", ");
     const total = it.total_chapters ?? "—";
 
     el.innerHTML = `
-      <div class="cover ${cover ? "" : "shimmer"}">${cover ? `<img src="${cover}" alt="${title}" loading="lazy" decoding="async">` : ""}</div>
+      <div class="cover ${cover ? "" : "shimmer"}">${cover ? `<img src="${cover}" alt="${title} cover" loading="lazy" decoding="async">` : ""}</div>
       <div class="meta">
-        <h3 class="title">${title}</h3>
-        <div class="subline">ID: ${it.id}${authors ? ` · ${authors}` : ""} · Chapters: ${total}</div>
+        <h3 class="title" title="${title}">${title}</h3>
+        <div class="subline">ID: <code>${it.id}</code>${authors ? ` · ${authors}` : ""} · Chapters: ${total}</div>
         <div class="row">
           <button class="btn" data-add="${it.id}">Watch</button>
           <button class="btn" data-open="${it.id}">Open</button>
+          <button class="btn" data-copy="${it.id}" title="Copy ID">Copy ID</button>
         </div>
       </div>`;
     box.appendChild(el);
@@ -409,6 +455,9 @@ function renderResults(js){
       else { toast("Failed to add", 2600); }
     };
     el.querySelector(`[data-open="${it.id}"]`).onclick = ()=> window.open(`https://mangabaka.dev/${it.id}`, "_blank");
+    el.querySelector(`[data-copy="${it.id}"]`).onclick = async ()=>{
+      try{ await navigator.clipboard.writeText(String(it.id)); toast("ID copied"); }catch{ toast("Copy failed", 2200); }
+    };
   }
 
   if(p){
@@ -427,7 +476,7 @@ async function loadWatchlist(){
   const js = await res.json();
   let list = js.data || [];
 
-  // optional filter: unread only
+  // filter
   if(state.unreadOnly){
     list = list.filter(it => {
       const total = Number.isFinite(+it.total_chapters) ? +it.total_chapters : null;
@@ -440,7 +489,15 @@ async function loadWatchlist(){
   // sort
   list = sortWatchlist(list);
 
+  // counts
   $("#watch-count").textContent = `${list.length} item${list.length===1?"":"s"}`;
+  const totalUnreadVisible = list.reduce((sum, it)=>{
+    const tot = Number.isFinite(+it.total_chapters) ? +it.total_chapters : null;
+    const last = parseProgress(it.last_read ?? 0);
+    return sum + (tot!==null ? unreadCount(tot, last) : 0);
+  }, 0);
+  $("#watch-unread-count").textContent = `Unread: ${totalUnreadVisible}`;
+
   const box = $("#watchlist");
   box.innerHTML = "";
 
@@ -455,19 +512,23 @@ async function loadWatchlist(){
     const unread = total!==null ? unreadCount(total, lastRead) : 0;
     const behind = total!==null ? unread > 0 : false;
 
+    const lastCheckedTxt = it.last_checked ? `· Last checked: ${timeAgo(it.last_checked)}` : "";
+    const lastChapterTxt = it.last_chapter_at ? `· Last update: ${timeAgo(it.last_chapter_at)}` : "";
+
     const row = document.createElement("div");
     row.className = "watch-item" + (behind ? " unread" : "");
     row.innerHTML = `
       <div style="min-width:0; display:flex; gap:10px; align-items:flex-start">
         ${behind ? `<span class="unread-dot" title="Unread chapters"></span>` : ``}
+        ${state.showCovers && it.cover ? `<img src="${it.cover}" alt="" width="40" height="60" loading="lazy" decoding="async" style="border-radius:6px; border:1px solid var(--border); object-fit:cover" />` : ""}
         <div style="min-width:0">
-          <div style="font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">
+          <div style="font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap" title="${it.title || ""}">
             ${it.title || "(no title)"}
           </div>
           <div class="subline" title="${it.last_checked ? formatLocal(it.last_checked) : ""}">
-            ID: ${it.id}
+            ID: <code>${it.id}</code>
             · Chapters: ${total ?? "—"}
-            ${it.last_checked ? `· Last checked: ${timeAgo(it.last_checked)}` : ""}
+            ${lastCheckedTxt} ${lastChapterTxt}
           </div>
           <div class="row" style="margin-top:6px; gap:8px">
             <span class="badge ${behind ? "warn":"ok"}" title="Unread chapters">
@@ -480,12 +541,19 @@ async function loadWatchlist(){
 
       <div class="controls">
         ${total!==null ? `
+          <button class="btn" data-prev="${it.id}" title="Decrement read (−1)">−1</button>
           <input class="input-mini" type="number" min="0" ${total!==null ? `max="${total}"`:""}
                  step="1" value="${String(lastRead).replace(/\.0$/,"")}" aria-label="Last read chapter" data-lr="${it.id}" />
           <button class="btn" data-set="${it.id}" title="Set last read">Set</button>
-          <button class="btn" data-next="${it.id}" title="Mark next read">+1</button>
+          <button class="btn" data-next="${it.id}" title="Increment read (+1)">+1</button>
           <button class="btn" data-latest="${it.id}" title="Mark latest">Mark latest</button>
         ` : ""}
+        <button class="btn" data-open="${it.id}" title="Open series page">Open</button>
+        <button class="btn" data-copy="${it.id}" title="Copy ID">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M9 9V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-4m-4 6H7a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </button>
         <button class="btn" data-remove="${it.id}" title="Remove">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M4 7h16M9 3h6m-8 4 1 13a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2l1-13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
@@ -496,13 +564,17 @@ async function loadWatchlist(){
 
     const id = it.id;
 
+    // open + copy
+    row.querySelector(`[data-open="${id}"]`).onclick = ()=> window.open(`https://mangabaka.dev/${id}`, "_blank");
+    row.querySelector(`[data-copy="${id}"]`).onclick = async ()=>{ try{ await navigator.clipboard.writeText(String(id)); toast("ID copied"); }catch{ toast("Copy failed", 2200); } };
+
     // remove
     row.querySelector(`[data-remove="${id}"]`).onclick = async ()=>{
       const r = await fetch(`/api/watchlist/${id}`, { method:"DELETE" });
       if(r.ok){ toast("Removed"); loadWatchlist(); } else { toast("Failed to remove", 2600); }
     };
 
-    // set explicit last_read (accepts decimals)
+    // set explicit last_read
     const inp = row.querySelector(`[data-lr="${id}"]`);
     const btnSet = row.querySelector(`[data-set="${id}"]`);
     if(btnSet && inp){
@@ -518,13 +590,23 @@ async function loadWatchlist(){
       };
     }
 
-    // +1 next
+    // +1 / -1
     const btnNext = row.querySelector(`[data-next="${id}"]`);
     if(btnNext){
       btnNext.onclick = async ()=>{
         const r = await fetch(`/api/watchlist/${id}/read/next`, { method:"POST" });
-        if(r.ok){ toast("+1 read"); loadWatchlist(); }
-        else { toast("Failed to bump", 2600); }
+        if(r.ok){ toast("+1 read"); loadWatchlist(); } else { toast("Failed to bump", 2600); }
+      };
+    }
+    const btnPrev = row.querySelector(`[data-prev="${id}"]`);
+    if(btnPrev){
+      btnPrev.onclick = async ()=>{
+        const r = await fetch(`/api/watchlist/${id}/progress`, {
+          method:"PATCH",
+          headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify({ decrement: 1 })
+        });
+        if(r.ok){ toast("−1 read"); loadWatchlist(); } else { toast("Failed to decrement", 2600); }
       };
     }
 
@@ -542,15 +624,14 @@ async function loadWatchlist(){
       };
     }
 
-    box.appendChild(row);
+    $("#watchlist").appendChild(row);
   }
+
+  // touch the last-refresh clock
+  state.lastRefreshTs = Date.now();
 }
 
 /* ===== Sorting ===== */
-state.sortBy  = localStorage.getItem("mn-sort-by")  || "title";
-state.sortDir = localStorage.getItem("mn-sort-dir") || "asc"; // asc | desc
-state.unreadOnly = localStorage.getItem("mn-unread-only") === "true";
-
 function sortWatchlist(list){
   const by = state.sortBy;
   const dir = state.sortDir === "desc" ? -1 : 1;
@@ -577,19 +658,100 @@ function sortWatchlist(list){
     let cmp = 0;
     switch(by){
       case "title":        cmp = aTitle.localeCompare(bTitle); break;
-      case "unread":       cmp = (bUnread - aUnread); break;          // high → low (desc default)
-      case "chapters":     cmp = ((bTotal ?? -1) - (aTotal ?? -1)); break; // high → low (desc default)
-      case "last_checked": cmp = (bChecked - aChecked); break;        // new → old (desc default)
-      case "added_at":     cmp = (bAdded - aAdded); break;            // new → old (desc default)
+      case "unread":       cmp = (bUnread - aUnread); break;
+      case "chapters":     cmp = ((bTotal ?? -1) - (aTotal ?? -1)); break;
+      case "last_checked": cmp = (bChecked - aChecked); break;
+      case "added_at":     cmp = (bAdded - aAdded); break;
       default:             cmp = 0;
     }
     return dir === 1 ? cmp : -cmp;
   });
 }
 
+/* ===== Export / Import ===== */
+async function exportWatchlist(){
+  try{
+    const res = await fetch("/api/watchlist");
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const js = await res.json();
+    const blob = new Blob([JSON.stringify(js, null, 2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `manganotify_watchlist_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    toast("Exported watchlist");
+  }catch(e){ toast(`Export failed: ${e}`, 4000); }
+}
+
+async function importWatchlist(file){
+  try{
+    const text = await file.text();
+    const js = JSON.parse(text);
+    const items = (js.data || js.results || js || []).filter(Boolean);
+    if(!Array.isArray(items) || !items.length){ toast("Nothing to import", 2600); return; }
+
+    let ok=0, fail=0;
+    for(const it of items){
+      try{
+        const body = { id: it.id, title: it.title, total_chapters: it.total_chapters ?? null, last_read: it.last_read ?? 0 };
+        const r = await fetch("/api/watchlist", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(body) });
+        if(r.ok) ok++; else fail++;
+      }catch{ fail++; }
+    }
+    toast(`Import finished · OK ${ok} · Failed ${fail}`, 4200);
+    loadWatchlist();
+  }catch(e){ toast(`Import failed: ${e}`, 4200); }
+}
+
+/* ===== Bulk mark latest (visible) ===== */
+async function bulkMarkLatest(){
+  const rows = $$("#watchlist .watch-item");
+  if(!rows.length){ toast("No items to mark"); return; }
+  let ok=0, fail=0;
+  for(const row of rows){
+    const id = (row.querySelector(".subline code")||{}).textContent;
+    if(!id) continue;
+    try{
+      const r = await fetch(`/api/watchlist/${id}/progress`, {
+        method:"PATCH",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ mark_latest: true })
+      });
+      if(r.ok) ok++; else fail++;
+    }catch{ fail++; }
+  }
+  toast(`Marked latest · OK ${ok} · Failed ${fail}`, 3800);
+  loadWatchlist();
+}
+
+/* ===== Auto-refresh clock ===== */
+function startAutoRefresh(){
+  clearInterval(state.autoTimer);
+  if(!state.autoRefresh){ $("#last-refresh").hidden = true; return; }
+  $("#last-refresh").hidden = false;
+  const tick = ()=>{
+    if(state.lastRefreshTs){
+      $("#last-refresh").textContent = `Refreshed ${timeAgo(state.lastRefreshTs)} (every ${state.autoRefresh/60|0 || 1}m)`;
+    }else{
+      $("#last-refresh").textContent = `Next refresh in ${state.autoRefresh/60|0 || 1}m`;
+    }
+  };
+  state.autoTimer = setInterval(async ()=>{
+    await loadWatchlist();
+    tick();
+  }, state.autoRefresh * 1000);
+  tick();
+}
+
 /* ===== Wiring ===== */
-$("#go").onclick = ()=>{ const q=$("#q").value.trim(); if(q) search(q, 1, state.limit); };
-$("#q").addEventListener("keydown", e=>{ if(e.key==="Enter") $("#go").click(); });
+const runSearch = ()=>{ const q=$("#q").value.trim(); if(q) search(q, 1, state.limit); };
+const debouncedSearch = debounce(runSearch, 350);
+
+$("#go").onclick = runSearch;
+$("#q").addEventListener("keydown", e=>{ if(e.key==="Enter") runSearch(); });
+$("#q").addEventListener("input", debouncedSearch);
+
 $("#prev").onclick = ()=>{ if(state.pagination?.previous){ search(state.q, (state.page-1)||1, state.limit); } };
 $("#next").onclick = ()=>{ if(state.pagination?.next){ search(state.q, state.page+1, state.limit); } };
 
@@ -611,14 +773,13 @@ $("#debug-toggle").onclick = ()=>{
   const el=$("#notify-debug");
   const showing = el.style.display !== "none";
   el.style.display = showing ? "none" : "block";
+  $("#debug-toggle").setAttribute("aria-expanded", String(!showing));
   if(!showing) refreshNotifyDebug();
 };
 $("#refresh").onclick = ()=> loadWatchlist();
 
-/* sort controls */
 $("#sort-by")?.addEventListener("change", e => {
   state.sortBy = e.target.value;
-  // sensible default directions
   state.sortDir = (state.sortBy === "title") ? "asc" : "desc";
   localStorage.setItem("mn-sort-by", state.sortBy);
   localStorage.setItem("mn-sort-dir", state.sortDir);
@@ -632,27 +793,59 @@ $("#sort-dir")?.addEventListener("click", () => {
   loadWatchlist();
 });
 
-/* unread-only toggle */
 $("#unread-only")?.addEventListener("change", e => {
   state.unreadOnly = !!e.target.checked;
   localStorage.setItem("mn-unread-only", String(state.unreadOnly));
   loadWatchlist();
 });
 
+$("#show-covers")?.addEventListener("change", e=>{
+  state.showCovers = !!e.target.checked;
+  localStorage.setItem("mn-show-covers", String(state.showCovers));
+  loadWatchlist();
+});
+
+$("#auto-refresh")?.addEventListener("change", e=>{
+  state.autoRefresh = +e.target.value;
+  localStorage.setItem("mn-auto-refresh", String(state.autoRefresh));
+  startAutoRefresh();
+});
+
+$("#bulk-mark-latest").onclick = bulkMarkLatest;
+$("#export").onclick = exportWatchlist;
+$("#import-file").addEventListener("change", e=>{
+  const f = e.target.files?.[0]; if(f) importWatchlist(f);
+  e.target.value = "";
+});
+
+/* Keyboard shortcuts */
+document.addEventListener("keydown", (e)=>{
+  if (e.key === "/" && document.activeElement !== $("#q")){
+    e.preventDefault(); $("#q").focus(); return;
+  }
+  if (e.key.toLowerCase() === "t"){ e.preventDefault(); $("#theme").click(); }
+  if (e.key.toLowerCase() === "r"){ e.preventDefault(); $("#refresh").click(); }
+});
+
 /* apply saved UI on load */
 window.addEventListener("DOMContentLoaded", () => {
+  updateNet();
   const sb = $("#sort-by");
   const sd = $("#sort-dir");
   const ur = $("#unread-only");
+  const sc = $("#show-covers");
+  const ar = $("#auto-refresh");
   if (sb) sb.value = state.sortBy;
   if (sd) sd.textContent = state.sortDir === "asc" ? "⬆︎" : "⬇︎";
   if (ur) ur.checked = !!state.unreadOnly;
+  if (sc) sc.checked = !!state.showCovers;
+  if (ar) ar.value = String(state.autoRefresh || 0);
 });
 
 /* ===== Init ===== */
 setStatus("Ready");
 loadWatchlist();
-
+startAutoRefresh();
 async function refreshNotifyDebug(){
   const el=$("#notify-debug");
   try{
