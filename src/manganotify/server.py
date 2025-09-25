@@ -1,4 +1,4 @@
-# server.py
+# src/manganotify/server.py
 from __future__ import annotations
 
 import os
@@ -19,9 +19,11 @@ from fastapi.staticfiles import StaticFiles
 # ------------------------------------------------------------
 # Env & Config
 # ------------------------------------------------------------
-load_dotenv()  # loads .env from project root if present
+load_dotenv()  # loads .env if present
 
 BASE = os.getenv("MANGABAKA_BASE", "https://api.mangabaka.dev").rstrip("/")
+
+# Keep data directory outside the package by default; override via env.
 DATA_DIR = Path(os.getenv("DATA_DIR", "./data")).resolve()
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 WATCHLIST_PATH = DATA_DIR / "watchlist.json"
@@ -33,9 +35,12 @@ PUSHOVER_APP_TOKEN = os.getenv("PUSHOVER_APP_TOKEN") or os.getenv("PUSHOVER_TOKE
 # Poll every N seconds (0 or negative disables background checks)
 POLL_INTERVAL_SEC = int(os.getenv("POLL_INTERVAL_SEC", "1800"))
 
+# Where our bundled static files live (inside the package dir)
+ASSETS_DIR = Path(__file__).parent
+
 
 def now_utc_iso() -> str:
-    """RFC 3339 / ISO 8601 UTC with trailing Z."""
+    """RFC3339 / ISO 8601 UTC with trailing Z."""
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
@@ -156,17 +161,17 @@ async def poll_watchlist_loop(app: FastAPI) -> None:
                     new_total = to_int(series.get("total_chapters"))
                     old_total = to_int(item.get("total_chapters"))
 
-                    if (
-                        new_total is not None
-                        and old_total is not None
-                        and new_total > old_total
-                    ):
-                        await pushover(
-                            client,
-                            title=f"New chapter(s): {item.get('title','(unknown)')}",
-                            message=f"{item.get('title','(unknown)')} has {new_total} chapters (was {old_total}).",
-                        )
+                    # inside poll/process loop after fetching series:
+                    new_total = to_int(series.get("total_chapters"))
+                    old_total = to_int(item.get("total_chapters"))
+                    last_read = to_int(item.get("last_read")) or 0
 
+                    if (new_total is not None) and (old_total is not None) and new_total > old_total:
+                        unread = max(new_total - last_read, 0)
+                        msg = f"{item.get('title', '(unknown)')} now has {new_total} chapters."
+                        if unread > 0:
+                            msg += f" You’re {unread} behind."
+                        await pushover(client, title=f"New chapter(s): {item.get('title', '(unknown)')}", message=msg)
                     # Update stored info
                     item["title"] = series.get("title") or item.get("title")
                     if new_total is not None:
@@ -185,6 +190,8 @@ async def poll_watchlist_loop(app: FastAPI) -> None:
             pass
 
         await asyncio.sleep(interval)
+
+
 async def process_watchlist_once(app: FastAPI, *, now: Optional[datetime] = None) -> dict:
     """
     Single iteration of the watchlist check.
@@ -216,7 +223,6 @@ async def process_watchlist_once(app: FastAPI, *, now: Optional[datetime] = None
             old_total = to_int(item.get("total_chapters"))
 
             if new_total is not None and old_total is not None and new_total > old_total:
-                # notify
                 res = await push(
                     client,
                     title=f"New chapter(s): {item.get('title','(unknown)')}",
@@ -231,11 +237,9 @@ async def process_watchlist_once(app: FastAPI, *, now: Optional[datetime] = None
                 item["total_chapters"] = new_total
 
             now_dt = now or datetime.now(timezone.utc)
-            # standardize to Z suffix
             item["last_checked"] = now_dt.isoformat().replace("+00:00", "Z")
             updated += 1
         except Exception:
-            # swallow per-item errors to keep the loop resilient
             continue
 
     if updated:
@@ -251,7 +255,7 @@ async def process_watchlist_once(app: FastAPI, *, now: Optional[datetime] = None
 async def lifespan(app: FastAPI):
     app.state.client = httpx.AsyncClient(timeout=20.0)
     app.state.poller_task = None
-    app.state.push_func = pushover  # <— allow tests to override
+    app.state.push_func = pushover  # allow tests to override
 
     if POLL_INTERVAL_SEC > 0:
         app.state.poller_task = asyncio.create_task(poll_watchlist_loop(app))
@@ -266,16 +270,15 @@ async def lifespan(app: FastAPI):
         await app.state.client.aclose()
 
 
-
 app = FastAPI(title="MangaNotify", version="0.2", lifespan=lifespan)
 
-# Static SPA
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# Static SPA (fix: use leading slash and package-relative directory)
+app.mount("/static", StaticFiles(directory=str(ASSETS_DIR / "static")), name="static")
 
 
 @app.get("/")
 async def index():
-    return FileResponse("static/index.html")
+    return FileResponse(str(ASSETS_DIR / "static" / "index.html"))
 
 
 # ------------------------------------------------------------
@@ -309,9 +312,22 @@ async def series_endpoint(request: Request, series_id: int):
 # ------------------------------------------------------------
 # API: Watchlist
 # ------------------------------------------------------------
+def to_int(v):
+    try:
+        return int(v) if v is not None else None
+    except Exception:
+        return None
+
 @app.get("/api/watchlist")
 def get_watchlist():
-    return {"data": load_watchlist()}
+    items = load_watchlist()
+    out = []
+    for it in items:
+        total = to_int(it.get("total_chapters")) or 0
+        last_read = to_int(it.get("last_read")) or 0
+        unread = max(total - last_read, 0)
+        out.append({**it, "unread": unread, "is_behind": unread > 0})
+    return {"data": out}
 
 
 @app.post("/api/watchlist")
@@ -327,7 +343,6 @@ async def add_watchlist(item: Dict[str, Any]):
     if any(str(x.get("id")) == sid for x in wl):
         return {"ok": True, "message": "Already in watchlist"}
 
-    # normalize total_chapters to int if possible
     try:
         total = int(item.get("total_chapters")) if item.get("total_chapters") is not None else None
     except Exception:
@@ -352,6 +367,66 @@ async def remove_watchlist(series_id: int):
     wl = [x for x in wl if str(x.get("id")) != str(series_id)]
     save_watchlist(wl)
     return {"removed": before - len(wl)}
+
+@app.patch("/api/watchlist/{series_id}/progress")
+async def set_progress(series_id: int, body: Dict[str, Any]):
+    """
+    body: {"last_read": 123} or {"mark_latest": true}
+    """
+    wl = load_watchlist()
+    found = False
+    for it in wl:
+        if str(it.get("id")) == str(series_id):
+            found = True
+            if body.get("mark_latest"):
+                # snap to current known total
+                total = it.get("total_chapters")
+                try:
+                    it["last_read"] = int(total) if total is not None else None
+                except Exception:
+                    it["last_read"] = None
+            else:
+                # explicit chapter number
+                lr = body.get("last_read")
+                try:
+                    it["last_read"] = int(lr) if lr is not None else None
+                except Exception:
+                    raise HTTPException(400, "last_read must be an integer")
+            break
+    if not found:
+        raise HTTPException(404, "Not in watchlist")
+
+    save_watchlist(wl)
+    return {"ok": True}
+
+@app.post("/api/watchlist/{series_id}/read/next")
+async def mark_next(series_id: int):
+    wl = load_watchlist()
+    for it in wl:
+        if str(it.get("id")) == str(series_id):
+            lr = to_int(it.get("last_read")) or 0
+            it["last_read"] = lr + 1
+            save_watchlist(wl)
+            return {"ok": True, "last_read": it["last_read"]}
+    raise HTTPException(404, "Not in watchlist")
+
+@app.post("/api/watchlist")
+async def add_watchlist(item: Dict[str, Any]):
+    ...
+    try:
+        total = int(item.get("total_chapters")) if item.get("total_chapters") is not None else None
+    except Exception:
+        total = item.get("total_chapters")
+
+    wl.append({
+        "id": item["id"],
+        "title": item.get("title"),
+        "total_chapters": total,
+        "last_read": total,            # <— initialize progress
+        "added_at": now_utc_iso(),
+    })
+    save_watchlist(wl)
+    return {"ok": True}
 
 
 # ------------------------------------------------------------
@@ -378,7 +453,7 @@ def notify_debug():
 
 @router.post("/api/notify/test")
 async def notify_test(request: Request):
-    # gate early if creds missing (also keeps request.app.state.client unused here)
+    # gate early if creds missing
     if not PUSHOVER_APP_TOKEN or not PUSHOVER_USER_KEY:
         return JSONResponse(
             status_code=500,
@@ -394,7 +469,7 @@ async def notify_test(request: Request):
     result = await pushover(client, "MangaNotify", "✅ MangaNotify test notification")
     status = 200 if result.get("ok") else 502
 
-    # add masked who block (JSON-safe dict)
+    # add masked who block
     result["who"] = {
         "token": env_mask(PUSHOVER_APP_TOKEN),
         "user": env_mask(PUSHOVER_USER_KEY),
@@ -419,5 +494,5 @@ if __name__ == "__main__":
         app,
         host="0.0.0.0",
         port=int(os.getenv("PORT", "8999")),
-        reload=False,  # avoid Windows/UNC reloader issues
+        reload=False,
     )
