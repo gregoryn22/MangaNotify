@@ -280,6 +280,19 @@ app.mount("/static", StaticFiles(directory=str(ASSETS_DIR / "static")), name="st
 async def index():
     return FileResponse(str(ASSETS_DIR / "static" / "index.html"))
 
+# after ASSETS_DIR and main static mount
+app.mount(
+    "/images",
+    StaticFiles(directory=str(ASSETS_DIR / "static" / "images")),
+    name="images",
+)
+
+# optional: direct /favicon.ico route
+from fastapi.responses import FileResponse
+
+@app.get("/favicon.ico")
+async def favicon():
+    return FileResponse(str(ASSETS_DIR / "static" / "images" / "favicon-32.png"))
 
 # ------------------------------------------------------------
 # API: Search & Series
