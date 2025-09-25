@@ -35,3 +35,4 @@ data/*
 # --- Logs ---
 logs/
 *.log
+/src/manganotify/data/watchlist.json
