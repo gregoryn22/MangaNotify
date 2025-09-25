@@ -45,9 +45,9 @@ def _reload_with_env(monkeypatch, **env):
         os.makedirs(data_dir, exist_ok=True)
 
     # Fresh import of server.py with new env
-    if "server" in sys.modules:
-        del sys.modules["server"]
-    srv = importlib.import_module("server")
+    if "manganotify.server" in sys.modules:
+        del sys.modules["manganotify.server"]
+    srv = importlib.import_module("manganotify.server")  # ← was "server"
     importlib.reload(srv)
     return srv
 
