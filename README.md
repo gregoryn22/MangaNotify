@@ -18,8 +18,9 @@ MangaNotify is a lightweight tool for tracking manga chapter releases via the [M
 - 🐳 Run locally or as a Docker container  
 
 <p align="center">
-  <img src="images/search_screenshot.png" width="45%" alt="Search view"/>
-  <img src="images/watchlist_screenshot.png" width="45%" alt="Watchlist view"/>
+  <img src="images/search_screenshot.png" width="75%" alt="Search view"/>
+    <br><br/>
+  <img src="images/watchlist_screenshot.png" width="75%" alt="Watchlist view"/>
 </p>
 
 ---
