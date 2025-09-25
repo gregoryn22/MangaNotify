@@ -4,6 +4,13 @@
 <meta charset="utf-8" />
 <title>MangaNotify · WebUI</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+ <!-- Favicons -->
+  <link rel="icon" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16.png">
+  <!-- Optional cache-buster while testing -->
+  <!-- <link rel="icon" href="/static/images/favicon.ico?v=2"> -->
+
 <style>
   :root{
     --bg: #0b1020;
@@ -65,12 +72,19 @@
   }
   .head-inner{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 20px}
   .brand{display:flex;align-items:center;gap:10px}
-  .logo{
-    width:36px;height:36px;border-radius:12px;
-    background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-    box-shadow: var(--shadow);
-    display:grid;place-items:center;color:white;font-weight:700;
-  }
+    .logo{
+      width:36px; height:36px; border-radius:12px;
+      /* remove gradient background if using an image */
+      background: transparent;
+      box-shadow: var(--shadow);
+      display:grid; place-items:center;
+      overflow: hidden;
+    }
+    .logo img{
+      width: 100%; height: 100%;
+      object-fit: contain;  /* keeps aspect ratio */
+      display: block;
+    }
   .brand h1{margin:0;font-size:18px;letter-spacing:.4px}
   .actions{display:flex;gap:8px;align-items:center}
 
@@ -159,7 +173,9 @@
   <div class="header">
     <div class="head-inner wrap" style="padding-inline:20px;">
       <div class="brand">
-        <div class="logo" aria-hidden="true">MN</div>
+        <div class="logo">
+          <img src="/images/manganotify_logo.png" alt="MangaNotify logo">
+        </div>
         <h1>MangaNotify</h1>
       </div>
       <div class="actions">
