@@ -52,12 +52,9 @@
     letter-spacing:.2px;
   }
 
-  /* Respect reduced motion */
-  @media (prefers-reduced-motion: reduce) {
-    * { animation: none !important; transition: none !important; }
-  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
-  /* big fixed glow */
+  /* background glow */
   body::before{
     content:"";
     position:fixed; inset:0; z-index:-1; pointer-events:none;
@@ -69,10 +66,8 @@
     filter: saturate(110%);
   }
 
-  /* Layout */
   .wrap{max-width:1200px; margin:0 auto; padding:28px 20px 60px}
 
-  /* Header */
   .header{
     position: sticky; top:0; z-index:30;
     backdrop-filter: saturate(120%) blur(10px);
@@ -80,31 +75,21 @@
   }
   .head-inner{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 20px}
   .brand{display:flex;align-items:center;gap:10px}
-  .logo{
-    width:36px; height:36px; border-radius:12px;
-    background: transparent;
-    box-shadow: var(--shadow);
-    display:grid; place-items:center;
-    overflow: hidden;
-  }
+  .logo{ width:36px; height:36px; border-radius:12px; background: transparent; box-shadow: var(--shadow); display:grid; place-items:center; overflow: hidden; }
   .logo img{width: 100%; height: 100%; object-fit: contain; display: block;}
   .brand h1{margin:0;font-size:18px;letter-spacing:.4px}
   .actions{display:flex;gap:8px;align-items:center}
 
-  /* Controls */
   .pill{
     border:1px solid var(--border); background:var(--card); color:var(--text);
     padding:10px 12px; border-radius:999px; display:flex; gap:10px; align-items:center;
     box-shadow: var(--shadow);
   }
   .input{
-    background:transparent;border:none;outline:none;color:inherit;min-width:220px;
-    font-size:14px;
+    background:transparent;border:none;outline:none;color:inherit;min-width:220px;font-size:14px;
   }
   .input:focus-visible, .btn:focus-visible, select:focus-visible, .input-mini:focus-visible {
-    outline: var(--focus);
-    outline-offset: 2px;
-    border-radius: 10px;
+    outline: var(--focus); outline-offset: 2px; border-radius: 10px;
   }
   .btn{
     border:1px solid var(--border); background:var(--card); color:var(--text);
@@ -117,17 +102,9 @@
   .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-strong)); color:#fff; border-color:transparent}
   .btn.ghost{background:transparent}
   .muted{color:var(--muted)}
-  .status{font-size:13px;margin-left:8px}
-
-  /* Content grid */
   .panel{margin-top:18px;background:color-mix(in oklab, var(--card) 88%, transparent);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;padding:16px}
-
-  .card{
-    border:1px solid var(--border); border-radius:16px; overflow:hidden; background:var(--bg-soft);
-    box-shadow: var(--shadow); transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
-    display:flex; flex-direction:column;
-  }
+  .card{ border:1px solid var(--border); border-radius:16px; overflow:hidden; background:var(--bg-soft); box-shadow: var(--shadow); transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease; display:flex; flex-direction:column; }
   .card:hover{transform:translateY(-2px); border-color: color-mix(in oklab, var(--accent) 50%, var(--border)); box-shadow:0 18px 40px rgba(0,0,0,.18)}
   .cover{position:relative; aspect-ratio:2/3; background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02))}
   .cover img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; display:block; border-bottom:1px solid var(--border)}
@@ -138,71 +115,41 @@
   .subline{font-size:12px; color:var(--muted)}
   .row{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
 
-  /* Watchlist */
   .watch{padding:10px 12px}
-  .watch-item{
-    display:flex; gap:12px; align-items:center; justify-content:space-between;
-    padding:10px 12px; border:1px solid var(--border); border-radius:12px; background:var(--bg-soft)
-  }
+  .watch-item{ display:flex; gap:12px; align-items:center; justify-content:space-between; padding:10px 12px; border:1px solid var(--border); border-radius:12px; background:var(--bg-soft) }
   .watch-list{display:grid; gap:10px; padding:0 12px 14px}
-
-  /* Pagination */
   .pager{display:flex; gap:10px; justify-content:center; padding:12px}
   .chip{border:1px solid var(--border); padding:6px 10px; border-radius:999px; font-size:12px; color:var(--muted)}
-
-  /* Toast */
   .toast{position:fixed; right:18px; bottom:18px; background:#111827; color:#fff; padding:12px 14px; border-radius:12px; box-shadow:0 18px 40px rgba(0,0,0,.35); opacity:0; transform:translateY(8px); pointer-events:none; transition:opacity .15s, transform .15s; font-size:14px; z-index:50}
   .toast.show{opacity:1; transform:translateY(0); pointer-events:auto}
-
-  /* Footer */
   footer{opacity:.8; font-size:12px; text-align:center; margin-top:22px; color:var(--muted)}
   a{color:var(--accent)}
-
-  /* Utility hide on small */
   @media (max-width:520px){ .hide-sm{display:none} }
 
-  .badge{
-    display:inline-flex; align-items:center; gap:6px;
-    font-size:12px; padding:4px 8px; border-radius:999px;
-    border:1px solid var(--border); background:var(--bg-soft); color:var(--muted);
-  }
-  .badge.ok{ color:#16a34a; border-color:#16a34a33; }
-  .badge.warn{ color:#ef4444; border-color:#ef444433; }
+  .badge{ display:inline-flex; align-items:center; gap:6px; font-size:12px; padding:4px 8px; border-radius:999px; border:1px solid var(--border); background:var(--bg-soft); color:var(--muted) }
+  .badge.ok{ color:#16a34a; border-color:#16a34a33 }
+  .badge.warn{ color:#ef4444; border-color:#ef444433 }
 
-  .input-mini{
-    width:84px; padding:8px 10px; font-size:13px;
-    background:transparent; border:1px solid var(--border);
-    border-radius:10px; color:var(--text);
-  }
-  .controls .btn{ padding:8px 10px; }
-  .controls{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .input-mini{ width:84px; padding:8px 10px; font-size:13px; background:transparent; border:1px solid var(--border); border-radius:10px; color:var(--text) }
+  .controls .btn{ padding:8px 10px }
+  .controls{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
 
-  /* unread cue */
-  .unread-dot{
-    width:8px; height:8px; border-radius:999px;
-    background: #ef4444;
-    box-shadow: 0 0 0 0 rgba(239,68,68,.55);
-    animation: pulse 1.8s ease-out infinite;
-    flex: 0 0 auto;
-    margin-top:4px;
-  }
-  @keyframes pulse{
-    0%   { box-shadow: 0 0 0 0 rgba(239,68,68,.55); }
-    70%  { box-shadow: 0 0 0 12px rgba(239,68,68,0); }
-    100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
-  }
-  .watch-item.unread{
-    border-color: color-mix(in oklab, #ef4444 45%, var(--border));
-    box-shadow: 0 8px 24px rgba(239,68,68,.08);
-  }
+  .unread-dot{ width:8px; height:8px; border-radius:999px; background: #ef4444; box-shadow: 0 0 0 0 rgba(239,68,68,.55); animation: pulse 1.8s ease-out infinite; flex: 0 0 auto; margin-top:4px }
+  @keyframes pulse{ 0%{box-shadow: 0 0 0 0 rgba(239,68,68,.55)} 70%{box-shadow: 0 0 0 12px rgba(239,68,68,0)} 100%{box-shadow: 0 0 0 0 rgba(239,68,68,0)} }
+  .watch-item.unread{ border-color: color-mix(in oklab, #ef4444 45%, var(--border)); box-shadow: 0 8px 24px rgba(239,68,68,.08) }
 
-  /* watchlist toolbar */
-  .toolbar{
-    display:flex; gap:10px; align-items:center; justify-content:space-between;
-    padding: 0 12px 10px;
-  }
+  .toolbar{ display:flex; gap:10px; align-items:center; justify-content:space-between; padding: 0 12px 10px }
   .left-tools, .right-tools{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
   .checkbox{display:flex; align-items:center; gap:6px; font-size:13px; color:var(--muted)}
+
+  /* modal */
+  dialog { border:1px solid var(--border); border-radius:12px; background:var(--card); color:var(--text); padding:0; max-width:720px }
+  dialog::backdrop { background: rgba(0,0,0,.4) }
+  .modal-head{ display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border-bottom:1px solid var(--border) }
+  .modal-body{ padding:12px 14px; display:grid; gap:10px }
+  .kvs{ font-size:13px; color:var(--muted) }
+  .kvs code{ font-size:12px }
+  .tags{ display:flex; flex-wrap:wrap; gap:6px }
 </style>
 </head>
 <body>
@@ -234,6 +181,46 @@
       <div class="chip" id="net" title="Network status">Online</div>
       <div class="chip" id="last-refresh" title="Auto-refresh clock" aria-live="polite" hidden>—</div>
     </div>
+
+    <!-- Search filters -->
+    <section class="panel" style="margin-top:12px; padding:10px 12px">
+      <div class="row" style="gap:8px; align-items:center; flex-wrap:wrap">
+        <label class="subline" for="f-status">Status</label>
+        <select id="f-status" class="btn" style="padding:8px 10px">
+          <option value="">Any</option>
+          <option>releasing</option>
+          <option>finished</option>
+          <option>hiatus</option>
+          <option>cancelled</option>
+          <option>upcoming</option>
+        </select>
+
+        <label class="subline" for="f-type">Type</label>
+        <select id="f-type" class="btn" style="padding:8px 10px">
+          <option value="">Any</option>
+          <option value="manga">manga</option>
+          <option value="manhwa">manhwa</option>
+          <option value="manhua">manhua</option>
+          <option value="novel">novel</option>
+          <option value="one_shot">one_shot</option>
+        </select>
+
+        <label class="checkbox">
+          <input id="f-has-anime" type="checkbox"> Has anime
+        </label>
+
+        <label class="subline" for="f-cr">Content</label>
+        <select id="f-cr" class="btn" style="padding:8px 10px">
+          <option value="">Any</option>
+          <option value="safe">safe</option>
+          <option value="suggestive">suggestive</option>
+          <option value="erotica">erotica</option>
+          <option value="pornographic">pornographic</option>
+        </select>
+
+        <button id="f-clear" class="btn">Clear filters</button>
+      </div>
+    </section>
 
     <!-- Results -->
     <section class="panel" id="results-panel" aria-label="Search results" hidden>
@@ -269,10 +256,10 @@
         </div>
       </div>
 
-      <!-- toolbar -->
       <div class="toolbar">
         <div class="left-tools">
-          <button id="refresh" class="btn" title="Refresh watchlist (r)">↻ Refresh</button>
+          <button id="refresh" class="btn" title="Refresh watchlist from cache (r)">↻ Refresh</button>
+          <button id="refresh-now" class="btn" title="Reload watchlist from server">Reload (server)</button>
 
           <label class="subline" for="sort-by">Sort</label>
           <select id="sort-by" class="btn" style="padding:8px 10px" aria-label="Sort by">
@@ -295,12 +282,10 @@
 
         <div class="right-tools">
           <label class="checkbox" title="Only show series with unread chapters">
-            <input id="unread-only" type="checkbox">
-            Show unread only
+            <input id="unread-only" type="checkbox"> Show unread only
           </label>
           <label class="checkbox" title="Toggle cover images in list (saves bandwidth)">
-            <input id="show-covers" type="checkbox" checked>
-            Show covers
+            <input id="show-covers" type="checkbox" checked> Show covers
           </label>
           <button id="bulk-mark-latest" class="btn" title="Mark visible items as latest">Mark all latest (visible)</button>
           <button id="export" class="btn" title="Export watchlist to JSON">Export</button>
@@ -317,6 +302,19 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
+  <!-- Modal -->
+  <dialog id="modal">
+    <div class="modal-head">
+      <div class="row">
+        <strong id="modal-title">Details</strong>
+      </div>
+      <button id="modal-close" class="btn">Close</button>
+    </div>
+    <div class="modal-body">
+      <div id="modal-body"></div>
+    </div>
+  </dialog>
+
 <script>
 /* ===== Helpers / State ===== */
 const $  = (s)=>document.querySelector(s);
@@ -330,7 +328,14 @@ const state = {
   autoRefresh: +(localStorage.getItem("mn-auto-refresh") || "0"),
   autoTimer: null,
   lastRefreshTs: null,
-  online: navigator.onLine
+  online: navigator.onLine,
+  filters: {
+    status: localStorage.getItem("mn-f-status") || "",
+    type: localStorage.getItem("mn-f-type") || "",
+    has_anime: localStorage.getItem("mn-f-has-anime") === "true",
+    content_rating: localStorage.getItem("mn-f-cr") || ""
+  },
+  aborter: null
 };
 
 function toast(msg, ms=2200){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), ms); }
@@ -366,20 +371,62 @@ function updateNet(){
   state.online = navigator.onLine;
   $("#net").textContent = state.online ? "Online" : "Offline";
   $("#net").style.color = state.online ? "#16a34a" : "#ef4444";
-  // disable actions when offline (kept minimal)
-  ["go","refresh","notify-test","bulk-mark-latest","export"].forEach(id=>{
+  ["go","refresh","refresh-now","notify-test","bulk-mark-latest","export"].forEach(id=>{
     const el = $("#"+id); if(el) el.disabled = !state.online && id!=="export";
   });
 }
 window.addEventListener("online",  updateNet);
 window.addEventListener("offline", updateNet);
 
-/* ===== Debounce ===== */
+/* ===== Debounce & URL helpers ===== */
 function debounce(fn, ms=350){ let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); }; }
+function buildQuery(params){ return Object.entries(params).filter(([,v])=>v!=="" && v!==undefined && v!==null).map(([k,v])=>`${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join("&"); }
+function syncUrl(){
+  const p = new URLSearchParams();
+  if(state.q) p.set("q", state.q);
+  for(const [k,v] of Object.entries(state.filters)){
+    if(v && !(k==="has_anime" && v===false)) p.set(k, v===true ? "1" : v);
+  }
+  history.replaceState(null, "", p.toString() ? `?${p}` : location.pathname);
+}
+function restoreFromUrl(){
+  const p = new URLSearchParams(location.search);
+  if(p.get("q")) $("#q").value = p.get("q");
+  const remap = {status:"f-status", type:"f-type", content_rating:"f-cr", has_anime:"f-has-anime"};
+  Object.entries(remap).forEach(([key,id])=>{
+    const val = p.get(key);
+    if(val !== null){
+      if(id==="f-has-anime") { $("#"+id).checked = val==="1" || val==="true"; }
+      else { $("#"+id).value = val; }
+    }
+  });
+}
+
+/* ===== Modal ===== */
+const modal = $("#modal");
+$("#modal-close").onclick = ()=> modal.close();
 
 /* ===== Search & render ===== */
-async function search(q, page=1, limit=20){
-  state.q=q; state.page=page; state.limit=limit;
+const debouncedSearch = debounce(()=> runSearch(), 300);
+
+function searchParams(){
+  const params = {
+    q: state.q,
+    page: state.page,
+    limit: state.limit
+  };
+  if(state.filters.status) params.status = state.filters.status;
+  if(state.filters.type) params.type = state.filters.type;
+  if(state.filters.content_rating) params.content_rating = state.filters.content_rating;
+  if(state.filters.has_anime) params.has_anime = "true";
+  return params;
+}
+
+async function search(){
+  // Abort previous search if any
+  if(state.aborter){ state.aborter.abort(); }
+  state.aborter = new AbortController();
+
   setStatus("Searching…");
   $("#results-panel").hidden=false;
   $("#results").innerHTML = Array.from({length:8}).map(()=>`
@@ -392,16 +439,19 @@ async function search(q, page=1, limit=20){
     </div>`).join("");
 
   try{
-    const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&page=${page}&limit=${limit}`);
+    const qs = buildQuery(searchParams());
+    const res = await fetch(`/api/search?${qs}`, { signal: state.aborter.signal });
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     const js = await res.json();
     renderResults(js);
     setStatus("Done");
   }catch(e){
+    if(e.name === "AbortError") return;
     $("#results").innerHTML = `<div style="padding:18px" class="subline">Search failed. ${e}</div>`;
     setStatus("Search failed");
   }
 }
+
 function renderResults(js){
   const items = js.data || js.results || [];
   const p = js.pagination || null;
@@ -420,21 +470,26 @@ function renderResults(js){
 
   for(const it of items){
     const el=document.createElement("div");
-    el.className="card";
-    el.setAttribute("role","listitem");
-    const title = it.title || "(no title)";
-    const cover = (it.cover && (it.cover.small || it.cover.default || it.cover.raw)) || "";
-    const authors=(it.authors||[]).join(", ");
+    el.className="card"; el.setAttribute("role","listitem");
+    const title = it.title || it.romanized_title || it.native_title || "(no title)";
+    // cover can be url string or object (back-compat)
+    let cover = "";
+    if (typeof it.cover === "string") cover = it.cover;
+    else if (it.cover && (it.cover.small || it.cover.default || it.cover.raw)) cover = it.cover.small || it.cover.default || it.cover.raw;
+
     const total = it.total_chapters ?? "—";
+    const cr = (it.content_rating || "").toLowerCase();
+    const status = it.status || "";
 
     el.innerHTML = `
       <div class="cover ${cover ? "" : "shimmer"}">${cover ? `<img src="${cover}" alt="${title} cover" loading="lazy" decoding="async">` : ""}</div>
       <div class="meta">
         <h3 class="title" title="${title}">${title}</h3>
-        <div class="subline">ID: <code>${it.id}</code>${authors ? ` · ${authors}` : ""} · Chapters: ${total}</div>
+        <div class="subline">ID: <code>${it.id}</code> · Chapters: ${total}${status?` · ${status}`:""}${cr?` · ${cr}`:""}</div>
         <div class="row">
           <button class="btn" data-add="${it.id}">Watch</button>
           <button class="btn" data-open="${it.id}">Open</button>
+          <button class="btn" data-details="${it.id}">Details</button>
           <button class="btn" data-copy="${it.id}" title="Copy ID">Copy ID</button>
         </div>
       </div>`;
@@ -449,15 +504,14 @@ function renderResults(js){
     el.querySelector(`[data-add="${it.id}"]`).onclick = async ()=>{
       const r = await fetch("/api/watchlist", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ id: it.id, title, total_chapters: total, last_read: 0 })
+        body: JSON.stringify({ id: it.id, title, total_chapters: total || null, last_read: 0, cover })
       });
       if(r.ok){ toast("Added to watchlist"); loadWatchlist(); }
       else { toast("Failed to add", 2600); }
     };
     el.querySelector(`[data-open="${it.id}"]`).onclick = ()=> window.open(`https://mangabaka.dev/${it.id}`, "_blank");
-    el.querySelector(`[data-copy="${it.id}"]`).onclick = async ()=>{
-      try{ await navigator.clipboard.writeText(String(it.id)); toast("ID copied"); }catch{ toast("Copy failed", 2200); }
-    };
+    el.querySelector(`[data-copy="${it.id}"]`).onclick = async ()=>{ try{ await navigator.clipboard.writeText(String(it.id)); toast("ID copied"); }catch{ toast("Copy failed", 2200); } };
+    el.querySelector(`[data-details="${it.id}"]`).onclick = ()=> openDetails(it.id, title);
   }
 
   if(p){
@@ -470,13 +524,46 @@ function renderResults(js){
   }
 }
 
+/* ===== Details modal (relationships + links from /api/series/{id}) ===== */
+async function openDetails(id, title){
+  $("#modal-title").textContent = title || `Series ${id}`;
+  const body = $("#modal-body");
+  body.innerHTML = `<div class="subline">Loading…</div>`;
+  modal.showModal();
+  try{
+    const res = await fetch(`/api/series/${id}`);
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const js = await res.json();
+    const series = js.data || {};
+    const rel = (series.relationships) || {};
+    const links = Array.isArray(series.links) ? series.links : [];
+
+    const relHtml = Object.keys(rel).length
+      ? Object.entries(rel).map(([kind, arr])=>{
+          const items = (arr||[]).map(sid=>`<a href="https://mangabaka.dev/${sid}" target="_blank" rel="noopener">${sid}</a>`).join(" · ");
+          return `<div class="kvs"><strong>${kind}</strong>: ${items || "<span class='muted'>(none)</span>"}</div>`;
+        }).join("")
+      : `<div class="muted">No relationships provided.</div>`;
+
+    const linksHtml = links.length
+      ? `<div class="tags">${links.map(u=>`<a class="badge" href="${u}" target="_blank" rel="noopener">${new URL(u).hostname}</a>`).join("")}</div>`
+      : `<div class="muted">No external links.</div>`;
+
+    body.innerHTML = `
+      <div>${relHtml}</div>
+      <div><strong>Links</strong>${linksHtml}</div>
+    `;
+  }catch(e){
+    body.innerHTML = `<div class="subline">Failed to load details. ${e}</div>`;
+  }
+}
+
 /* ===== Watchlist ===== */
 async function loadWatchlist(){
   const res = await fetch("/api/watchlist");
   const js = await res.json();
   let list = js.data || [];
 
-  // filter
   if(state.unreadOnly){
     list = list.filter(it => {
       const total = Number.isFinite(+it.total_chapters) ? +it.total_chapters : null;
@@ -486,10 +573,8 @@ async function loadWatchlist(){
     });
   }
 
-  // sort
   list = sortWatchlist(list);
 
-  // counts
   $("#watch-count").textContent = `${list.length} item${list.length===1?"":"s"}`;
   const totalUnreadVisible = list.reduce((sum, it)=>{
     const tot = Number.isFinite(+it.total_chapters) ? +it.total_chapters : null;
@@ -514,6 +599,7 @@ async function loadWatchlist(){
 
     const lastCheckedTxt = it.last_checked ? `· Last checked: ${timeAgo(it.last_checked)}` : "";
     const lastChapterTxt = it.last_chapter_at ? `· Last update: ${timeAgo(it.last_chapter_at)}` : "";
+    const mergeTxt = it.merge_note ? ` · <span class="badge">merged</span>` : "";
 
     const row = document.createElement("div");
     row.className = "watch-item" + (behind ? " unread" : "");
@@ -523,18 +609,20 @@ async function loadWatchlist(){
         ${state.showCovers && it.cover ? `<img src="${it.cover}" alt="" width="40" height="60" loading="lazy" decoding="async" style="border-radius:6px; border:1px solid var(--border); object-fit:cover" />` : ""}
         <div style="min-width:0">
           <div style="font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap" title="${it.title || ""}">
-            ${it.title || "(no title)"}
+            ${it.title || "(no title)"} ${mergeTxt}
           </div>
           <div class="subline" title="${it.last_checked ? formatLocal(it.last_checked) : ""}">
             ID: <code>${it.id}</code>
             · Chapters: ${total ?? "—"}
             ${lastCheckedTxt} ${lastChapterTxt}
+            ${it.status? ` · ${it.status}` : ""} ${it.content_rating? ` · ${it.content_rating}` : ""}
           </div>
           <div class="row" style="margin-top:6px; gap:8px">
             <span class="badge ${behind ? "warn":"ok"}" title="Unread chapters">
               ${behind ? "Unread" : "Up to date"}${total!==null ? `: ${unread}` : ""}
             </span>
-            ${total!==null ? `<span class="badge">Read: ${String(lastRead).replace(/\.0$/,"")}/${total}</span>` : ""}
+            ${(total!==null) ? `<span class="badge">Read: ${String(lastRead).replace(/\.0$/,"")}/${total}</span>` : ""}
+            ${(it.authors && it.authors.length) ? `<span class="badge" title="Authors">${it.authors[0]}${it.authors.length>1?"…":""}</span>` : ""}
           </div>
         </div>
       </div>
@@ -548,6 +636,7 @@ async function loadWatchlist(){
           <button class="btn" data-next="${it.id}" title="Increment read (+1)">+1</button>
           <button class="btn" data-latest="${it.id}" title="Mark latest">Mark latest</button>
         ` : ""}
+        <button class="btn" data-details="${it.id}" title="Details">Details</button>
         <button class="btn" data-open="${it.id}" title="Open series page">Open</button>
         <button class="btn" data-copy="${it.id}" title="Copy ID">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -563,18 +652,15 @@ async function loadWatchlist(){
     `;
 
     const id = it.id;
-
-    // open + copy
     row.querySelector(`[data-open="${id}"]`).onclick = ()=> window.open(`https://mangabaka.dev/${id}`, "_blank");
     row.querySelector(`[data-copy="${id}"]`).onclick = async ()=>{ try{ await navigator.clipboard.writeText(String(id)); toast("ID copied"); }catch{ toast("Copy failed", 2200); } };
+    row.querySelector(`[data-details="${id}"]`).onclick = ()=> openDetails(id, it.title || `Series ${id}`);
 
-    // remove
     row.querySelector(`[data-remove="${id}"]`).onclick = async ()=>{
       const r = await fetch(`/api/watchlist/${id}`, { method:"DELETE" });
       if(r.ok){ toast("Removed"); loadWatchlist(); } else { toast("Failed to remove", 2600); }
     };
 
-    // set explicit last_read
     const inp = row.querySelector(`[data-lr="${id}"]`);
     const btnSet = row.querySelector(`[data-set="${id}"]`);
     if(btnSet && inp){
@@ -590,7 +676,6 @@ async function loadWatchlist(){
       };
     }
 
-    // +1 / -1
     const btnNext = row.querySelector(`[data-next="${id}"]`);
     if(btnNext){
       btnNext.onclick = async ()=>{
@@ -610,7 +695,6 @@ async function loadWatchlist(){
       };
     }
 
-    // mark latest
     const btnLatest = row.querySelector(`[data-latest="${id}"]`);
     if(btnLatest){
       btnLatest.onclick = async ()=>{
@@ -619,15 +703,13 @@ async function loadWatchlist(){
           headers:{ "Content-Type":"application/json" },
           body: JSON.stringify({ mark_latest: true })
         });
-        if(r.ok){ toast("Marked latest"); loadWatchlist(); }
-        else { toast("Failed to mark latest", 2600); }
+        if(r.ok){ toast("Marked latest"); loadWatchlist(); } else { toast("Failed to mark", 2600); }
       };
     }
 
     $("#watchlist").appendChild(row);
   }
 
-  // touch the last-refresh clock
   state.lastRefreshTs = Date.now();
 }
 
@@ -694,7 +776,7 @@ async function importWatchlist(file){
     let ok=0, fail=0;
     for(const it of items){
       try{
-        const body = { id: it.id, title: it.title, total_chapters: it.total_chapters ?? null, last_read: it.last_read ?? 0 };
+        const body = { id: it.id, title: it.title, total_chapters: it.total_chapters ?? null, last_read: it.last_read ?? 0, cover: it.cover };
         const r = await fetch("/api/watchlist", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(body) });
         if(r.ok) ok++; else fail++;
       }catch{ fail++; }
@@ -745,15 +827,18 @@ function startAutoRefresh(){
 }
 
 /* ===== Wiring ===== */
-const runSearch = ()=>{ const q=$("#q").value.trim(); if(q) search(q, 1, state.limit); };
-const debouncedSearch = debounce(runSearch, 350);
+function runSearch(){
+  state.q = $("#q").value.trim();
+  syncUrl();
+  if(state.q) search();
+}
 
 $("#go").onclick = runSearch;
 $("#q").addEventListener("keydown", e=>{ if(e.key==="Enter") runSearch(); });
 $("#q").addEventListener("input", debouncedSearch);
 
-$("#prev").onclick = ()=>{ if(state.pagination?.previous){ search(state.q, (state.page-1)||1, state.limit); } };
-$("#next").onclick = ()=>{ if(state.pagination?.next){ search(state.q, state.page+1, state.limit); } };
+$("#prev").onclick = ()=>{ if(state.pagination?.previous){ state.page = Math.max(1, (state.page-1)||1); search(); } };
+$("#next").onclick = ()=>{ if(state.pagination?.next){ state.page = state.page+1; search(); } };
 
 $("#notify-test").onclick = async ()=>{
   const btn=$("#notify-test"); btn.disabled=true;
@@ -777,6 +862,14 @@ $("#debug-toggle").onclick = ()=>{
   if(!showing) refreshNotifyDebug();
 };
 $("#refresh").onclick = ()=> loadWatchlist();
+$("#refresh-now").onclick = async ()=>{
+  try{
+    // No explicit server "refresh" route; poller runs in background.
+    // Just force a reload from server storage.
+    await loadWatchlist();
+    toast("Reloaded watchlist from server");
+  }catch{ toast("Reload failed", 2600); }
+};
 
 $("#sort-by")?.addEventListener("change", e => {
   state.sortBy = e.target.value;
@@ -811,6 +904,18 @@ $("#auto-refresh")?.addEventListener("change", e=>{
   startAutoRefresh();
 });
 
+/* Filters wiring */
+$("#f-status").addEventListener("change", e=>{ state.filters.status = e.target.value; localStorage.setItem("mn-f-status", state.filters.status); syncUrl(); if(state.q) search(); });
+$("#f-type").addEventListener("change", e=>{ state.filters.type = e.target.value; localStorage.setItem("mn-f-type", state.filters.type); syncUrl(); if(state.q) search(); });
+$("#f-has-anime").addEventListener("change", e=>{ state.filters.has_anime = !!e.target.checked; localStorage.setItem("mn-f-has-anime", String(state.filters.has_anime)); syncUrl(); if(state.q) search(); });
+$("#f-cr").addEventListener("change", e=>{ state.filters.content_rating = e.target.value; localStorage.setItem("mn-f-cr", state.filters.content_rating); syncUrl(); if(state.q) search(); });
+$("#f-clear").onclick = ()=>{
+  state.filters = {status:"", type:"", has_anime:false, content_rating:""};
+  $("#f-status").value=""; $("#f-type").value=""; $("#f-has-anime").checked=false; $("#f-cr").value="";
+  localStorage.removeItem("mn-f-status"); localStorage.removeItem("mn-f-type"); localStorage.removeItem("mn-f-has-anime"); localStorage.removeItem("mn-f-cr");
+  syncUrl(); if(state.q) search();
+};
+
 $("#bulk-mark-latest").onclick = bulkMarkLatest;
 $("#export").onclick = exportWatchlist;
 $("#import-file").addEventListener("change", e=>{
@@ -820,61 +925,41 @@ $("#import-file").addEventListener("change", e=>{
 
 /* Keyboard shortcuts — safe around inputs */
 function isEditable(el) {
-  return !!el && (
-    el.tagName === "INPUT" ||
-    el.tagName === "TEXTAREA" ||
-    el.isContentEditable
-  );
+  return !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
 }
-
 document.addEventListener("keydown", (e) => {
-  // If user is typing or holding a modifier, bail.
   if (isEditable(e.target) || e.metaKey || e.ctrlKey || e.altKey) return;
-
-  // Focus search on "/" (only when not typing in an input already)
-  if (e.key === "/") {
-    e.preventDefault();
-    const q = document.getElementById("q");
-    if (q) q.focus();
-    return;
-  }
-
-  // Theme toggle (t)
-  if (e.key.toLowerCase() === "t") {
-    e.preventDefault();
-    const themeBtn = document.getElementById("theme");
-    if (themeBtn) themeBtn.click();
-    return;
-  }
-
-  // Refresh (r)
-  if (e.key.toLowerCase() === "r") {
-    e.preventDefault();
-    const refreshBtn = document.getElementById("refresh");
-    if (refreshBtn) refreshBtn.click();
-    return;
-  }
+  if (e.key === "/") { e.preventDefault(); $("#q")?.focus(); return; }
+  if (e.key.toLowerCase() === "t") { e.preventDefault(); $("#theme")?.click(); return; }
+  if (e.key.toLowerCase() === "r") { e.preventDefault(); $("#refresh")?.click(); return; }
 });
 
 /* apply saved UI on load */
 window.addEventListener("DOMContentLoaded", () => {
+  restoreFromUrl();
   updateNet();
   const sb = $("#sort-by");
   const sd = $("#sort-dir");
   const ur = $("#unread-only");
   const sc = $("#show-covers");
   const ar = $("#auto-refresh");
+  const fs = $("#f-status"), ft = $("#f-type"), fha = $("#f-has-anime"), fcr = $("#f-cr");
   if (sb) sb.value = state.sortBy;
   if (sd) sd.textContent = state.sortDir === "asc" ? "⬆︎" : "⬇︎";
   if (ur) ur.checked = !!state.unreadOnly;
   if (sc) sc.checked = !!state.showCovers;
   if (ar) ar.value = String(state.autoRefresh || 0);
+  if (fs) fs.value = state.filters.status || "";
+  if (ft) ft.value = state.filters.type || "";
+  if (fha) fha.checked = !!state.filters.has_anime;
+  if (fcr) fcr.value = state.filters.content_rating || "";
 });
 
 /* ===== Init ===== */
 setStatus("Ready");
 loadWatchlist();
 startAutoRefresh();
+
 async function refreshNotifyDebug(){
   const el=$("#notify-debug");
   try{
