@@ -1,37 +1,37 @@
+version: "3.9"
+
 services:
   manganotify:
+    # If you publish an image, prefer this:
+    # image: ghcr.io/gregoryn22/manganotify:latest
     build: .
     container_name: manganotify
 
-    # Map host → container ports (host port comes from .env, defaults to 8999)
     ports:
       - "${HOST_PORT:-8999}:8999"
 
     environment:
-      # API base (can override if needed)
       MANGABAKA_BASE: ${MANGABAKA_BASE:-https://api.mangabaka.dev}
-
-      # App port inside container (keep at 8999 unless you change app config)
       PORT: "8999"
-
-      # Data dir used by server.py (watchlist lives here)
       DATA_DIR: /data
-
-      # Poll interval in seconds (default 10 minutes)
       POLL_INTERVAL_SEC: ${POLL_INTERVAL_SEC:-600}
-
-      # Optional: Pushover credentials
       PUSHOVER_USER_KEY: ${PUSHOVER_USER_KEY:-}
       PUSHOVER_APP_TOKEN: ${PUSHOVER_APP_TOKEN:-}
 
+    # Use a named volume so Docker owns perms correctly
     volumes:
-      - ./data:/data                # persist watchlist, logs, etc (must be writable)
-      - ./static:/app/static:ro     # live-edit HTML/CSS/JS (read-only is fine)
+      - manganotify-data:/data
+      # optional live-edit (read-only is fine)
+      - ./src/manganotify/static:/app/src/manganotify/static:ro
 
-    user: "${PUID:-1000}:${PGID:-1000}"
+    # Let the image's default user (appuser, uid 10001) run the process
+    # user:  <-- intentionally omitted
 
     restart: unless-stopped
 
     labels:
       net.unraid.docker.webui: "http://[IP]:[PORT:8999]/"
       net.unraid.docker.icon: "https://raw.githubusercontent.com/gregoryn22/MangaNotify/refs/heads/master/images/manganotify_logo.png"
+
+volumes:
+  manganotify-data:
