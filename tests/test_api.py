@@ -1,11 +1,15 @@
 # tests/test_api.py
-import importlib
+import importlib, os, sys, pathlib
 import os
 import sys
 
 import respx
 from fastapi.testclient import TestClient
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
+
+srv = importlib.import_module("manganotify.server")
+importlib.reload(srv)
 
 def _reload_with_env(monkeypatch, **env):
     """
