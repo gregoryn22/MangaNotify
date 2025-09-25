@@ -4,12 +4,11 @@
 <meta charset="utf-8" />
 <title>MangaNotify · WebUI</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
- <!-- Favicons -->
-  <link rel="icon" href="/images/favicon.ico">
-  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16.png">
-  <!-- Optional cache-buster while testing -->
-  <!-- <link rel="icon" href="/static/images/favicon.ico?v=2"> -->
+
+<!-- Favicons -->
+<link rel="icon" href="/images/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16.png">
 
 <style>
   :root{
@@ -72,19 +71,18 @@
   }
   .head-inner{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 20px}
   .brand{display:flex;align-items:center;gap:10px}
-    .logo{
-      width:36px; height:36px; border-radius:12px;
-      /* remove gradient background if using an image */
-      background: transparent;
-      box-shadow: var(--shadow);
-      display:grid; place-items:center;
-      overflow: hidden;
-    }
-    .logo img{
-      width: 100%; height: 100%;
-      object-fit: contain;  /* keeps aspect ratio */
-      display: block;
-    }
+  .logo{
+    width:36px; height:36px; border-radius:12px;
+    background: transparent;
+    box-shadow: var(--shadow);
+    display:grid; place-items:center;
+    overflow: hidden;
+  }
+  .logo img{
+    width: 100%; height: 100%;
+    object-fit: contain;
+    display: block;
+  }
   .brand h1{margin:0;font-size:18px;letter-spacing:.4px}
   .actions{display:flex;gap:8px;align-items:center}
 
@@ -167,6 +165,33 @@
   }
   .controls .btn{ padding:8px 10px; }
   .controls{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+
+  /* unread cue */
+  .unread-dot{
+    width:8px; height:8px; border-radius:999px;
+    background: #ef4444;
+    box-shadow: 0 0 0 0 rgba(239,68,68,.55);
+    animation: pulse 1.8s ease-out infinite;
+    flex: 0 0 auto;
+    margin-top:4px;
+  }
+  @keyframes pulse{
+    0%   { box-shadow: 0 0 0 0 rgba(239,68,68,.55); }
+    70%  { box-shadow: 0 0 0 12px rgba(239,68,68,0); }
+    100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+  }
+  .watch-item.unread{
+    border-color: color-mix(in oklab, #ef4444 45%, var(--border));
+    box-shadow: 0 8px 24px rgba(239,68,68,.08);
+  }
+
+  /* watchlist toolbar */
+  .toolbar{
+    display:flex; gap:10px; align-items:center; justify-content:space-between;
+    padding: 0 12px 10px;
+  }
+  .left-tools, .right-tools{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+  .checkbox{display:flex; align-items:center; gap:6px; font-size:13px; color:var(--muted)}
 </style>
 </head>
 <body>
@@ -229,6 +254,31 @@
           <div class="chip" id="watch-count">0 items</div>
         </div>
       </div>
+
+      <!-- toolbar -->
+      <div class="toolbar">
+        <div class="left-tools">
+          <button id="refresh" class="btn" title="Refresh watchlist">↻ Refresh</button>
+
+          <label class="subline" for="sort-by">Sort</label>
+          <select id="sort-by" class="btn" style="padding:8px 10px">
+            <option value="title">Title (A→Z)</option>
+            <option value="unread">Unread chapters (high→low)</option>
+            <option value="chapters">Total chapters (high→low)</option>
+            <option value="last_checked">Last checked (new→old)</option>
+            <option value="added_at">Added (new→old)</option>
+          </select>
+          <button id="sort-dir" class="btn" title="Toggle sort direction">⬆︎</button>
+        </div>
+
+        <div class="right-tools">
+          <label class="checkbox">
+            <input id="unread-only" type="checkbox">
+            Show unread only
+          </label>
+        </div>
+      </div>
+
       <div id="watchlist" class="watch-list"></div>
     </section>
 
@@ -242,22 +292,33 @@
 const $ = (s)=>document.querySelector(s);
 const state = { q:"", page:1, limit:20, pagination:null };
 
-function toast(msg, ms=2200){
-  const t=$("#toast"); t.textContent=msg; t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"), ms);
-}
+/* Toast + status */
+function toast(msg, ms=2200){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), ms); }
 function setStatus(text){ $("#status").textContent = text || "—"; }
 
 /* parse decimal-friendly progress safely */
-function parseProgress(v){
-  const n = parseFloat(String(v).replace(",", "."));
-  return Number.isFinite(n) ? Math.max(0, n) : 0;
-}
+function parseProgress(v){ const n = parseFloat(String(v ?? "").replace(",", ".")); return Number.isFinite(n) ? Math.max(0, n) : 0; }
 /* unread uses whole chapters beyond floor(last_read) */
-function unreadCount(total, lastRead){
-  const t = Number(total) || 0;
-  const r = parseProgress(lastRead);
-  return Math.max(0, t - Math.floor(r));
+function unreadCount(total, lastRead){ const t=Number(total)||0; const r=parseProgress(lastRead); return Math.max(0, t - Math.floor(r)); }
+
+/* local date & "time ago" */
+const dtFormatter = new Intl.DateTimeFormat(undefined, { year:"numeric", month:"short", day:"2-digit", hour:"2-digit", minute:"2-digit", hour12:false, timeZoneName:"short" });
+function formatLocal(iso){ try{ return dtFormatter.format(new Date(iso)); } catch { return iso || ""; } }
+function timeAgo(iso){
+  try{
+    const then = new Date(iso).getTime();
+    if(!Number.isFinite(then)) return "";
+    const s = Math.max(0, (Date.now() - then) / 1000);
+    const units = [
+      ["yr", 365*24*3600], ["mo", 30*24*3600], ["d", 24*3600],
+      ["h", 3600], ["m", 60], ["s", 1],
+    ];
+    for(const [label, secs] of units){
+      const v = Math.floor(s / secs);
+      if(v >= 1) return `${v}${label} ago`;
+    }
+    return "just now";
+  }catch{ return ""; }
 }
 
 /* ===== Theme toggle ===== */
@@ -296,14 +357,12 @@ async function search(q, page=1, limit=20){
     setStatus("Search failed");
   }
 }
-
 function renderResults(js){
   const items = js.data || js.results || [];
   const p = js.pagination || null;
   state.pagination = p;
 
-  const info = p ? `Page ${p.page} · ${p.count} result${p.count===1?"":"s"}` :
-                   `${items.length} result${items.length===1?"":"s"}`;
+  const info = p ? `Page ${p.page} · ${p.count} result${p.count===1?"":"s"}` : `${items.length} result${items.length===1?"":"s"}`;
   setStatus("Done");
   $("#result-info").textContent = info;
 
@@ -366,7 +425,21 @@ function renderResults(js){
 async function loadWatchlist(){
   const res = await fetch("/api/watchlist");
   const js = await res.json();
-  const list = js.data || [];
+  let list = js.data || [];
+
+  // optional filter: unread only
+  if(state.unreadOnly){
+    list = list.filter(it => {
+      const total = Number.isFinite(+it.total_chapters) ? +it.total_chapters : null;
+      const lastRead = parseProgress(it.last_read ?? 0);
+      const unread = total!==null ? unreadCount(total, lastRead) : 0;
+      return unread > 0;
+    });
+  }
+
+  // sort
+  list = sortWatchlist(list);
+
   $("#watch-count").textContent = `${list.length} item${list.length===1?"":"s"}`;
   const box = $("#watchlist");
   box.innerHTML = "";
@@ -383,28 +456,32 @@ async function loadWatchlist(){
     const behind = total!==null ? unread > 0 : false;
 
     const row = document.createElement("div");
-    row.className = "watch-item";
-
+    row.className = "watch-item" + (behind ? " unread" : "");
     row.innerHTML = `
-      <div style="min-width:0">
-        <div style="font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">${it.title || "(no title)"}</div>
-        <div class="subline">
-          ID: ${it.id}
-          · Chapters: ${total ?? "—"}
-          ${it.last_checked ? `· Last checked: ${it.last_checked}` : ""}
-        </div>
-        <div class="row" style="margin-top:6px; gap:8px">
-          <span class="badge ${behind ? "warn":"ok"}" title="Unread chapters">
-            ${behind ? "Unread" : "Up to date"}${total!==null ? `: ${unread}` : ""}
-          </span>
-          ${total!==null ? `<span class="badge">Read: ${String(lastRead).replace(/\.0$/,"")}/${total}</span>` : ""}
+      <div style="min-width:0; display:flex; gap:10px; align-items:flex-start">
+        ${behind ? `<span class="unread-dot" title="Unread chapters"></span>` : ``}
+        <div style="min-width:0">
+          <div style="font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">
+            ${it.title || "(no title)"}
+          </div>
+          <div class="subline" title="${it.last_checked ? formatLocal(it.last_checked) : ""}">
+            ID: ${it.id}
+            · Chapters: ${total ?? "—"}
+            ${it.last_checked ? `· Last checked: ${timeAgo(it.last_checked)}` : ""}
+          </div>
+          <div class="row" style="margin-top:6px; gap:8px">
+            <span class="badge ${behind ? "warn":"ok"}" title="Unread chapters">
+              ${behind ? "Unread" : "Up to date"}${total!==null ? `: ${unread}` : ""}
+            </span>
+            ${total!==null ? `<span class="badge">Read: ${String(lastRead).replace(/\.0$/,"")}/${total}</span>` : ""}
+          </div>
         </div>
       </div>
 
       <div class="controls">
         ${total!==null ? `
           <input class="input-mini" type="number" min="0" ${total!==null ? `max="${total}"`:""}
-                 step="0.1" value="${String(lastRead).replace(/\.0$/,"")}" aria-label="Last read chapter" data-lr="${it.id}" />
+                 step="1" value="${String(lastRead).replace(/\.0$/,"")}" aria-label="Last read chapter" data-lr="${it.id}" />
           <button class="btn" data-set="${it.id}" title="Set last read">Set</button>
           <button class="btn" data-next="${it.id}" title="Mark next read">+1</button>
           <button class="btn" data-latest="${it.id}" title="Mark latest">Mark latest</button>
@@ -441,9 +518,9 @@ async function loadWatchlist(){
       };
     }
 
-    // +1 next (bumps by 1.0, keeps decimals if present)
+    // +1 next
     const btnNext = row.querySelector(`[data-next="${id}"]`);
-    if(btnNext && inp){
+    if(btnNext){
       btnNext.onclick = async ()=>{
         const r = await fetch(`/api/watchlist/${id}/read/next`, { method:"POST" });
         if(r.ok){ toast("+1 read"); loadWatchlist(); }
@@ -469,18 +546,45 @@ async function loadWatchlist(){
   }
 }
 
-/* ===== Notifications ===== */
-async function refreshNotifyDebug(){
-  const el=$("#notify-debug");
-  try{
-    const res=await fetch("/api/notify/debug");
-    if(!res.ok){ el.textContent="(debug endpoint not reachable)"; return; }
-    const js=await res.json();
-    el.innerHTML = `
-      <div>has_token: <b>${js.has_token}</b> (${js.token_preview||""})</div>
-      <div>has_user: <b>${js.has_user}</b> (${js.user_preview||""})</div>
-      <div class="subline" style="margin-top:6px">${js.notes||""}</div>`;
-  }catch{ el.textContent="(debug fetch failed)"; }
+/* ===== Sorting ===== */
+state.sortBy  = localStorage.getItem("mn-sort-by")  || "title";
+state.sortDir = localStorage.getItem("mn-sort-dir") || "asc"; // asc | desc
+state.unreadOnly = localStorage.getItem("mn-unread-only") === "true";
+
+function sortWatchlist(list){
+  const by = state.sortBy;
+  const dir = state.sortDir === "desc" ? -1 : 1;
+
+  return [...list].sort((a, b) => {
+    const aTitle = (a.title || "").toLowerCase();
+    const bTitle = (b.title || "").toLowerCase();
+
+    const aTotal = Number.isFinite(+a.total_chapters) ? +a.total_chapters : null;
+    const bTotal = Number.isFinite(+b.total_chapters) ? +b.total_chapters : null;
+
+    const aLast = parseProgress(a.last_read ?? 0);
+    const bLast = parseProgress(b.last_read ?? 0);
+
+    const aUnread = aTotal !== null ? unreadCount(aTotal, aLast) : -1;
+    const bUnread = bTotal !== null ? unreadCount(bTotal, bLast) : -1;
+
+    const aChecked = a.last_checked ? Date.parse(a.last_checked) : 0;
+    const bChecked = b.last_checked ? Date.parse(b.last_checked) : 0;
+
+    const aAdded = a.added_at ? Date.parse(a.added_at) : 0;
+    const bAdded = b.added_at ? Date.parse(b.added_at) : 0;
+
+    let cmp = 0;
+    switch(by){
+      case "title":        cmp = aTitle.localeCompare(bTitle); break;
+      case "unread":       cmp = (bUnread - aUnread); break;          // high → low (desc default)
+      case "chapters":     cmp = ((bTotal ?? -1) - (aTotal ?? -1)); break; // high → low (desc default)
+      case "last_checked": cmp = (bChecked - aChecked); break;        // new → old (desc default)
+      case "added_at":     cmp = (bAdded - aAdded); break;            // new → old (desc default)
+      default:             cmp = 0;
+    }
+    return dir === 1 ? cmp : -cmp;
+  });
 }
 
 /* ===== Wiring ===== */
@@ -503,17 +607,64 @@ $("#notify-test").onclick = async ()=>{
   }catch(e){ toast("❌ Network error calling /api/notify/test", 4200); }
   finally{ btn.disabled=false; }
 };
-
 $("#debug-toggle").onclick = ()=>{
   const el=$("#notify-debug");
   const showing = el.style.display !== "none";
   el.style.display = showing ? "none" : "block";
   if(!showing) refreshNotifyDebug();
 };
+$("#refresh").onclick = ()=> loadWatchlist();
+
+/* sort controls */
+$("#sort-by")?.addEventListener("change", e => {
+  state.sortBy = e.target.value;
+  // sensible default directions
+  state.sortDir = (state.sortBy === "title") ? "asc" : "desc";
+  localStorage.setItem("mn-sort-by", state.sortBy);
+  localStorage.setItem("mn-sort-dir", state.sortDir);
+  $("#sort-dir").textContent = state.sortDir === "asc" ? "⬆︎" : "⬇︎";
+  loadWatchlist();
+});
+$("#sort-dir")?.addEventListener("click", () => {
+  state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
+  localStorage.setItem("mn-sort-dir", state.sortDir);
+  $("#sort-dir").textContent = state.sortDir === "asc" ? "⬆︎" : "⬇︎";
+  loadWatchlist();
+});
+
+/* unread-only toggle */
+$("#unread-only")?.addEventListener("change", e => {
+  state.unreadOnly = !!e.target.checked;
+  localStorage.setItem("mn-unread-only", String(state.unreadOnly));
+  loadWatchlist();
+});
+
+/* apply saved UI on load */
+window.addEventListener("DOMContentLoaded", () => {
+  const sb = $("#sort-by");
+  const sd = $("#sort-dir");
+  const ur = $("#unread-only");
+  if (sb) sb.value = state.sortBy;
+  if (sd) sd.textContent = state.sortDir === "asc" ? "⬆︎" : "⬇︎";
+  if (ur) ur.checked = !!state.unreadOnly;
+});
 
 /* ===== Init ===== */
 setStatus("Ready");
 loadWatchlist();
+
+async function refreshNotifyDebug(){
+  const el=$("#notify-debug");
+  try{
+    const res=await fetch("/api/notify/debug");
+    if(!res.ok){ el.textContent="(debug endpoint not reachable)"; return; }
+    const js=await res.json();
+    el.innerHTML = `
+      <div>has_token: <b>${js.has_token}</b> (${js.token_preview||""})</div>
+      <div>has_user: <b>${js.has_user}</b> (${js.user_preview||""})</div>
+      <div class="subline" style="margin-top:6px">${js.notes||""}</div>`;
+  }catch{ el.textContent="(debug fetch failed)"; }
+}
 </script>
 </body>
 </html>
