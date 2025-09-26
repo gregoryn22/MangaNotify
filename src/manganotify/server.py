@@ -25,6 +25,7 @@ BASE = os.getenv("MANGABAKA_BASE", "https://api.mangabaka.dev").rstrip("/")
 DATA_DIR = Path(os.getenv("DATA_DIR", "./data")).resolve()
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 WATCHLIST_PATH = DATA_DIR / "watchlist.json"
+NOTIFY_PATH = DATA_DIR / "notifications.json"
 
 # Pushover (optional)
 PUSHOVER_USER_KEY = os.getenv("PUSHOVER_USER_KEY") or os.getenv("PUSHOVER_USER")
@@ -56,6 +57,41 @@ def load_watchlist() -> List[Dict[str, Any]]:
 
 def save_watchlist(items: List[Dict[str, Any]]) -> None:
     WATCHLIST_PATH.write_text(json.dumps(items, indent=2), encoding="utf-8")
+
+def load_notifications() -> List[Dict[str, Any]]:
+    if NOTIFY_PATH.exists():
+        try:
+            return json.loads(NOTIFY_PATH.read_text("utf-8"))
+        except Exception:
+            return []
+    return []
+
+def save_notifications(items: List[Dict[str, Any]]) -> None:
+    # Keep compact; history can grow
+    NOTIFY_PATH.write_text(json.dumps(items, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+
+def next_notification_id(items: List[Dict[str, Any]]) -> int:
+    # simple monotonic int id
+    try:
+        return (max((int(x.get("id", 0)) for x in items), default=0) + 1)
+    except Exception:
+        return 1
+
+def add_notification(kind: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    payload can include: series_id, title, old_total, new_total, unread, message, push_ok, etc.
+    """
+    items = load_notifications()
+    rec = {
+        "id": next_notification_id(items),
+        "kind": kind,                       # "chapter_update" | "test" | ...
+        "detected_at": now_utc_iso(),
+        **payload
+    }
+    # newest first
+    items.insert(0, rec)
+    save_notifications(items)
+    return rec
 
 
 # ------------------------------------------------------------
@@ -239,10 +275,26 @@ async def poll_watchlist_loop(app: FastAPI) -> None:
                         msg = f"{item.get('title', '(unknown)')} now has {new_total} chapters."
                         if unread > 0:
                             msg += f" You’re {unread} behind."
-                        await app.state.push_func(
+
+                        push_res = await app.state.push_func(
                             client,
                             title=f"New chapter(s): {item.get('title', '(unknown)')}",
                             message=msg,
+                        )
+
+                        # record history
+                        add_notification(
+                            "chapter_update",
+                            {
+                                "series_id": item.get("id"),
+                                "title": item.get("title"),
+                                "old_total": old_total,
+                                "new_total": new_total,
+                                "unread": unread,
+                                "message": msg,
+                                "push_ok": bool(getattr(push_res, "get", lambda _: False)("ok") if isinstance(push_res,
+                                                                                                              dict) else False),
+                            },
                         )
 
                     # Update stored info
@@ -300,11 +352,24 @@ async def process_watchlist_once(app: FastAPI, *, now: Optional[datetime] = None
             if new_total is not None and old_total is not None and new_total > old_total:
                 res = await push(
                     client,
-                    title=f"New chapter(s): {item.get('title','(unknown)')}",
-                    message=f"{item.get('title','(unknown)')} has {new_total} chapters (was {old_total}).",
+                    title=f"New chapter(s): {item.get('title', '(unknown)')}",
+                    message=f"{item.get('title', '(unknown)')} has {new_total} chapters (was {old_total}).",
                 )
                 if isinstance(res, dict) and res.get("ok"):
                     notified += 1
+
+                add_notification(
+                    "chapter_update",
+                    {
+                        "series_id": item.get("id"),
+                        "title": item.get("title"),
+                        "old_total": old_total,
+                        "new_total": new_total,
+                        "unread": max((new_total or 0) - (to_int(item.get('last_read')) or 0), 0),
+                        "message": f"{item.get('title', '(unknown)')} has {new_total} chapters (was {old_total}).",
+                        "push_ok": bool(res.get("ok")) if isinstance(res, dict) else False,
+                    },
+                )
 
             # store freshest values
             item["title"] = series.get("title") or item.get("title")
@@ -575,6 +640,11 @@ async def mark_next(series_id: int):
             return {"ok": True, "last_read": it["last_read"]}
     raise HTTPException(404, "Not in watchlist")
 
+@app.post("/api/watchlist/refresh")
+async def trigger_refresh(request: Request):
+    # Run the one-shot processor and return counts
+    stats = await process_watchlist_once(request.app)
+    return stats
 
 # ------------------------------------------------------------
 # API: Health & Notifications
@@ -615,7 +685,34 @@ async def notify_test(request: Request):
     status = 200 if result.get("ok") else 502
 
     result["who"] = {"token": env_mask(PUSHOVER_APP_TOKEN), "user": env_mask(PUSHOVER_USER_KEY)}
+    # record test entry regardless of push success so users see it in history
+    add_notification(
+        "test",
+        {
+            "title": "MangaNotify test",
+            "message": "Manual test notification",
+            "push_ok": bool(result.get("ok")),
+        },
+    )
     return JSONResponse(status_code=status, content=result)
+
+@app.get("/api/notifications")
+def list_notifications(limit: int = 200):
+    items = load_notifications()
+    return {"data": items[: max(1, min(limit, 1000))]}
+
+@app.delete("/api/notifications/{nid}")
+def delete_notification(nid: int):
+    items = load_notifications()
+    before = len(items)
+    items = [x for x in items if int(x.get("id", -1)) != int(nid)]
+    save_notifications(items)
+    return {"removed": before - len(items)}
+
+@app.delete("/api/notifications")
+def clear_notifications():
+    save_notifications([])
+    return {"removed": "all"}
 
 
 app.include_router(router)

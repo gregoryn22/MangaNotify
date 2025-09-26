@@ -78,19 +78,15 @@
   .logo{ width:36px; height:36px; border-radius:12px; background: transparent; box-shadow: var(--shadow); display:grid; place-items:center; overflow: hidden; }
   .logo img{width: 100%; height: 100%; object-fit: contain; display: block;}
   .brand h1{margin:0;font-size:18px;letter-spacing:.4px}
-  .actions{display:flex;gap:8px;align-items:center}
+  .actions{display:flex;gap:8px;align-items:center; flex-wrap: wrap;}
 
   .pill{
     border:1px solid var(--border); background:var(--card); color:var(--text);
-    padding:10px 12px; border-radius:999px; display:flex; gap:10px; align-items:center;
+    padding:10px 12px; border-radius:999px; display:flex; gap:8px; align-items:center;
     box-shadow: var(--shadow);
   }
-  .input{
-    background:transparent;border:none;outline:none;color:inherit;min-width:220px;font-size:14px;
-  }
-  .input:focus-visible, .btn:focus-visible, select:focus-visible, .input-mini:focus-visible {
-    outline: var(--focus); outline-offset: 2px; border-radius: 10px;
-  }
+  .input{ background:transparent;border:none;outline:none;color:inherit;min-width:220px;font-size:14px; }
+  .input:focus-visible, .btn:focus-visible, select:focus-visible, .input-mini:focus-visible { outline: var(--focus); outline-offset: 2px; border-radius: 10px; }
   .btn{
     border:1px solid var(--border); background:var(--card); color:var(--text);
     padding:10px 14px;border-radius:12px;cursor:pointer;transition:transform .12s ease, filter .12s ease;
@@ -150,6 +146,38 @@
   .kvs{ font-size:13px; color:var(--muted) }
   .kvs code{ font-size:12px }
   .tags{ display:flex; flex-wrap:wrap; gap:6px }
+
+  /* ===== Notification history ===== */
+  .notif-toolbar { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 12px 12px }
+  .notif-count { border:1px solid var(--border); padding:6px 10px; border-radius:999px; font-size:12px; color:var(--muted) }
+  .notif-list { display:grid; gap:8px; padding:0 12px 14px }
+  .notif-item { display:flex; justify-content:space-between; gap:10px; padding:10px 12px; border:1px solid var(--border); border-radius:12px; background:var(--bg-soft) }
+  .notif-left { min-width:0 }
+  .notif-title { font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+  .notif-meta { font-size:12px; color:var(--muted) }
+  .notif-actions { display:flex; align-items:center; gap:8px }
+  code.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:12px }
+
+  /* ====== Layout reordering / Tabs ====== */
+  #sections { display:flex; flex-direction:column; gap:16px; }
+  #search-group      { order: 10; }
+  #watchlist-panel   { order: 20; }
+  #notifications     { order: 30; }
+
+  #tabbar { display:none; }
+  .tabbar { display:flex; gap:6px; border-bottom:1px solid var(--border); padding:6px; margin-top:8px; }
+  .tabbar button[aria-selected="true"] { border-bottom:2px solid var(--accent); }
+
+  body[data-layout="tabs"] #tabbar { display:block; }
+
+  /* ===== Settings Drawer ===== */
+  #settings-drawer { position: fixed; top:0; right:0; height:100%; width:min(420px, 92vw); border-left:1px solid var(--border); background:var(--card); box-shadow: -20px 0 60px rgba(0,0,0,.35); transform: translateX(105%); transition: transform .18s ease; z-index:60; display:flex; flex-direction:column }
+  #settings-drawer.open { transform: translateX(0); }
+  .s-head { display:flex; align-items:center; justify-content:space-between; padding:14px; border-bottom:1px solid var(--border) }
+  .s-body { padding:14px; overflow:auto; display:grid; gap:12px }
+  .s-section { border:1px solid var(--border); background:var(--bg-soft); border-radius:12px; padding:12px }
+  .s-title { margin:0 0 6px 0; font-size:14px }
+
 </style>
 </head>
 <body>
@@ -162,14 +190,22 @@
         <h1 aria-label="MangaNotify">MangaNotify</h1>
       </div>
       <div class="actions" role="search">
-        <div class="pill" style="gap:8px;">
+        <div class="pill" style="gap:6px;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M21 21l-3.6-3.6M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
           </svg>
-          <input id="q" class="input" placeholder="Search series…" autocomplete="off" aria-label="Search series" />
+          <input id="q" class="input" placeholder="Search series… (/ to focus)" autocomplete="off" aria-label="Search series" />
+          <button id="clear-q" class="btn ghost" title="Clear search" aria-label="Clear search" style="padding:6px 8px">✕</button>
           <button id="go" class="btn primary" aria-label="Run search">Search</button>
         </div>
+        <select id="layout" class="btn hide-sm" style="padding:8px 10px" title="Layout">
+          <option value="stack">Layout: Stacked</option>
+          <option value="search-first">Layout: Search → Watchlist → Notifications</option>
+          <option value="watch-first">Layout: Watchlist → Search → Notifications</option>
+          <option value="tabs">Layout: Tabs</option>
+        </select>
         <button id="theme" class="btn hide-sm" title="Toggle theme (t)">Theme</button>
+        <button id="open-settings" class="btn" title="Settings (,)" aria-controls="settings-drawer" aria-expanded="false">⚙️ Settings</button>
       </div>
     </div>
   </header>
@@ -182,127 +218,122 @@
       <div class="chip" id="last-refresh" title="Auto-refresh clock" aria-live="polite" hidden>—</div>
     </div>
 
-    <!-- Search filters -->
-    <section class="panel" style="margin-top:12px; padding:10px 12px">
-      <div class="row" style="gap:8px; align-items:center; flex-wrap:wrap">
-        <label class="subline" for="f-status">Status</label>
-        <select id="f-status" class="btn" style="padding:8px 10px">
-          <option value="">Any</option>
-          <option>releasing</option>
-          <option>finished</option>
-          <option>hiatus</option>
-          <option>cancelled</option>
-          <option>upcoming</option>
-        </select>
+    <!-- Tab bar (only shown in Tabs mode) -->
+    <div id="tabbar" class="tabbar" role="tablist" aria-label="Sections">
+      <button id="tab-watch"  role="tab" aria-selected="false" class="btn ghost">Watchlist</button>
+      <button id="tab-search" role="tab" aria-selected="true" class="btn ghost">Search</button>
+      <button id="tab-notif"  role="tab" aria-selected="false" class="btn ghost">Notifications</button>
+    </div>
 
-        <label class="subline" for="f-type">Type</label>
-        <select id="f-type" class="btn" style="padding:8px 10px">
-          <option value="">Any</option>
-          <option value="manga">manga</option>
-          <option value="manhwa">manhwa</option>
-          <option value="manhua">manhua</option>
-          <option value="novel">novel</option>
-          <option value="one_shot">one_shot</option>
-        </select>
+    <div id="sections">
+      <!-- SEARCH GROUP (filters + results) -->
+      <section id="search-group" aria-label="Search">
+        <section class="panel" style="margin-top:12px; padding:10px 12px">
+          <div class="row" style="gap:8px; align-items:center; flex-wrap:wrap">
+            <label class="subline" for="f-status">Status</label>
+            <select id="f-status" class="btn" style="padding:8px 10px">
+              <option value="">Any</option>
+              <option>releasing</option>
+              <option>finished</option>
+              <option>hiatus</option>
+              <option>cancelled</option>
+              <option>upcoming</option>
+            </select>
 
-        <label class="checkbox">
-          <input id="f-has-anime" type="checkbox"> Has anime
-        </label>
+            <label class="subline" for="f-type">Type</label>
+            <select id="f-type" class="btn" style="padding:8px 10px">
+              <option value="">Any</option>
+              <option value="manga">manga</option>
+              <option value="manhwa">manhwa</option>
+              <option value="manhua">manhua</option>
+              <option value="novel">novel</option>
+              <option value="one_shot">one_shot</option>
+            </select>
 
-        <label class="subline" for="f-cr">Content</label>
-        <select id="f-cr" class="btn" style="padding:8px 10px">
-          <option value="">Any</option>
-          <option value="safe">safe</option>
-          <option value="suggestive">suggestive</option>
-          <option value="erotica">erotica</option>
-          <option value="pornographic">pornographic</option>
-        </select>
+            <label class="checkbox">
+              <input id="f-has-anime" type="checkbox"> Has anime
+            </label>
 
-        <button id="f-clear" class="btn">Clear filters</button>
-      </div>
-    </section>
+            <label class="subline" for="f-cr">Content</label>
+            <select id="f-cr" class="btn" style="padding:8px 10px">
+              <option value="">Any</option>
+              <option value="safe">safe</option>
+              <option value="suggestive">suggestive</option>
+              <option value="erotica">erotica</option>
+              <option value="pornographic">pornographic</option>
+            </select>
 
-    <!-- Results -->
-    <section class="panel" id="results-panel" aria-label="Search results" hidden>
-      <div id="results" class="grid" role="list"></div>
-      <div class="pager" id="pager" hidden>
-        <button class="btn" id="prev" aria-label="Previous page">‹ Prev</button>
-        <div class="chip" id="page-indicator" aria-live="polite"></div>
-        <button class="btn" id="next" aria-label="Next page">Next ›</button>
-      </div>
-    </section>
+            <button id="f-clear" class="btn">Clear filters</button>
+          </div>
+        </section>
 
-    <!-- Notifications -->
-    <section class="panel" style="margin-top:16px; overflow:hidden">
-      <div class="row" style="justify-content:space-between; padding:12px 12px 0 12px">
-        <h2 style="margin:0">Notifications</h2>
-        <div class="row">
-          <button id="notify-test" class="btn">Send test</button>
-          <button id="debug-toggle" class="btn ghost" aria-expanded="false" aria-controls="notify-debug">Debug</button>
-        </div>
-      </div>
-      <div id="notify-debug" style="display:none; padding:10px 12px 14px; color:var(--muted); font-size:13px"></div>
-    </section>
+        <section class="panel" id="results-panel" aria-label="Search results" hidden>
+          <div id="results" class="grid" role="list"></div>
+          <div class="pager" id="pager" hidden>
+            <button class="btn" id="prev" aria-label="Previous page">‹ Prev</button>
+            <div class="chip" id="page-indicator" aria-live="polite"></div>
+            <button class="btn" id="next" aria-label="Next page">Next ›</button>
+          </div>
+        </section>
+      </section>
 
-    <!-- Watchlist -->
-    <section class="panel" style="margin-top:16px;" aria-label="Watchlist">
-      <div class="watch">
-        <div class="row" style="justify-content:space-between; align-items:center">
-          <h2 style="margin:0">Watchlist</h2>
-          <div class="row" style="gap:8px; align-items:center">
-            <div class="chip" id="watch-count">0 items</div>
-            <div class="chip hide-sm" id="watch-unread-count" title="Unread across visible items">Unread: 0</div>
+      <!-- Notifications -->
+      <section class="panel" id="notifications" style="margin-top:16px; overflow:hidden" aria-label="Notifications" role="tabpanel" aria-labelledby="tab-notif">
+        <div class="row" style="justify-content:space-between; padding:12px 12px 0 12px">
+          <h2 style="margin:0">Notifications</h2>
+          <div class="row">
+            <button id="notify-test" class="btn">Send test</button>
+            <button id="debug-toggle" class="btn ghost" aria-expanded="false" aria-controls="notify-debug">Debug</button>
           </div>
         </div>
-      </div>
+        <div id="notify-debug" style="display:none; padding:10px 12px 14px; color:var(--muted); font-size:13px"></div>
 
-      <div class="toolbar">
-        <div class="left-tools">
-          <button id="refresh" class="btn" title="Refresh watchlist from cache (r)">↻ Refresh</button>
-          <button id="refresh-now" class="btn" title="Reload watchlist from server">Reload (server)</button>
+        <!-- History UI -->
+        <div class="notif-toolbar">
+          <div class="row" style="gap:8px; align-items:center">
+            <div id="notif-count" class="notif-count">0 entries</div>
+          </div>
+          <div class="notif-actions">
+            <button id="notif-reload" class="btn" title="Reload notification history">Reload history</button>
+            <button id="notif-clear" class="btn ghost" title="Clear all notification history">Clear all</button>
+          </div>
+        </div>
+        <div id="notif-list" class="notif-list" aria-live="polite"></div>
+      </section>
 
-          <label class="subline" for="sort-by">Sort</label>
-          <select id="sort-by" class="btn" style="padding:8px 10px" aria-label="Sort by">
-            <option value="title">Title (A→Z)</option>
-            <option value="unread">Unread chapters (high→low)</option>
-            <option value="chapters">Total chapters (high→low)</option>
-            <option value="last_checked">Last checked (new→old)</option>
-            <option value="added_at">Added (new→old)</option>
-          </select>
-          <button id="sort-dir" class="btn" title="Toggle sort direction">⬆︎</button>
-
-          <label class="subline" for="auto-refresh">Auto-refresh</label>
-          <select id="auto-refresh" class="btn" style="padding:8px 10px" aria-label="Auto-refresh interval">
-            <option value="0">Off</option>
-            <option value="60">1 min</option>
-            <option value="300">5 min</option>
-            <option value="900">15 min</option>
-          </select>
+      <!-- Watchlist -->
+      <section class="panel" id="watchlist-panel" style="margin-top:16px;" aria-label="Watchlist" role="tabpanel" aria-labelledby="tab-watch">
+        <div class="watch">
+          <div class="row" style="justify-content:space-between; align-items:center">
+            <h2 style="margin:0">Watchlist</h2>
+            <div class="row" style="gap:8px; align-items:center">
+              <div class="chip" id="watch-count">0 items</div>
+              <div class="chip hide-sm" id="watch-unread-count" title="Unread across visible items">Unread: 0</div>
+            </div>
+          </div>
         </div>
 
-        <div class="right-tools">
-          <label class="checkbox" title="Only show series with unread chapters">
-            <input id="unread-only" type="checkbox"> Show unread only
-          </label>
-          <label class="checkbox" title="Toggle cover images in list (saves bandwidth)">
-            <input id="show-covers" type="checkbox" checked> Show covers
-          </label>
-          <button id="bulk-mark-latest" class="btn" title="Mark visible items as latest">Mark all latest (visible)</button>
-          <button id="export" class="btn" title="Export watchlist to JSON">Export</button>
-          <label class="btn" for="import-file" title="Import watchlist from JSON" style="cursor:pointer">Import</label>
-          <input id="import-file" type="file" accept="application/json" style="display:none" />
+        <!-- Slim toolbar: heavy controls moved into Settings -->
+        <div class="toolbar">
+          <div class="left-tools">
+            <button id="refresh" class="btn" title="Refresh watchlist from cache (r)">↻ Refresh</button>
+            <button id="refresh-now" class="btn" title="Ask server to refresh now">Refresh now (server)</button>
+          </div>
+          <div class="right-tools">
+            <button id="open-settings-2" class="btn" title="Open settings">⚙️ Settings</button>
+          </div>
         </div>
-      </div>
 
-      <div id="watchlist" class="watch-list"></div>
-    </section>
+        <div id="watchlist" class="watch-list"></div>
+      </section>
+    </div>
 
-    <footer>Built with ❤️ for reading. API: /api/search, /api/series/:id, /api/watchlist, /api/notify/test</footer>
+    <footer>Built with ❤️ for reading. API: /api/search, /api/series/:id, /api/watchlist, /api/watchlist/refresh, /api/notify/test, /api/notifications</footer>
   </main>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <!-- Modal -->
+  <!-- Details Modal -->
   <dialog id="modal">
     <div class="modal-head">
       <div class="row">
@@ -315,8 +346,86 @@
     </div>
   </dialog>
 
+  <!-- Settings Drawer (off‑canvas) -->
+  <aside id="settings-drawer" aria-label="Settings" aria-hidden="true">
+    <div class="s-head">
+      <strong>Settings</strong>
+      <button id="close-settings" class="btn">Close</button>
+    </div>
+    <div class="s-body">
+      <section class="s-section">
+        <h3 class="s-title">Watchlist</h3>
+        <div class="row" style="align-items:center; gap:10px">
+          <label class="subline" for="sort-by">Sort</label>
+          <select id="sort-by" class="btn" style="padding:8px 10px" aria-label="Sort by">
+            <option value="title">Title (A→Z)</option>
+            <option value="unread">Unread chapters (high→low)</option>
+            <option value="chapters">Total chapters (high→low)</option>
+            <option value="last_checked">Last checked (new→old)</option>
+            <option value="added_at">Added (new→old)</option>
+          </select>
+          <button id="sort-dir" class="btn" title="Toggle sort direction">⬆︎</button>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <label class="checkbox" title="Only show series with unread chapters">
+            <input id="unread-only" type="checkbox"> Show unread only
+          </label>
+          <label class="checkbox" title="Toggle cover images in list (saves bandwidth)">
+            <input id="show-covers" type="checkbox" checked> Show covers
+          </label>
+        </div>
+        <div class="row" style="margin-top:8px; align-items:center">
+          <label class="subline" for="auto-refresh">Auto-refresh</label>
+          <select id="auto-refresh" class="btn" style="padding:8px 10px" aria-label="Auto-refresh interval">
+            <option value="0">Off</option>
+            <option value="60">1 min</option>
+            <option value="300">5 min</option>
+            <option value="900">15 min</option>
+          </select>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <button id="bulk-mark-latest" class="btn" title="Mark visible items as latest">Mark all latest (visible)</button>
+          <button id="export" class="btn" title="Export watchlist to JSON">Export</button>
+          <label class="btn" for="import-file" title="Import watchlist from JSON" style="cursor:pointer">Import</label>
+          <input id="import-file" type="file" accept="application/json" style="display:none" />
+        </div>
+      </section>
+
+      <section class="s-section">
+        <h3 class="s-title">Display</h3>
+        <div class="row">
+          <button id="theme-alt" class="btn" title="Toggle theme">Toggle Theme</button>
+          <select id="layout-alt" class="btn" style="padding:8px 10px" title="Layout">
+            <option value="stack">Stacked</option>
+            <option value="search-first">Search → Watchlist → Notifications</option>
+            <option value="watch-first">Watchlist → Search → Notifications</option>
+            <option value="tabs">Tabs</option>
+          </select>
+        </div>
+      </section>
+
+<!--      <section class="s-section">-->
+<!--        <h3 class="s-title">About</h3>-->
+<!--        <div class="subline">MangaNotify · sleek UI with search‑as‑you‑type, tabs, and keyboard shortcuts.-->
+<!--          <br/> Shortcuts: <code>/</code> focus search · <code>t</code> theme · <code>r</code> refresh · <code>,</code> settings-->
+<!--        </div>-->
+<!--      </section>-->
+    </div>
+  </aside>
+
 <script>
+/* ===== Search tuning / cache ===== */
+const MIN_QUERY_LEN = 3;
+const TYPE_DEBOUNCE_MS = 500;
+const searchCache = new Map();
+
 /* ===== Helpers / State ===== */
+function getCoverUrl(c){
+  if(!c) return "";
+  if (typeof c === "string") return c;
+  if (typeof c === "object") return c.small || c.default || c.raw || "";
+  return "";
+}
 const $  = (s)=>document.querySelector(s);
 const $$ = (s)=>Array.from(document.querySelectorAll(s));
 const state = {
@@ -335,7 +444,8 @@ const state = {
     has_anime: localStorage.getItem("mn-f-has-anime") === "true",
     content_rating: localStorage.getItem("mn-f-cr") || ""
   },
-  aborter: null
+  aborter: null,
+  layout: localStorage.getItem("mn-layout") || "stack"
 };
 
 function toast(msg, ms=2200){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), ms); }
@@ -358,12 +468,14 @@ function timeAgo(iso){
 (function initTheme(){
   const saved = localStorage.getItem("mn-theme");
   if(saved){ document.documentElement.setAttribute("data-theme", saved); }
-  $("#theme").onclick = ()=>{
+  const toggle = ()=>{
     const cur = document.documentElement.getAttribute("data-theme");
     const next = cur === "light" ? "dark" : "light";
     document.documentElement.setAttribute("data-theme", next);
     localStorage.setItem("mn-theme", next);
   };
+  $("#theme").onclick = toggle;
+  $("#theme-alt").onclick = toggle;
 })();
 
 /* ===== Network status ===== */
@@ -407,14 +519,22 @@ const modal = $("#modal");
 $("#modal-close").onclick = ()=> modal.close();
 
 /* ===== Search & render ===== */
-const debouncedSearch = debounce(()=> runSearch(), 300);
+const debouncedSearch = debounce(() => {
+  const val = $("#q").value.trim();
+  if (val.length >= MIN_QUERY_LEN) {
+    if (state.layout === "tabs") selectTab("search");
+    state.q = val;
+    state.page = 1;                 // reset page for new query
+    syncUrl();
+    search();
+  } else if (val.length === 0) {
+    $("#results-panel").hidden = true;
+    $("#result-info").textContent = "";
+  }
+}, TYPE_DEBOUNCE_MS);
 
 function searchParams(){
-  const params = {
-    q: state.q,
-    page: state.page,
-    limit: state.limit
-  };
+  const params = { q: state.q, page: state.page, limit: state.limit };
   if(state.filters.status) params.status = state.filters.status;
   if(state.filters.type) params.type = state.filters.type;
   if(state.filters.content_rating) params.content_rating = state.filters.content_rating;
@@ -423,7 +543,7 @@ function searchParams(){
 }
 
 async function search(){
-  // Abort previous search if any
+  if(!state.q) { $("#results-panel").hidden = true; return; }
   if(state.aborter){ state.aborter.abort(); }
   state.aborter = new AbortController();
 
@@ -440,9 +560,18 @@ async function search(){
 
   try{
     const qs = buildQuery(searchParams());
+
+    // Serve from cache when possible
+    if (searchCache.has(qs)) {
+      renderResults(searchCache.get(qs));
+      setStatus("Cached");
+      return;
+    }
+
     const res = await fetch(`/api/search?${qs}`, { signal: state.aborter.signal });
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     const js = await res.json();
+    searchCache.set(qs, js);
     renderResults(js);
     setStatus("Done");
   }catch(e){
@@ -472,11 +601,8 @@ function renderResults(js){
     const el=document.createElement("div");
     el.className="card"; el.setAttribute("role","listitem");
     const title = it.title || it.romanized_title || it.native_title || "(no title)";
-    // cover can be url string or object (back-compat)
-    let cover = "";
-    if (typeof it.cover === "string") cover = it.cover;
-    else if (it.cover && (it.cover.small || it.cover.default || it.cover.raw)) cover = it.cover.small || it.cover.default || it.cover.raw;
-
+    const cover = getCoverUrl(it.cover);
+    const authors=(it.authors||[]).join(", ");
     const total = it.total_chapters ?? "—";
     const cr = (it.content_rating || "").toLowerCase();
     const status = it.status || "";
@@ -485,7 +611,7 @@ function renderResults(js){
       <div class="cover ${cover ? "" : "shimmer"}">${cover ? `<img src="${cover}" alt="${title} cover" loading="lazy" decoding="async">` : ""}</div>
       <div class="meta">
         <h3 class="title" title="${title}">${title}</h3>
-        <div class="subline">ID: <code>${it.id}</code> · Chapters: ${total}${status?` · ${status}`:""}${cr?` · ${cr}`:""}</div>
+        <div class="subline">ID: <code>${it.id}</code>${authors ? ` · ${authors}` : ""} · Chapters: ${total}${status?` · ${status}`:""}${cr?` · ${cr}`:""}</div>
         <div class="row">
           <button class="btn" data-add="${it.id}">Watch</button>
           <button class="btn" data-open="${it.id}">Open</button>
@@ -493,6 +619,7 @@ function renderResults(js){
           <button class="btn" data-copy="${it.id}" title="Copy ID">Copy ID</button>
         </div>
       </div>`;
+
     box.appendChild(el);
 
     const img = el.querySelector("img");
@@ -504,7 +631,7 @@ function renderResults(js){
     el.querySelector(`[data-add="${it.id}"]`).onclick = async ()=>{
       const r = await fetch("/api/watchlist", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ id: it.id, title, total_chapters: total || null, last_read: 0, cover })
+        body: JSON.stringify({ id: it.id, title, total_chapters: total, last_read: 0, cover })
       });
       if(r.ok){ toast("Added to watchlist"); loadWatchlist(); }
       else { toast("Failed to add", 2600); }
@@ -524,19 +651,19 @@ function renderResults(js){
   }
 }
 
-/* ===== Details modal (relationships + links from /api/series/{id}) ===== */
+/* ===== Details modal ===== */
 async function openDetails(id, title){
   $("#modal-title").textContent = title || `Series ${id}`;
   const body = $("#modal-body");
   body.innerHTML = `<div class="subline">Loading…</div>`;
   modal.showModal();
   try{
-    const res = await fetch(`/api/series/${id}`);
-    if(!res.ok) throw new Error(`HTTP ${res.status}`);
-    const js = await res.json();
-    const series = js.data || {};
-    const rel = (series.relationships) || {};
-    const links = Array.isArray(series.links) ? series.links : [];
+    const [relRes, linkRes] = await Promise.all([
+      fetch(`/api/series/${id}/related`),
+      fetch(`/api/series/${id}/links`)
+    ]);
+    const rel = relRes.ok ? (await relRes.json()).relationships || {} : {};
+    const links = linkRes.ok ? (await linkRes.json()).links || [] : [];
 
     const relHtml = Object.keys(rel).length
       ? Object.entries(rel).map(([kind, arr])=>{
@@ -553,8 +680,8 @@ async function openDetails(id, title){
       <div>${relHtml}</div>
       <div><strong>Links</strong>${linksHtml}</div>
     `;
-  }catch(e){
-    body.innerHTML = `<div class="subline">Failed to load details. ${e}</div>`;
+  }catch{
+    body.innerHTML = `<div class="subline">Failed to load details.</div>`;
   }
 }
 
@@ -621,7 +748,7 @@ async function loadWatchlist(){
             <span class="badge ${behind ? "warn":"ok"}" title="Unread chapters">
               ${behind ? "Unread" : "Up to date"}${total!==null ? `: ${unread}` : ""}
             </span>
-            ${(total!==null) ? `<span class="badge">Read: ${String(lastRead).replace(/\.0$/,"")}/${total}</span>` : ""}
+            ${total!==null ? `<span class="badge">Read: ${String(lastRead).replace(/\.0$/,"")}/${total}</span>` : ""}
             ${(it.authors && it.authors.length) ? `<span class="badge" title="Authors">${it.authors[0]}${it.authors.length>1?"…":""}</span>` : ""}
           </div>
         </div>
@@ -695,18 +822,6 @@ async function loadWatchlist(){
       };
     }
 
-    const btnLatest = row.querySelector(`[data-latest="${id}"]`);
-    if(btnLatest){
-      btnLatest.onclick = async ()=>{
-        const r = await fetch(`/api/watchlist/${id}/progress`, {
-          method:"PATCH",
-          headers:{ "Content-Type":"application/json" },
-          body: JSON.stringify({ mark_latest: true })
-        });
-        if(r.ok){ toast("Marked latest"); loadWatchlist(); } else { toast("Failed to mark", 2600); }
-      };
-    }
-
     $("#watchlist").appendChild(row);
   }
 
@@ -744,7 +859,7 @@ function sortWatchlist(list){
       case "chapters":     cmp = ((bTotal ?? -1) - (aTotal ?? -1)); break;
       case "last_checked": cmp = (bChecked - aChecked); break;
       case "added_at":     cmp = (bAdded - aAdded); break;
-      default:             cmp = 0;
+      default:              cmp = 0;
     }
     return dir === 1 ? cmp : -cmp;
   });
@@ -781,197 +896,286 @@ async function importWatchlist(file){
         if(r.ok) ok++; else fail++;
       }catch{ fail++; }
     }
-    toast(`Import finished · OK ${ok} · Failed ${fail}`, 4200);
+    toast(`Import finished · OK ${ok}${fail?` · Failed ${fail}`:""}`);
     loadWatchlist();
-  }catch(e){ toast(`Import failed: ${e}`, 4200); }
+  }catch(e){ toast(`Import failed: ${e}`, 4000); }
 }
 
-/* ===== Bulk mark latest (visible) ===== */
-async function bulkMarkLatest(){
+/* ===== Bulk mark latest ===== */
+async function bulkMarkLatestVisible(){
   const rows = $$("#watchlist .watch-item");
-  if(!rows.length){ toast("No items to mark"); return; }
   let ok=0, fail=0;
-  for(const row of rows){
-    const id = (row.querySelector(".subline code")||{}).textContent;
-    if(!id) continue;
+  await Promise.all(rows.map(async row=>{
+    const id = row.querySelector("[data-latest]")?.getAttribute("data-latest");
+    if(!id) return;
+    // read total from the text (already rendered)
+    const meta = row.querySelector(".subline")?.textContent || "";
+    const m = meta.match(/Chapters:\s+(\d+)/i);
+    const total = m ? +m[1] : null;
+    if(total===null) return;
     try{
       const r = await fetch(`/api/watchlist/${id}/progress`, {
         method:"PATCH",
         headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ mark_latest: true })
+        body: JSON.stringify({ last_read: total })
       });
       if(r.ok) ok++; else fail++;
     }catch{ fail++; }
-  }
-  toast(`Marked latest · OK ${ok} · Failed ${fail}`, 3800);
+  }));
+  toast(`Marked latest · OK ${ok}${fail?` · Failed ${fail}`:""}`);
   loadWatchlist();
 }
 
-/* ===== Auto-refresh clock ===== */
-function startAutoRefresh(){
-  clearInterval(state.autoTimer);
-  if(!state.autoRefresh){ $("#last-refresh").hidden = true; return; }
-  $("#last-refresh").hidden = false;
-  const tick = ()=>{
-    if(state.lastRefreshTs){
-      $("#last-refresh").textContent = `Refreshed ${timeAgo(state.lastRefreshTs)} (every ${state.autoRefresh/60|0 || 1}m)`;
-    }else{
-      $("#last-refresh").textContent = `Next refresh in ${state.autoRefresh/60|0 || 1}m`;
-    }
-  };
-  state.autoTimer = setInterval(async ()=>{
-    await loadWatchlist();
-    tick();
-  }, state.autoRefresh * 1000);
-  tick();
-}
-
-/* ===== Wiring ===== */
-function runSearch(){
-  state.q = $("#q").value.trim();
-  syncUrl();
-  if(state.q) search();
-}
-
-$("#go").onclick = runSearch;
-$("#q").addEventListener("keydown", e=>{ if(e.key==="Enter") runSearch(); });
-$("#q").addEventListener("input", debouncedSearch);
-
-$("#prev").onclick = ()=>{ if(state.pagination?.previous){ state.page = Math.max(1, (state.page-1)||1); search(); } };
-$("#next").onclick = ()=>{ if(state.pagination?.next){ state.page = state.page+1; search(); } };
-
-$("#notify-test").onclick = async ()=>{
-  const btn=$("#notify-test"); btn.disabled=true;
+/* ===== Notifications ===== */
+async function loadNotifications(){
   try{
-    const res = await fetch("/api/notify/test", { method:"POST" });
-    const text = await res.text(); let js={}; try{ js=JSON.parse(text);}catch{}
-    if(res.ok && js.ok){ toast("✅ Test notification sent!"); }
-    else{
-      const detail=(js.errors&&js.errors.join("; "))||js.message||text||`HTTP ${res.status}`;
-      toast(`❌ Notification failed: ${detail}`, 5000);
-      console.warn("notify/test response:", {status:res.status, body:text});
+    const r = await fetch("/api/notifications");
+    if(!r.ok) throw new Error(`HTTP ${r.status}`);
+    const js = await r.json();
+    renderNotifications(js.data || js.results || []);
+  }catch(e){
+    $("#notif-list").innerHTML = `<div class="subline" style="padding:10px 12px">Failed to load: ${e}</div>`;
+  }
+}
+
+function renderNotifications(items){
+  $("#notif-count").textContent = `${items.length} entr${items.length===1?"y":"ies"}`;
+  const box = $("#notif-list");
+  box.innerHTML = "";
+  if(!items.length){
+    box.innerHTML = `<div class="subline" style="padding:0 12px 12px">No notifications yet.</div>`;
+    return;
+  }
+  for(const n of items){
+    const el = document.createElement("div");
+    el.className = "notif-item";
+    const when = n.created_at || n.timestamp || n.time || "";
+    el.innerHTML = `
+      <div class="notif-left">
+        <div class="notif-title">${n.title || n.series || "Notification"}</div>
+        <div class="notif-meta">${when ? timeAgo(when) : ""} · <span class="mono">${n.id || ""}</span></div>
+        ${n.message ? `<div class="subline" style="margin-top:4px">${n.message}</div>` : ""}
+      </div>
+      <div class="notif-actions">
+        <button class="btn" data-copy="${n.id || ""}">Copy ID</button>
+      </div>
+    `;
+    const copy = el.querySelector("[data-copy]");
+    if(copy && (n.id||"").length){
+      copy.onclick = async ()=>{ try{ await navigator.clipboard.writeText(String(n.id)); toast("Copied"); }catch{ toast("Copy failed",2200);} };
     }
-  }catch(e){ toast("❌ Network error calling /api/notify/test", 4200); }
-  finally{ btn.disabled=false; }
-};
-$("#debug-toggle").onclick = ()=>{
-  const el=$("#notify-debug");
-  const showing = el.style.display !== "none";
-  el.style.display = showing ? "none" : "block";
-  $("#debug-toggle").setAttribute("aria-expanded", String(!showing));
-  if(!showing) refreshNotifyDebug();
-};
+    box.appendChild(el);
+  }
+}
+
+async function clearNotifications(){
+  try{
+    const r = await fetch("/api/notifications", { method:"DELETE" });
+    if(!r.ok) throw new Error(`HTTP ${r.status}`);
+    toast("Cleared");
+    loadNotifications();
+  }catch(e){ toast(`Failed: ${e}`, 3000); }
+}
+
+async function sendTestNotification(){
+  try{
+    const r = await fetch("/api/notify/test", { method:"POST" });
+    if(!r.ok) throw new Error(`HTTP ${r.status}`);
+    toast("Test sent");
+    loadNotifications();
+  }catch(e){ toast(`Failed: ${e}`, 3000); }
+}
+
+/* ===== Paging ===== */
+$("#prev").onclick = ()=>{ if(state.pagination?.previous){ state.page = Math.max(1, (state.pagination.page||1)-1); search(); } };
+$("#next").onclick = ()=>{ if(state.pagination?.next){ state.page = (state.pagination.page||1)+1; search(); } };
+
+/* ===== Filters & Controls ===== */
+function persistFilters(){
+  localStorage.setItem("mn-f-status", state.filters.status || "");
+  localStorage.setItem("mn-f-type", state.filters.type || "");
+  localStorage.setItem("mn-f-has-anime", String(!!state.filters.has_anime));
+  localStorage.setItem("mn-f-cr", state.filters.content_rating || "");
+}
+
+function wireFilters(){
+  $("#f-status").addEventListener("change", (e)=>{ state.filters.status = e.target.value || ""; persistFilters(); if(state.q) search(); });
+  $("#f-type").addEventListener("change", (e)=>{ state.filters.type = e.target.value || ""; persistFilters(); if(state.q) search(); });
+  $("#f-has-anime").addEventListener("change", (e)=>{ state.filters.has_anime = !!e.target.checked; persistFilters(); if(state.q) search(); });
+  $("#f-cr").addEventListener("change", (e)=>{ state.filters.content_rating = e.target.value || ""; persistFilters(); if(state.q) search(); });
+  $("#f-clear").onclick = ()=>{
+    state.filters = { status:"", type:"", has_anime:false, content_rating:"" };
+    $("#f-status").value=""; $("#f-type").value=""; $("#f-has-anime").checked=false; $("#f-cr").value="";
+    persistFilters(); if(state.q) search();
+  };
+}
+
+/* ===== Settings drawer ===== */
+const drawer = $("#settings-drawer");
+function openSettings(){ drawer.classList.add("open"); drawer.setAttribute("aria-hidden","false"); $("#open-settings").setAttribute("aria-expanded","true"); }
+function closeSettings(){ drawer.classList.remove("open"); drawer.setAttribute("aria-hidden","true"); $("#open-settings").setAttribute("aria-expanded","false"); }
+$("#open-settings").onclick = openSettings;
+$("#open-settings-2").onclick = openSettings;
+$("#close-settings").onclick = closeSettings;
+window.addEventListener("keydown",(e)=>{ if(e.key==="Escape") closeSettings(); });
+
+/* ===== Layout / Tabs ===== */
+function applyLayout(v){
+  state.layout = v;
+  localStorage.setItem("mn-layout", v);
+  document.body.setAttribute("data-layout", v);
+  // In tabs layout, default to Search tab
+  if(v==="tabs"){ selectTab("search"); }
+  // In non-tabs, show all sections
+  if(v!=="tabs"){
+    $("#search-group").hidden = false;
+    $("#watchlist-panel").hidden = false;
+    $("#notifications").hidden = false;
+  }
+}
+function selectTab(name){
+  // hide/show panels
+  const map = { watch: "#watchlist-panel", search:"#search-group", notif:"#notifications" };
+  for(const [key, sel] of Object.entries(map)){
+    const on = key===name || (name==="search" && key==="search");
+    document.querySelector(sel).hidden = !on;
+    $(`#tab-${key}`)?.setAttribute("aria-selected", on ? "true" : "false");
+  }
+}
+
+$("#layout").addEventListener("change", e=> applyLayout(e.target.value));
+$("#layout-alt").addEventListener("change", e=>{ $("#layout").value = e.target.value; applyLayout(e.target.value); });
+$("#tab-watch").onclick = ()=> selectTab("watch");
+$("#tab-search").onclick = ()=> selectTab("search");
+$("#tab-notif").onclick = ()=> selectTab("notif");
+
+/* ===== Sorting / toggles ===== */
+$("#sort-by").addEventListener("change", e=>{ state.sortBy = e.target.value; localStorage.setItem("mn-sort-by", state.sortBy); loadWatchlist(); });
+$("#sort-dir").addEventListener("click", ()=>{ state.sortDir = state.sortDir==="asc" ? "desc" : "asc"; $("#sort-dir").textContent = state.sortDir==="asc" ? "⬆︎" : "⬇︎"; localStorage.setItem("mn-sort-dir", state.sortDir); loadWatchlist(); });
+$("#unread-only").checked = state.unreadOnly;
+$("#unread-only").addEventListener("change", e=>{ state.unreadOnly = !!e.target.checked; localStorage.setItem("mn-unread-only", String(state.unreadOnly)); loadWatchlist(); });
+$("#show-covers").checked = state.showCovers;
+$("#show-covers").addEventListener("change", e=>{ state.showCovers = !!e.target.checked; localStorage.setItem("mn-show-covers", String(state.showCovers)); loadWatchlist(); });
+
+/* ===== Auto refresh ===== */
+function refreshTicker(){
+  const el = $("#last-refresh");
+  if(!state.lastRefreshTs){ el.hidden = true; return; }
+  el.hidden = false;
+  const s = Math.max(0, Math.floor((Date.now() - state.lastRefreshTs)/1000));
+  el.textContent = `Refreshed ${s}s ago`;
+  // update every second while visible
+}
+setInterval(refreshTicker, 1000);
+
+function setAutoRefresh(sec){
+  localStorage.setItem("mn-auto-refresh", String(sec));
+  state.autoRefresh = +sec;
+  if(state.autoTimer){ clearInterval(state.autoTimer); state.autoTimer = null; }
+  if(state.autoRefresh > 0){
+    state.autoTimer = setInterval(loadWatchlist, state.autoRefresh * 1000);
+  }
+}
+$("#auto-refresh").value = String(state.autoRefresh);
+$("#auto-refresh").addEventListener("change", e=> setAutoRefresh(+e.target.value));
+
+/* ===== Watchlist actions ===== */
 $("#refresh").onclick = ()=> loadWatchlist();
 $("#refresh-now").onclick = async ()=>{
   try{
-    // No explicit server "refresh" route; poller runs in background.
-    // Just force a reload from server storage.
-    await loadWatchlist();
-    toast("Reloaded watchlist from server");
-  }catch{ toast("Reload failed", 2600); }
+    const r = await fetch("/api/watchlist/refresh", { method:"POST" });
+    if(!r.ok) throw new Error(`HTTP ${r.status}`);
+    toast("Server refresh requested");
+  }catch(e){ toast(`Failed: ${e}`, 3000); }
 };
-
-$("#sort-by")?.addEventListener("change", e => {
-  state.sortBy = e.target.value;
-  state.sortDir = (state.sortBy === "title") ? "asc" : "desc";
-  localStorage.setItem("mn-sort-by", state.sortBy);
-  localStorage.setItem("mn-sort-dir", state.sortDir);
-  $("#sort-dir").textContent = state.sortDir === "asc" ? "⬆︎" : "⬇︎";
-  loadWatchlist();
-});
-$("#sort-dir")?.addEventListener("click", () => {
-  state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
-  localStorage.setItem("mn-sort-dir", state.sortDir);
-  $("#sort-dir").textContent = state.sortDir === "asc" ? "⬆︎" : "⬇︎";
-  loadWatchlist();
-});
-
-$("#unread-only")?.addEventListener("change", e => {
-  state.unreadOnly = !!e.target.checked;
-  localStorage.setItem("mn-unread-only", String(state.unreadOnly));
-  loadWatchlist();
-});
-
-$("#show-covers")?.addEventListener("change", e=>{
-  state.showCovers = !!e.target.checked;
-  localStorage.setItem("mn-show-covers", String(state.showCovers));
-  loadWatchlist();
-});
-
-$("#auto-refresh")?.addEventListener("change", e=>{
-  state.autoRefresh = +e.target.value;
-  localStorage.setItem("mn-auto-refresh", String(state.autoRefresh));
-  startAutoRefresh();
-});
-
-/* Filters wiring */
-$("#f-status").addEventListener("change", e=>{ state.filters.status = e.target.value; localStorage.setItem("mn-f-status", state.filters.status); syncUrl(); if(state.q) search(); });
-$("#f-type").addEventListener("change", e=>{ state.filters.type = e.target.value; localStorage.setItem("mn-f-type", state.filters.type); syncUrl(); if(state.q) search(); });
-$("#f-has-anime").addEventListener("change", e=>{ state.filters.has_anime = !!e.target.checked; localStorage.setItem("mn-f-has-anime", String(state.filters.has_anime)); syncUrl(); if(state.q) search(); });
-$("#f-cr").addEventListener("change", e=>{ state.filters.content_rating = e.target.value; localStorage.setItem("mn-f-cr", state.filters.content_rating); syncUrl(); if(state.q) search(); });
-$("#f-clear").onclick = ()=>{
-  state.filters = {status:"", type:"", has_anime:false, content_rating:""};
-  $("#f-status").value=""; $("#f-type").value=""; $("#f-has-anime").checked=false; $("#f-cr").value="";
-  localStorage.removeItem("mn-f-status"); localStorage.removeItem("mn-f-type"); localStorage.removeItem("mn-f-has-anime"); localStorage.removeItem("mn-f-cr");
-  syncUrl(); if(state.q) search();
-};
-
-$("#bulk-mark-latest").onclick = bulkMarkLatest;
+$("#bulk-mark-latest").onclick = bulkMarkLatestVisible;
 $("#export").onclick = exportWatchlist;
-$("#import-file").addEventListener("change", e=>{
-  const f = e.target.files?.[0]; if(f) importWatchlist(f);
-  e.target.value = "";
+$("#import-file").addEventListener("change", e=>{ const f = e.target.files?.[0]; if(f) importWatchlist(f); });
+
+/* ===== Search box wiring ===== */
+$("#q").addEventListener("input", debouncedSearch);
+$("#go").onclick = ()=>{ const v=$("#q").value.trim(); if(v.length>=MIN_QUERY_LEN){ state.q=v; state.page=1; syncUrl(); search(); } };
+$("#clear-q").onclick = ()=>{ $("#q").value=""; state.q=""; $("#results-panel").hidden=true; $("#result-info").textContent=""; syncUrl(); };
+
+/* ===== Row-level Mark latest wiring (delegated) ===== */
+$("#watchlist").addEventListener("click", async (e)=>{
+  const b = e.target.closest("button[data-latest]");
+  if(!b) return;
+  const id = b.getAttribute("data-latest");
+  // find total in that row
+  const row = b.closest(".watch-item");
+  const meta = row.querySelector(".subline")?.textContent || "";
+  const m = meta.match(/Chapters:\s+(\d+)/i);
+  const total = m ? +m[1] : null;
+  if(total===null){ toast("No total known"); return; }
+  try{
+    const r = await fetch(`/api/watchlist/${id}/progress`, {
+      method:"PATCH",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ last_read: total })
+    });
+    if(r.ok){ toast("Marked latest"); loadWatchlist(); } else { toast("Failed", 2500); }
+  }catch{ toast("Failed", 2500); }
 });
 
-/* Keyboard shortcuts — safe around inputs */
-function isEditable(el) {
-  return !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
-}
-document.addEventListener("keydown", (e) => {
-  if (isEditable(e.target) || e.metaKey || e.ctrlKey || e.altKey) return;
-  if (e.key === "/") { e.preventDefault(); $("#q")?.focus(); return; }
-  if (e.key.toLowerCase() === "t") { e.preventDefault(); $("#theme")?.click(); return; }
-  if (e.key.toLowerCase() === "r") { e.preventDefault(); $("#refresh")?.click(); return; }
-});
+/* ===== Notifications controls ===== */
+$("#notif-reload").onclick = loadNotifications;
+$("#notif-clear").onclick = clearNotifications;
+$("#notify-test").onclick = sendTestNotification;
+$("#debug-toggle").onclick = ()=>{
+  const p = $("#notify-debug");
+  const open = p.style.display !== "none";
+  p.style.display = open ? "none" : "block";
+  $("#debug-toggle").setAttribute("aria-expanded", (!open).toString());
+  if(!open){
+    p.textContent = "Fetching /api/notifications …";
+    fetch("/api/notifications").then(r=>r.json()).then(js=>{
+      p.textContent = JSON.stringify(js,null,2);
+    }).catch(e=>{
+      p.textContent = `Failed: ${e}`;
+    });
+  }
+};
 
-/* apply saved UI on load */
-window.addEventListener("DOMContentLoaded", () => {
-  restoreFromUrl();
-  updateNet();
-  const sb = $("#sort-by");
-  const sd = $("#sort-dir");
-  const ur = $("#unread-only");
-  const sc = $("#show-covers");
-  const ar = $("#auto-refresh");
-  const fs = $("#f-status"), ft = $("#f-type"), fha = $("#f-has-anime"), fcr = $("#f-cr");
-  if (sb) sb.value = state.sortBy;
-  if (sd) sd.textContent = state.sortDir === "asc" ? "⬆︎" : "⬇︎";
-  if (ur) ur.checked = !!state.unreadOnly;
-  if (sc) sc.checked = !!state.showCovers;
-  if (ar) ar.value = String(state.autoRefresh || 0);
-  if (fs) fs.value = state.filters.status || "";
-  if (ft) ft.value = state.filters.type || "";
-  if (fha) fha.checked = !!state.filters.has_anime;
-  if (fcr) fcr.value = state.filters.content_rating || "";
-});
+// /* ===== Keyboard shortcuts ===== */
+// window.addEventListener("keydown", (e)=>{
+//   if (e.key === "/" && document.activeElement !== $("#q")) {
+//     e.preventDefault(); $("#q").focus(); return;
+//   }
+//   if (e.key.toLowerCase() === "t" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+//     e.preventDefault(); $("#theme").click(); return;
+//   }
+//   if (e.key.toLowerCase() === "r" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+//     e.preventDefault(); $("#refresh").click(); return;
+//   }
+//   if (e.key === ",") {
+//     e.preventDefault(); openSettings(); return;
+//   }
+// });
 
 /* ===== Init ===== */
-setStatus("Ready");
-loadWatchlist();
-startAutoRefresh();
+(async function init(){
+  updateNet();
+  restoreFromUrl();
+  wireFilters();
+  applyLayout(state.layout);
+  // reflect saved sort dir arrow
+  $("#sort-dir").textContent = state.sortDir==="asc" ? "⬆︎" : "⬇︎";
+  // reflect saved selects
+  $("#sort-by").value = state.sortBy;
+  $("#layout").value = state.layout;
+  $("#layout-alt").value = state.layout;
 
-async function refreshNotifyDebug(){
-  const el=$("#notify-debug");
-  try{
-    const res=await fetch("/api/notify/debug");
-    if(!res.ok){ el.textContent="(debug endpoint not reachable)"; return; }
-    const js=await res.json();
-    el.innerHTML = `
-      <div>has_token: <b>${js.has_token}</b> (${js.token_preview||""})</div>
-      <div>has_user: <b>${js.has_user}</b> (${js.user_preview||""})</div>
-      <div class="subline" style="margin-top:6px">${js.notes||""}</div>`;
-  }catch{ el.textContent="(debug fetch failed)"; }
-}
+  // initial data
+  await loadWatchlist();
+  await loadNotifications();
+
+  // if there is a query in URL, run a search immediately
+  const qinit = $("#q").value.trim();
+  if(qinit.length >= MIN_QUERY_LEN){
+    state.q = qinit; state.page = 1; search();
+  }
+})();
 </script>
 </body>
 </html>
