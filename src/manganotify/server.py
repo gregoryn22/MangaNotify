@@ -15,6 +15,12 @@ from fastapi import APIRouter, FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+import mimetypes
+mimetypes.add_type("application/javascript", ".js")
+mimetypes.add_type("text/css", ".css")
+
+
+
 # ------------------------------------------------------------
 # Env & Config
 # ------------------------------------------------------------
@@ -415,6 +421,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="MangaNotify", version="0.3", lifespan=lifespan)
+
+from starlette.middleware.gzip import GZipMiddleware
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # Static SPA
 app.mount("/static", StaticFiles(directory=str(ASSETS_DIR / "static")), name="static")
