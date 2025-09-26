@@ -330,11 +330,12 @@ function sortWatchlist(list){
 
 /* ===== Tabs/layout helpers ===== */
 export function selectTab(name){
+  localStorage.setItem("mn-last-tab", name);
   const map = { watch: "#watchlist-panel", search:"#search-group", notif:"#notifications" };
   for(const [key, sel] of Object.entries(map)){
-    const on = key===name || (name==="search" && key==="search");
+    const on = key===name;
     document.querySelector(sel).hidden = !on;
-    document.getElementById(`tab-${key}`)?.setAttribute("aria-selected", on ? "true" : "false");
+    $(`#tab-${key}`)?.setAttribute("aria-selected", on ? "true" : "false");
   }
 }
 
@@ -342,9 +343,15 @@ export function applyLayout(v){
   state.layout = v;
   localStorage.setItem("mn-layout", v);
   document.body.setAttribute("data-layout", v);
-  if(v==="tabs"){ selectTab("search"); }
+  // In tabs layout, default to Watchlist tab
+  if(v==="tabs"){
+  const last = localStorage.getItem("mn-last-tab") || "watch";
+  selectTab(last);
+    }
   if(v!=="tabs"){
-    $("#search-group").hidden=false; $("#watchlist-panel").hidden=false; $("#notifications").hidden=false;
+    $("#search-group").hidden = false;
+    $("#watchlist-panel").hidden = false;
+    $("#notifications").hidden = false;
   }
 }
 
