@@ -1,3 +1,4 @@
+// ui.js
 import { state, MIN_QUERY_LEN, TYPE_DEBOUNCE_MS, searchCache, dtFormatter } from "./state.js";
 import api from "./api.js";
 
@@ -5,23 +6,25 @@ import api from "./api.js";
 export const $  = (s)=>document.querySelector(s);
 export const $$ = (s)=>Array.from(document.querySelectorAll(s));
 export function debounce(fn, ms=350){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
-export function buildQuery(params){ return Object.entries(params).filter(([,v])=>v!=="" && v!==undefined && v!==null).map(([k,v])=>`${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join("&"); }
+export function buildQuery(params){
+  return Object.entries(params)
+    .filter(([,v])=>v!=="" && v!==undefined && v!==null)
+    .map(([k,v])=>`${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join("&");
+}
 
 export function getCoverUrl(c){ if(!c) return ""; if(typeof c==="string") return c; if(typeof c==="object") return c.small||c.default||c.raw||""; return ""; }
 export function toast(msg, ms=2200){ const t=$("#toast"); if(!t) return; t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), ms); }
-export function setStatus(text){
-  const el = document.getElementById("status");
-  if (el) el.textContent = text || "—";
-}
+export function setStatus(text){ const el=document.getElementById("status"); if(el) el.textContent=text||"—"; }
 export function parseProgress(v){ const n=parseFloat(String(v??"").replace(",",".")); return Number.isFinite(n)?Math.max(0,n):0; }
 export function unreadCount(total,lastRead){ const t=Number(total)||0; const r=parseProgress(lastRead); return Math.max(0,t-Math.floor(r)); }
 export function formatLocal(iso){ try{ return dtFormatter.format(new Date(iso)); } catch { return iso||""; } }
 export function timeAgo(iso){
-  try{ const then=new Date(iso).getTime(); if(!Number.isFinite(then)) return "";
-       const s=Math.max(0,(Date.now()-then)/1000);
-       const units=[["yr",31536000],["mo",2592000],["d",86400],["h",3600],["m",60],["s",1]];
-       for(const [l,sec] of units){ const v=Math.floor(s/sec); if(v>=1) return `${v}${l} ago`; }
-       return "just now";
+  try{
+    const then=new Date(iso).getTime(); if(!Number.isFinite(then)) return "";
+    const s=Math.max(0,(Date.now()-then)/1000);
+    const units=[["yr",31536000],["mo",2592000],["d",86400],["h",3600],["m",60],["s",1]];
+    for(const [l,sec] of units){ const v=Math.floor(s/sec); if(v>=1) return `${v}${l} ago`; }
+    return "just now";
   }catch{ return ""; }
 }
 
@@ -49,7 +52,7 @@ export function restoreFromUrl(){
 
 /* ===== Modal ===== */
 const modal = $("#modal");
-$("#modal-close")?.addEventListener("click", ()=> modal?.close());
+$("#modal-close")?.addEventListener("click", ()=> modal?.close?.());
 
 /* ===== Search ===== */
 const debouncedSearch = debounce(() => {
@@ -173,13 +176,12 @@ async function openDetails(id, title){
   $("#modal-title").textContent = title || `Series ${id}`;
   const body = $("#modal-body");
   body.innerHTML = `<div class="subline">Loading…</div>`;
-  modal.showModal();
+  modal.showModal?.();
   try{
-    // Your server exposes /api/series/{id}
     const js = await api.series(id, true);
     const s  = js.minimal || {};
     const merged = js.merged_with ? `<span class="badge">merged → ${js.merged_with}</span>` : "";
-    const linksHtml = []; // populate later if you add /links
+    const linksHtml = []; // add when you expose /links
 
     body.innerHTML = `
       <div class="kvs">
@@ -302,6 +304,20 @@ export async function loadWatchlist(){
   state.lastRefreshTs = Date.now();
 }
 
+/* ===== Delegated: Mark latest ===== */
+document.getElementById("watchlist")?.addEventListener("click", async (e) => {
+  const btn = e.target.closest("button[data-latest]");
+  if (!btn) return;
+  const id = btn.getAttribute("data-latest");
+  try{
+    await api.setProgress(id, { mark_latest: true }); // <— server handles “latest”
+    toast("Marked latest");
+    loadWatchlist();
+  }catch{
+    toast("Failed", 2500);
+  }
+});
+
 function sortWatchlist(list){
   const by = state.sortBy;
   const dir = state.sortDir === "desc" ? -1 : 1;
@@ -343,17 +359,34 @@ export function applyLayout(v){
   state.layout = v;
   localStorage.setItem("mn-layout", v);
   document.body.setAttribute("data-layout", v);
-  // In tabs layout, default to Watchlist tab
   if(v==="tabs"){
-  const last = localStorage.getItem("mn-last-tab") || "watch";
-  selectTab(last);
-    }
-  if(v!=="tabs"){
+    const last = localStorage.getItem("mn-last-tab") || "watch"; // default to Watch
+    selectTab(last);
+  }else{
     $("#search-group").hidden = false;
     $("#watchlist-panel").hidden = false;
     $("#notifications").hidden = false;
   }
 }
+
+/* ===== Settings Drawer wiring (and export) ===== */
+const drawer = document.getElementById("settings-drawer");
+export function openSettings(){
+  drawer?.classList.add("open");
+  drawer?.setAttribute("aria-hidden","false");
+  document.getElementById("open-settings")?.setAttribute("aria-expanded","true");
+  document.body.classList.add("drawer-open"); // shows scrim
+}
+export function closeSettings(){
+  drawer?.classList.remove("open");
+  drawer?.setAttribute("aria-hidden","true");
+  document.getElementById("open-settings")?.setAttribute("aria-expanded","false");
+  document.body.classList.remove("drawer-open"); // hides scrim
+}
+document.getElementById("open-settings")?.addEventListener("click", openSettings);
+document.getElementById("open-settings-2")?.addEventListener("click", openSettings);
+document.getElementById("close-settings")?.addEventListener("click", closeSettings);
+window.addEventListener("keydown",(e)=>{ if(e.key==="Escape") closeSettings(); });
 
 /* ===== small public inits used elsewhere ===== */
 export function wireSearchBox(){
@@ -367,17 +400,9 @@ export function wireSearchBox(){
 
   $("#prev")?.addEventListener("click", ()=>{ if(state.pagination?.previous){ state.page=Math.max(1,(state.pagination.page||1)-1); search(); } });
   $("#next")?.addEventListener("click", ()=>{ if(state.pagination?.next){ state.page=(state.pagination.page||1)+1; search(); } });
-}
 
-function openSettings(){
-  drawer.classList.add("open");
-  drawer.setAttribute("aria-hidden","false");
-  $("#open-settings").setAttribute("aria-expanded","true");
-  document.body.classList.add("drawer-open");   // NEW: show scrim
-}
-function closeSettings(){
-  drawer.classList.remove("open");
-  drawer.setAttribute("aria-hidden","true");
-  $("#open-settings").setAttribute("aria-expanded","false");
-  document.body.classList.remove("drawer-open"); // NEW: hide scrim
+  // Tab buttons (only visible in tabs layout)
+  document.getElementById("tab-watch")?.addEventListener("click", ()=>selectTab("watch"));
+  document.getElementById("tab-search")?.addEventListener("click", ()=>selectTab("search"));
+  document.getElementById("tab-notif")?.addEventListener("click", ()=>selectTab("notif"));
 }
