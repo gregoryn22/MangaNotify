@@ -33,6 +33,7 @@ data/*
 !data/.gitkeep
 
 # --- Logs ---
-logs/
+logs/K
 *.log
 /src/manganotify/data/watchlist.json
+/src/manganotify/data/notifications.json
