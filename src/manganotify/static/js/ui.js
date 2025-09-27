@@ -1,4 +1,3 @@
-// ui.js
 import { state, MIN_QUERY_LEN, TYPE_DEBOUNCE_MS, searchCache, dtFormatter } from "./state.js";
 import api from "./api.js";
 
@@ -144,12 +143,6 @@ function renderResults(js){
       </div>`;
     box.appendChild(el);
 
-    const img = el.querySelector("img");
-    if(img){
-      img.addEventListener("load", ()=> el.querySelector(".cover").classList.remove("shimmer"));
-      img.addEventListener("error", ()=> el.querySelector(".cover").classList.add("shimmer"));
-    }
-
     el.querySelector(`[data-add="${it.id}"]`).onclick = async ()=>{
       try{
         await api.addWatch({ id: it.id, title, total_chapters: total, last_read: 0, cover });
@@ -181,7 +174,7 @@ async function openDetails(id, title){
     const js = await api.series(id, true);
     const s  = js.minimal || {};
     const merged = js.merged_with ? `<span class="badge">merged → ${js.merged_with}</span>` : "";
-    const linksHtml = []; // add when you expose /links
+    const linksHtml = []; // populate when you add /links
 
     body.innerHTML = `
       <div class="kvs">
@@ -241,9 +234,14 @@ export async function loadWatchlist(){
     const row = document.createElement("div");
     row.className = "watch-item" + (behind ? " unread" : "");
     row.innerHTML = `
-      <div style="min-width:0; display:flex; gap:10px; align-items:flex-start">
-        ${behind ? `<span class="unread-dot" title="Unread chapters"></span>` : ``}
-        ${state.showCovers && it.cover ? `<img src="${it.cover}" alt="" width="40" height="60" loading="lazy" decoding="async" style="border-radius:6px; border:1px solid var(--border); object-fit:cover" />` : ""}
+      <div class="left3">
+        <span class="dot-spacer ${behind ? "unread" : ""}" aria-hidden="true"></span>
+        ${
+          state.showCovers && it.cover
+            ? `<img src="${it.cover}" alt="" width="40" height="60" loading="lazy" decoding="async"
+                   style="border-radius:6px; border:1px solid var(--border); object-fit:cover" />`
+            : `<div class="cover-ph" aria-hidden="true"></div>`
+        }
         <div style="min-width:0">
           <div style="font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap" title="${it.title || ""}">
             ${it.title || "(no title)"} ${mergeTxt}
@@ -304,13 +302,13 @@ export async function loadWatchlist(){
   state.lastRefreshTs = Date.now();
 }
 
-/* ===== Delegated: Mark latest ===== */
+/* ===== Delegated: Mark latest (works even after re-render) ===== */
 document.getElementById("watchlist")?.addEventListener("click", async (e) => {
   const btn = e.target.closest("button[data-latest]");
   if (!btn) return;
   const id = btn.getAttribute("data-latest");
   try{
-    await api.setProgress(id, { mark_latest: true }); // <— server handles “latest”
+    await api.setProgress(id, { mark_latest: true });
     toast("Marked latest");
     loadWatchlist();
   }catch{
