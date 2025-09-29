@@ -2,7 +2,6 @@ from fastapi import APIRouter, Request, Depends
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from ..services.notifications import load_notifications, save_notifications, add_notification, pushover, discord_notify
-from ..core.config import settings
 from ..auth import require_auth
 
 router = APIRouter()
@@ -11,8 +10,11 @@ router = APIRouter()
 def health(): return {"ok": True}
 
 @router.get("/api/notify/debug")
-def notify_debug(current_user: dict = Depends(require_auth)):
+def notify_debug(request: Request, current_user: dict = Depends(require_auth)):
     """Debug endpoint - requires authentication to prevent information disclosure."""
+    # Get settings from app state
+    settings = request.app.state.settings
+    
     def mask(s: str | None, keep=4):
         if not s: return ""
         return (s[:keep] + "…") if len(s) > keep else "…"
@@ -25,6 +27,9 @@ def notify_debug(current_user: dict = Depends(require_auth)):
 
 @router.post("/api/notify/test")
 async def notify_test(request: Request, current_user: dict = Depends(require_auth)):
+    # Get settings from app state
+    settings = request.app.state.settings
+    
     if not (settings.PUSHOVER_APP_TOKEN and settings.PUSHOVER_USER_KEY):
         return JSONResponse(status_code=500, content={"ok": False, "message": "Missing Pushover env vars"})
     res = await pushover(request.app.state.client, "MangaNotify", "✅ test")
@@ -53,14 +58,20 @@ class DiscordSettings(BaseModel):
     enabled: bool = False
 
 @router.get("/api/discord/settings")
-async def get_discord_settings(current_user: dict = Depends(require_auth)):
+async def get_discord_settings(request: Request, current_user: dict = Depends(require_auth)):
+    # Get settings from app state
+    settings = request.app.state.settings
+    
     return {
         "webhook_url": settings.DISCORD_WEBHOOK_URL or "",
         "enabled": bool(settings.DISCORD_ENABLED),
     }
 
 @router.post("/api/discord/settings")
-async def set_discord_settings(body: DiscordSettings, current_user: dict = Depends(require_auth)):
+async def set_discord_settings(body: DiscordSettings, request: Request, current_user: dict = Depends(require_auth)):
+    # Get settings from app state
+    settings = request.app.state.settings
+    
     # Save to settings (and persist if needed)
     settings.DISCORD_WEBHOOK_URL = body.webhook_url
     settings.DISCORD_ENABLED = body.enabled

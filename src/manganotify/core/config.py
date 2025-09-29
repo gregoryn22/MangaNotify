@@ -10,6 +10,60 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 PKG_ROOT = Path(__file__).resolve().parents[1]      # .../src/manganotify
 PKG_DATA = (PKG_ROOT / "data").resolve()
 
+def create_settings():
+    """Create a new Settings instance (useful for testing)."""
+    # Create a new Settings instance that only uses environment variables
+    # Don't load from .env file to avoid conflicts with test environment variables
+    class TestSettings(BaseSettings):
+        # Copy all fields from Settings class
+        MANGABAKA_BASE: str = Field(default="https://api.mangabaka.dev", pattern=r"^https?://[a-zA-Z0-9.-]+")
+        DATA_DIR: Path = Field(default=PKG_DATA)
+        PUSHOVER_APP_TOKEN: Optional[str] = Field(default=None, description="Pushover app token")
+        PUSHOVER_USER_KEY: Optional[str] = Field(default=None, description="Pushover user key")
+        DISCORD_WEBHOOK_URL: Optional[str] = Field(default=None, description="Discord webhook URL")
+        DISCORD_ENABLED: bool = Field(default=False, description="Enable Discord notifications")
+        POLL_INTERVAL_SEC: int = Field(default=600, ge=0, description="Polling interval in seconds")
+        CORS_ALLOW_ORIGINS: str = Field(default="*", description="CORS allowed origins")
+        LOG_LEVEL: str = Field(default="INFO", description="Logging level")
+        LOG_FORMAT: str = Field(default="plain", description="Logging format")
+        AUTH_ENABLED: bool = Field(default=False, description="Enable authentication")
+        AUTH_SECRET_KEY: Optional[str] = Field(default=None, description="JWT secret key")
+        AUTH_USERNAME: str = Field(default="admin", description="Admin username")
+        AUTH_PASSWORD: Optional[str] = Field(default=None, description="Admin password")
+        AUTH_TOKEN_EXPIRE_HOURS: int = Field(default=24, ge=1, le=8760, description="Token expiration in hours")
+        PORT: int = Field(default=8999, ge=1, le=65535, description="Port number")
+        TZ: Optional[str] = Field(default=None, description="Timezone")
+        PYTHONDONTWRITEBYTECODE: Optional[str] = Field(default=None, description="Python bytecode setting")
+        
+        model_config = SettingsConfigDict(
+            env_file=None, 
+            env_file_encoding='utf-8', 
+            case_sensitive=False, 
+            extra="ignore",
+            env_ignore_empty=True
+        )
+        
+        @property
+        def BASE(self) -> str:
+            return self.MANGABAKA_BASE.rstrip("/")
+        
+        @property
+        def cors_allow_origins_list(self) -> list[str]:
+            if self.CORS_ALLOW_ORIGINS == "*":
+                return ["*"]
+            return [origin.strip() for origin in self.CORS_ALLOW_ORIGINS.split(",")]
+        
+        def get_decrypted_pushover_app_token(self) -> str:
+            return self.PUSHOVER_APP_TOKEN or ""
+        
+        def get_decrypted_pushover_user_key(self) -> str:
+            return self.PUSHOVER_USER_KEY or ""
+        
+        def get_decrypted_discord_webhook_url(self) -> str:
+            return self.DISCORD_WEBHOOK_URL or ""
+    
+    return TestSettings()
+
 class Settings(BaseSettings):
     # Upstream API base
     MANGABAKA_BASE: str = Field(default="https://api.mangabaka.dev", pattern=r"^https?://[a-zA-Z0-9.-]+")

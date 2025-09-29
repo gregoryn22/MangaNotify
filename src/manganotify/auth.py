@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import jwt
-from fastapi import HTTPException, status, Depends
+from fastapi import HTTPException, status, Depends, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from passlib.context import CryptContext
 
@@ -31,12 +31,16 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None, settings_obj=None) -> str:
     """Create a JWT access token."""
-    if not settings.AUTH_SECRET_KEY:
+    # Use provided settings or fall back to imported settings
+    if settings_obj is None:
+        settings_obj = settings
+    
+    if not settings_obj.AUTH_SECRET_KEY:
         raise ValueError("AUTH_SECRET_KEY is required for JWT token creation")
     
-    if len(settings.AUTH_SECRET_KEY) < 32:
+    if len(settings_obj.AUTH_SECRET_KEY) < 32:
         raise ValueError("AUTH_SECRET_KEY must be at least 32 characters long for security")
     
     # Validate data contains required fields
@@ -55,16 +59,20 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(hours=settings.AUTH_TOKEN_EXPIRE_HOURS)
+        expire = datetime.now(timezone.utc) + timedelta(hours=settings_obj.AUTH_TOKEN_EXPIRE_HOURS)
     
     to_encode.update({"exp": expire.timestamp()})
-    encoded_jwt = jwt.encode(to_encode, settings.AUTH_SECRET_KEY, algorithm="HS256")
+    encoded_jwt = jwt.encode(to_encode, settings_obj.AUTH_SECRET_KEY, algorithm="HS256")
     return encoded_jwt
 
 
-def verify_token(token: str) -> Optional[dict]:
+def verify_token(token: str, settings_obj=None) -> Optional[dict]:
     """Verify and decode a JWT token."""
-    if not settings.AUTH_SECRET_KEY:
+    # Use provided settings or fall back to imported settings
+    if settings_obj is None:
+        settings_obj = settings
+    
+    if not settings_obj.AUTH_SECRET_KEY:
         logger.error("AUTH_SECRET_KEY is not set - cannot verify token")
         return None
     
@@ -76,7 +84,7 @@ def verify_token(token: str) -> Optional[dict]:
             return None
         
         # Then decode with algorithm validation
-        payload = jwt.decode(token, settings.AUTH_SECRET_KEY, algorithms=["HS256"])
+        payload = jwt.decode(token, settings_obj.AUTH_SECRET_KEY, algorithms=["HS256"])
         username: str = payload.get("sub")
         if username is None:
             return None
@@ -86,27 +94,37 @@ def verify_token(token: str) -> Optional[dict]:
         return None
 
 
-async def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = None) -> Optional[dict]:
+async def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = None, settings_obj=None) -> Optional[dict]:
     """Get current user from JWT token."""
-    if not settings.AUTH_ENABLED:
+    # Use provided settings or fall back to imported settings
+    if settings_obj is None:
+        settings_obj = settings
+    
+    if not settings_obj.AUTH_ENABLED:
         return {"username": "anonymous"}
     
     if not credentials:
         return None
     
-    user = verify_token(credentials.credentials)
+    user = verify_token(credentials.credentials, settings_obj)
     if user is None:
         return None
     
     return user
 
 
-async def require_auth(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)) -> dict:
+async def require_auth(
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
+) -> dict:
     """Require authentication and return user info."""
-    if not settings.AUTH_ENABLED:
+    # Get settings from app state
+    app_settings = request.app.state.settings
+    
+    if not app_settings.AUTH_ENABLED:
         return {"username": "anonymous"}
     
-    user = await get_current_user(credentials)
+    user = await get_current_user(credentials, app_settings)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -117,9 +135,13 @@ async def require_auth(credentials: Optional[HTTPAuthorizationCredentials] = Dep
     return user
 
 
-def authenticate_user(username: str, password: str) -> bool:
+def authenticate_user(username: str, password: str, settings_obj=None) -> bool:
     """Authenticate a user with username and password."""
-    if not settings.AUTH_ENABLED:
+    # Use provided settings or fall back to imported settings
+    if settings_obj is None:
+        settings_obj = settings
+    
+    if not settings_obj.AUTH_ENABLED:
         logger.debug("Authentication disabled")
         return False
     
@@ -143,24 +165,24 @@ def authenticate_user(username: str, password: str) -> bool:
         return False
     
     # Hash the provided password and compare with stored hash
-    if username != settings.AUTH_USERNAME:
-        logger.debug(f"Username mismatch: '{username}' != '{settings.AUTH_USERNAME}'")
+    if username != settings_obj.AUTH_USERNAME:
+        logger.debug(f"Username mismatch: '{username}' != '{settings_obj.AUTH_USERNAME}'")
         return False
     
     # If AUTH_PASSWORD is empty, it means no password is set (insecure)
-    if not settings.AUTH_PASSWORD:
+    if not settings_obj.AUTH_PASSWORD:
         logger.error("AUTH_PASSWORD is not set - authentication disabled for security")
         return False
     
     # Check if stored password is already hashed (starts with $2b$)
-    if settings.AUTH_PASSWORD.startswith("$2b$"):
+    if settings_obj.AUTH_PASSWORD.startswith("$2b$"):
         # Password is already hashed, verify against hash
-        result = verify_password(password, settings.AUTH_PASSWORD)
+        result = verify_password(password, settings_obj.AUTH_PASSWORD)
         logger.debug(f"Password hash verification: {result}")
         return result
     else:
         # Password is plain text (legacy), hash it and compare
         logger.warning("AUTH_PASSWORD appears to be plain text - consider hashing it")
-        result = password == settings.AUTH_PASSWORD
+        result = password == settings_obj.AUTH_PASSWORD
         logger.debug(f"Password plain text comparison: {result}")
         return result
