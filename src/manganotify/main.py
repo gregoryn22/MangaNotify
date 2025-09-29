@@ -379,10 +379,18 @@ def create_app() -> FastAPI:
         stats = getattr(app.state, "poll_stats", None) or {}
         return {"ok": True, "poll": stats, "interval_sec": settings.POLL_INTERVAL_SEC}
 
-    # Debug endpoint for CSP and image testing
+    # Debug endpoint for CSP and image testing (only available in DEBUG mode)
     @app.get("/api/debug/csp")
     async def debug_csp():
         """Debug endpoint to inspect CSP settings."""
+        # Only allow in DEBUG mode for security
+        if settings.LOG_LEVEL != "DEBUG":
+            from fastapi import HTTPException, status
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Debug endpoints only available in DEBUG mode"
+            )
+        
         mangabaka_domain = settings.MANGABAKA_BASE.split("://", 1)[1].split("/")[0]
         image_domains = [
             mangabaka_domain,
@@ -400,10 +408,18 @@ def create_app() -> FastAPI:
             "cors_allow_origins": settings.CORS_ALLOW_ORIGINS,
         }
     
-    # Debug endpoint for authentication and rate limiting
+    # Debug endpoint for authentication and rate limiting (only available in DEBUG mode)
     @app.get("/api/debug/auth")
     async def debug_auth():
         """Debug endpoint to inspect authentication settings and clear rate limits."""
+        # Only allow in DEBUG mode for security
+        if settings.LOG_LEVEL != "DEBUG":
+            from fastapi import HTTPException, status
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Debug endpoints only available in DEBUG mode"
+            )
+        
         # Clear rate limits for debugging
         app.state.rate_limits.clear()
         
