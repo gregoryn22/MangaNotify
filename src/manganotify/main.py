@@ -18,7 +18,7 @@ import time
 import uuid
 
 
-from .core.config import settings
+from .core.config import create_settings
 from .core.utils import setup_logging
 from .services.poller import poll_loop, process_once
 from .routers import search, series, watchlist, notify, auth, setup
@@ -33,9 +33,14 @@ ASSETS_DIR = Path(__file__).resolve().parent / "static"   # /src/manganotify/sta
 
 
 def create_app() -> FastAPI:
+    settings = create_settings()
+    setup_logging(settings.LOG_LEVEL, settings.LOG_FORMAT)
+    logger = logging.getLogger(__name__)
+    
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         app.state.client = httpx.AsyncClient(timeout=20.0)
+        app.state.settings = settings  # Store settings in app state
         app.state.poller_task = None
         if settings.POLL_INTERVAL_SEC > 0:
             app.state.poller_task = asyncio.create_task(poll_loop(app))
@@ -51,9 +56,6 @@ def create_app() -> FastAPI:
             if client:
                 await client.aclose()
 
-    # logging
-    setup_logging(settings.LOG_LEVEL, settings.LOG_FORMAT)
-    logger = logging.getLogger(__name__)
     
     # Security validation on startup
     if settings.AUTH_ENABLED:
@@ -411,10 +413,9 @@ def create_app() -> FastAPI:
     return app
 
 
-app = create_app()
-
-
+# Only create app when running directly, not when importing
 if __name__ == "__main__":
+    app = create_app()
     # Run directly (no app_dir, no chdir, just pass the object)
     import uvicorn
     import os
@@ -424,3 +425,7 @@ if __name__ == "__main__":
         port=int(os.getenv("PORT", "8999")),
         reload=False,
     )
+else:
+    # For testing, don't create app at import time
+    # Tests will call create_app() directly
+    app = None

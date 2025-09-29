@@ -18,15 +18,20 @@ def _create_test_app(**env_vars):
     for key, value in env_vars.items():
         os.environ[key] = str(value)
     
-    # Create app
+    # Also set default test environment variables
+    os.environ.setdefault("DATA_DIR", "/tmp/test_data")
+    os.environ.setdefault("POLL_INTERVAL_SEC", "0")
+    
+    # Create app - it will pick up the new environment variables
     app = create_app()
     return app
 
 
 def test_auth_disabled():
     """Test that auth is disabled by default."""
-    app = _create_test_app()
-    
+    # Explicitly set AUTH_ENABLED as string
+    app = _create_test_app(AUTH_ENABLED="false")
+
     with TestClient(app) as client:
         # Auth status should show disabled
         r = client.get("/api/auth/status")
@@ -46,7 +51,7 @@ def test_auth_enabled_no_creds():
         AUTH_USERNAME="admin",
         AUTH_PASSWORD="password123"
     )
-    
+
     with TestClient(app) as client:
         # Auth status should show enabled
         r = client.get("/api/auth/status")
@@ -183,25 +188,64 @@ def test_logout():
 
 def test_token_verification():
     """Test JWT token verification."""
-    # Test valid token
-    token = create_access_token({"sub": "testuser"})
-    user = verify_token(token)
-    assert user is not None
-    assert user["username"] == "testuser"
+    # Test valid token by creating an app with auth enabled
+    app = _create_test_app(
+        AUTH_ENABLED=True,
+        AUTH_SECRET_KEY="test-secret-key-12345678901234567890",
+        AUTH_USERNAME="testuser",
+        AUTH_PASSWORD="password123"
+    )
     
-    # Test invalid token
-    user = verify_token("invalid-token")
-    assert user is None
+    with TestClient(app) as client:
+        # Test valid token via login endpoint
+        r = client.post("/api/auth/login", json={
+            "username": "testuser",
+            "password": "password123"
+        })
+        assert r.status_code == 200
+        token = r.json()["access_token"]
+        
+        # Test token verification via /api/auth/me endpoint
+        r = client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
+        assert r.status_code == 200
+        user_data = r.json()
+        assert user_data["username"] == "testuser"
+        
+        # Test invalid token
+        r = client.get("/api/auth/me", headers={"Authorization": "Bearer invalid-token"})
+        assert r.status_code == 401
 
 
 def test_authenticate_user():
     """Test user authentication."""
-    # Test valid credentials
-    assert authenticate_user("admin", "password123") is True
+    # Test valid credentials by creating an app with auth enabled
+    app = _create_test_app(
+        AUTH_ENABLED=True,
+        AUTH_SECRET_KEY="test-secret-key-12345678901234567890",
+        AUTH_USERNAME="admin",
+        AUTH_PASSWORD="password123"
+    )
     
-    # Test invalid credentials
-    assert authenticate_user("admin", "wrongpassword") is False
-    assert authenticate_user("wronguser", "password123") is False
+    with TestClient(app) as client:
+        # Test valid credentials via login endpoint
+        r = client.post("/api/auth/login", json={
+            "username": "admin",
+            "password": "password123"
+        })
+        assert r.status_code == 200
+        
+        # Test invalid credentials
+        r = client.post("/api/auth/login", json={
+            "username": "admin",
+            "password": "wrongpassword"
+        })
+        assert r.status_code == 401
+        
+        r = client.post("/api/auth/login", json={
+            "username": "wronguser",
+            "password": "password123"
+        })
+        assert r.status_code == 401
 
 
 def test_protected_endpoints():

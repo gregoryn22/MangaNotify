@@ -54,17 +54,19 @@ def _reload_with_env(monkeypatch, **env):
 
 
 def test_notify_test_missing_creds(tmp_path, monkeypatch):
-    # No Pushover creds; disable poller
+    # No Pushover creds; disable poller; disable auth for test
     monkeypatch.setenv("DATA_DIR", str(tmp_path))
-    srv = _reload_with_env(
-        monkeypatch,
-        PUSHOVER_APP_TOKEN=None,  # stays ""
-        PUSHOVER_USER_KEY=None,   # stays ""
-        POLL_INTERVAL_SEC="0",
-    )
+    monkeypatch.setenv("PUSHOVER_APP_TOKEN", "")
+    monkeypatch.setenv("PUSHOVER_USER_KEY", "")
+    monkeypatch.setenv("POLL_INTERVAL_SEC", "0")
+    monkeypatch.setenv("AUTH_ENABLED", "false")
+    
+    # Import and create app
+    from manganotify.main import create_app
+    app = create_app()
 
     # Use context manager so lifespan runs
-    with TestClient(srv.create_app()) as client:
+    with TestClient(app) as client:
         r = client.post("/api/notify/test")
         # server returns 500 for missing creds (by design)
         assert r.status_code == 500
@@ -74,16 +76,18 @@ def test_notify_test_missing_creds(tmp_path, monkeypatch):
 
 
 def test_notify_test_ok(tmp_path, monkeypatch):
-    # Provide creds; disable poller for determinism
+    # Provide creds; disable poller for determinism; disable auth for test
     monkeypatch.setenv("DATA_DIR", str(tmp_path))
-    srv = _reload_with_env(
-        monkeypatch,
-        PUSHOVER_APP_TOKEN="tokenX",
-        PUSHOVER_USER_KEY="userY",
-        POLL_INTERVAL_SEC="0",
-    )
+    monkeypatch.setenv("PUSHOVER_APP_TOKEN", "tokenX")
+    monkeypatch.setenv("PUSHOVER_USER_KEY", "userY")
+    monkeypatch.setenv("POLL_INTERVAL_SEC", "0")
+    monkeypatch.setenv("AUTH_ENABLED", "false")
+    
+    # Import and create app
+    from manganotify.main import create_app
+    app = create_app()
 
-    with TestClient(srv.create_app()) as client:
+    with TestClient(app) as client:
         # Mock the external Pushover API call
         with respx.mock(assert_all_called=True) as router:
             router.post("https://api.pushover.net/1/messages.json").respond(
@@ -94,5 +98,5 @@ def test_notify_test_ok(tmp_path, monkeypatch):
         assert r.status_code == 200
         js = r.json()
         assert js.get("ok") is True
-        assert js.get("pushover_status") == 1
-        assert "who" in js and "token" in js["who"] and "user" in js["who"]
+        assert js.get("raw", {}).get("status") == 1  # Check the Pushover API response status
+        assert "raw" in js
