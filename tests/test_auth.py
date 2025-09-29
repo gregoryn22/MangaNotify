@@ -19,7 +19,8 @@ def _create_test_app(**env_vars):
         os.environ[key] = str(value)
     
     # Also set default test environment variables
-    os.environ.setdefault("DATA_DIR", "/tmp/test_data")
+    import tempfile
+    os.environ.setdefault("DATA_DIR", tempfile.mkdtemp(prefix="manganotify_test_"))
     os.environ.setdefault("POLL_INTERVAL_SEC", "0")
     
     # Reload config module to pick up new environment variables

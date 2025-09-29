@@ -4,6 +4,7 @@ import os
 import sys
 import pathlib
 import pytest
+import tempfile
 from fastapi.testclient import TestClient
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
@@ -19,7 +20,7 @@ def test_full_auth_flow():
         "AUTH_SECRET_KEY": "test-secret-key-12345678901234567890",
         "AUTH_USERNAME": "admin",
         "AUTH_PASSWORD": "password123",
-        "DATA_DIR": "/tmp/test_data",
+        "DATA_DIR": tempfile.mkdtemp(prefix="manganotify_test_"),
         "POLL_INTERVAL_SEC": "0"
     })
     
@@ -71,7 +72,7 @@ def test_auth_disabled_full_access():
     """Test that when auth is disabled, all endpoints are accessible."""
     os.environ.update({
         "AUTH_ENABLED": "false",
-        "DATA_DIR": "/tmp/test_data",
+        "DATA_DIR": tempfile.mkdtemp(prefix="manganotify_test_"),
         "POLL_INTERVAL_SEC": "0"
     })
     
@@ -103,7 +104,7 @@ def test_cors_with_auth():
         "AUTH_USERNAME": "admin",
         "AUTH_PASSWORD": "password123",
         "CORS_ALLOW_ORIGINS": "https://example.com,http://localhost:3000",
-        "DATA_DIR": "/tmp/test_data",
+        "DATA_DIR": tempfile.mkdtemp(prefix="manganotify_test_"),
         "POLL_INTERVAL_SEC": "0"
     })
 
@@ -138,7 +139,7 @@ def test_error_handling():
         "AUTH_SECRET_KEY": "test-secret-key-12345678901234567890",
         "AUTH_USERNAME": "admin",
         "AUTH_PASSWORD": "password123",
-        "DATA_DIR": "/tmp/test_data",
+        "DATA_DIR": tempfile.mkdtemp(prefix="manganotify_test_"),
         "POLL_INTERVAL_SEC": "0"
     })
     
@@ -176,7 +177,7 @@ def test_token_expiration():
         "AUTH_SECRET_KEY": "test-secret-key-12345678901234567890",
         "AUTH_USERNAME": "admin",
         "AUTH_PASSWORD": "password123",
-        "DATA_DIR": "/tmp/test_data",
+        "DATA_DIR": tempfile.mkdtemp(prefix="manganotify_test_"),
         "POLL_INTERVAL_SEC": "0"
     })
 

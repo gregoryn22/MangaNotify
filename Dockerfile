@@ -29,9 +29,6 @@ VOLUME ["/data"]
 
 EXPOSE 8999
 
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-  CMD curl -fsS "http://127.0.0.1:${PORT}/api/health" || exit 1
-
 USER appuser
 
 # IMPORTANT: module path changed to manganotify.server:app
