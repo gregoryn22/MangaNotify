@@ -87,6 +87,114 @@ export function initSettings(){
   $("#hide-dropped") && ($("#hide-dropped").checked = state.hideDropped);
   $("#hide-dropped")?.addEventListener("change", e=>{ state.hideDropped = !!e.target.checked; localStorage.setItem("mn-hide-dropped", String(state.hideDropped)); loadWatchlist(); });
 
+  // Emoji toggle
+  $("#use-emojis") && ($("#use-emojis").checked = state.useEmojis);
+  $("#use-emojis")?.addEventListener("change", e=>{ 
+    state.useEmojis = !!e.target.checked; 
+    localStorage.setItem("mn-use-emojis", String(state.useEmojis)); 
+    // Update settings button icon
+    updateSettingsIcon();
+    // Refresh UI to apply emoji changes
+    loadWatchlist();
+    loadNotifications();
+  });
+  
+  // Update settings button icon based on emoji preference
+  function updateSettingsIcon() {
+    const icon = $("#settings-icon");
+    if (icon) {
+      icon.textContent = state.useEmojis ? "⚙️" : "⚙";
+    }
+  }
+  
+  // Initialize settings icon
+  updateSettingsIcon();
+
+  /* Layout Density */
+  $("#layout-density") && ($("#layout-density").value = state.layoutDensity);
+  $("#layout-density")?.addEventListener("change", e=>{ 
+    state.layoutDensity = e.target.value; 
+    localStorage.setItem("mn-layout-density", state.layoutDensity); 
+    applyLayoutDensity();
+  });
+
+  /* Font Size */
+  $("#font-size") && ($("#font-size").value = state.fontSize);
+  $("#font-size")?.addEventListener("change", e=>{ 
+    state.fontSize = e.target.value; 
+    localStorage.setItem("mn-font-size", state.fontSize); 
+    applyFontSize();
+  });
+
+  /* Custom Accent Color */
+  $("#accent-color") && ($("#accent-color").value = state.customAccentColor || "#7c9cff");
+  $("#accent-color")?.addEventListener("change", e=>{ 
+    state.customAccentColor = e.target.value; 
+    localStorage.setItem("mn-custom-accent", state.customAccentColor); 
+    applyCustomAccentColor();
+  });
+  $("#reset-accent")?.addEventListener("click", ()=>{ 
+    state.customAccentColor = ""; 
+    localStorage.removeItem("mn-custom-accent"); 
+    $("#accent-color").value = "#7c9cff";
+    applyCustomAccentColor();
+  });
+
+  /* Information Display Toggles */
+  $("#show-ids") && ($("#show-ids").checked = state.showIds);
+  $("#show-ids")?.addEventListener("change", e=>{ 
+    state.showIds = !!e.target.checked; 
+    localStorage.setItem("mn-show-ids", String(state.showIds)); 
+    loadWatchlist();
+  });
+
+  $("#show-last-checked") && ($("#show-last-checked").checked = state.showLastChecked);
+  $("#show-last-checked")?.addEventListener("change", e=>{ 
+    state.showLastChecked = !!e.target.checked; 
+    localStorage.setItem("mn-show-last-checked", String(state.showLastChecked)); 
+    loadWatchlist();
+  });
+
+  $("#show-content-rating") && ($("#show-content-rating").checked = state.showContentRating);
+  $("#show-content-rating")?.addEventListener("change", e=>{ 
+    state.showContentRating = !!e.target.checked; 
+    localStorage.setItem("mn-show-content-rating", String(state.showContentRating)); 
+    loadWatchlist();
+  });
+
+  $("#show-status") && ($("#show-status").checked = state.showStatus);
+  $("#show-status")?.addEventListener("change", e=>{ 
+    state.showStatus = !!e.target.checked; 
+    localStorage.setItem("mn-show-status", String(state.showStatus)); 
+    loadWatchlist();
+  });
+
+  /* Quiet Hours */
+  $("#quiet-hours-enabled") && ($("#quiet-hours-enabled").checked = state.quietHoursEnabled);
+  $("#quiet-hours-enabled")?.addEventListener("change", e=>{ 
+    state.quietHoursEnabled = !!e.target.checked; 
+    localStorage.setItem("mn-quiet-hours-enabled", String(state.quietHoursEnabled)); 
+  });
+
+  $("#quiet-hours-start") && ($("#quiet-hours-start").value = state.quietHoursStart);
+  $("#quiet-hours-start")?.addEventListener("change", e=>{ 
+    state.quietHoursStart = e.target.value; 
+    localStorage.setItem("mn-quiet-hours-start", state.quietHoursStart); 
+  });
+
+  $("#quiet-hours-end") && ($("#quiet-hours-end").value = state.quietHoursEnd);
+  $("#quiet-hours-end")?.addEventListener("change", e=>{ 
+    state.quietHoursEnd = e.target.value; 
+    localStorage.setItem("mn-quiet-hours-end", state.quietHoursEnd); 
+  });
+
+  /* Notification Batching */
+  $("#notification-batching") && ($("#notification-batching").value = state.notificationBatching);
+  $("#notification-batching")?.addEventListener("change", e=>{ 
+    state.notificationBatching = e.target.value; 
+    localStorage.setItem("mn-notification-batching", state.notificationBatching); 
+  });
+
   /* Auto refresh + ticker */
   function refreshTicker(){
     const el=$("#last-refresh");
@@ -206,4 +314,166 @@ export function initSettings(){
 
   // URL → controls
   restoreFromUrl();
+  
+  // Initialize all custom settings
+  applyLayoutDensity();
+  applyFontSize();
+  applyCustomAccentColor();
+}
+
+/* ===== Customization Helper Functions ===== */
+
+function applyLayoutDensity() {
+  const density = state.layoutDensity;
+  document.documentElement.setAttribute("data-density", density);
+  
+  // Apply density-specific styles
+  const style = document.getElementById("density-styles") || document.createElement("style");
+  style.id = "density-styles";
+  
+  let css = "";
+  if (density === "compact") {
+    css = `
+      .watch-item-main { padding: 8px 12px; gap: 8px; }
+      .watch-item-title { font-size: 14px; margin-bottom: 2px; }
+      .watch-item-meta { font-size: 11px; margin-bottom: 4px; }
+      .btn-sm { padding: 2px 6px; font-size: 11px; min-height: 24px; }
+      .btn-icon { width: 28px; height: 28px; font-size: 12px; }
+      .progress-controls { padding: 2px; gap: 2px; }
+    `;
+  } else if (density === "spacious") {
+    css = `
+      .watch-item-main { padding: 24px; gap: 20px; }
+      .watch-item-title { font-size: 18px; margin-bottom: 8px; }
+      .watch-item-meta { font-size: 15px; margin-bottom: 10px; }
+      .btn-sm { padding: 8px 12px; font-size: 14px; min-height: 36px; }
+      .btn-icon { width: 40px; height: 40px; font-size: 16px; }
+      .progress-controls { padding: 8px; gap: 8px; }
+    `;
+  }
+  
+  style.textContent = css;
+  if (!document.getElementById("density-styles")) {
+    document.head.appendChild(style);
+  }
+}
+
+function applyFontSize() {
+  const fontSize = state.fontSize;
+  document.documentElement.setAttribute("data-font-size", fontSize);
+  
+  const style = document.getElementById("font-styles") || document.createElement("style");
+  style.id = "font-styles";
+  
+  let css = "";
+  if (fontSize === "small") {
+    css = `
+      body { font-size: 13px; }
+      .watch-item-title { font-size: 14px; }
+      .watch-item-meta { font-size: 11px; }
+      .btn { font-size: 12px; }
+    `;
+  } else if (fontSize === "large") {
+    css = `
+      body { font-size: 16px; }
+      .watch-item-title { font-size: 18px; }
+      .watch-item-meta { font-size: 15px; }
+      .btn { font-size: 15px; }
+    `;
+  }
+  
+  style.textContent = css;
+  if (!document.getElementById("font-styles")) {
+    document.head.appendChild(style);
+  }
+}
+
+function applyCustomAccentColor() {
+  const color = state.customAccentColor;
+  if (color) {
+    document.documentElement.style.setProperty("--accent", color);
+    document.documentElement.style.setProperty("--accent-strong", color);
+    
+    // Calculate RGB values for rgba usage
+    const rgb = hexToRgb(color);
+    if (rgb) {
+      document.documentElement.style.setProperty("--accent-rgb", `${rgb.r}, ${rgb.g}, ${rgb.b}`);
+    }
+  } else {
+    // Reset to default
+    document.documentElement.style.removeProperty("--accent");
+    document.documentElement.style.removeProperty("--accent-strong");
+    document.documentElement.style.removeProperty("--accent-rgb");
+  }
+}
+
+function hexToRgb(hex) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
+}
+
+function isInQuietHours() {
+  if (!state.quietHoursEnabled) return false;
+  
+  const now = new Date();
+  const currentTime = now.getHours() * 60 + now.getMinutes();
+  
+  const [startHour, startMin] = state.quietHoursStart.split(':').map(Number);
+  const [endHour, endMin] = state.quietHoursEnd.split(':').map(Number);
+  
+  const startTime = startHour * 60 + startMin;
+  const endTime = endHour * 60 + endMin;
+  
+  // Handle overnight quiet hours (e.g., 22:00 to 08:00)
+  if (startTime > endTime) {
+    return currentTime >= startTime || currentTime <= endTime;
+  } else {
+    return currentTime >= startTime && currentTime <= endTime;
+  }
+}
+
+function shouldBatchNotification() {
+  return state.notificationBatching !== "off";
+}
+
+function addToBatch(notification) {
+  if (!shouldBatchNotification()) return false;
+  
+  state.batchNotifications.push({
+    ...notification,
+    timestamp: Date.now()
+  });
+  
+  // Schedule batch processing
+  if (state.batchNotifications.length === 1) {
+    const interval = state.notificationBatching === "hourly" ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+    setTimeout(processBatchNotifications, interval);
+  }
+  
+  return true;
+}
+
+function processBatchNotifications() {
+  if (state.batchNotifications.length === 0) return;
+  
+  const notifications = [...state.batchNotifications];
+  state.batchNotifications = [];
+  
+  // Create digest message
+  const seriesCount = new Set(notifications.map(n => n.series_id)).size;
+  const title = `Manga Update Digest (${seriesCount} series)`;
+  
+  const messages = notifications.map(n => 
+    `• ${n.title}: ${n.message}`
+  ).join('\n');
+  
+  const digestMessage = `${seriesCount} manga series have new chapters:\n\n${messages}`;
+  
+  // Send batched notification
+  // This would integrate with the existing notification system
+  console.log("Sending batched notification:", title, digestMessage);
 }

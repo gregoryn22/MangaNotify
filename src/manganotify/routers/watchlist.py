@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Request, Query, Depends
-from ..models.schemas import WatchlistAdd, ProgressPatch, StatusPatch, StatusLiteral
+from ..models.schemas import WatchlistAdd, ProgressPatch, StatusPatch, StatusLiteral, NotificationPreferencesPatch
 from ..auth import require_auth
 from ..services.watchlist import load_watchlist, save_watchlist, pick_cover, derive_last_chapter_at
 from ..services.manga_api import api_series_by_id
@@ -40,6 +40,20 @@ async def add_watch(item: WatchlistAdd, request: Request, current_user: dict = D
         pass
 
     total = to_int(item.total_chapters) or to_int(series.get("total_chapters"))
+    
+    # Set up default notification preferences
+    default_notifications = {
+        "enabled": True,
+        "pushover": True,
+        "discord": True,
+        "only_when_reading": True
+    }
+    
+    # Use provided preferences or defaults
+    notifications = default_notifications
+    if item.notifications:
+        notifications.update(item.notifications.dict())
+    
     record = {
         "id": int(sid),
         "title": item.title or series.get("title"),
@@ -50,6 +64,7 @@ async def add_watch(item: WatchlistAdd, request: Request, current_user: dict = D
         "added_at": now_utc_iso(),
         "last_chapter_at": derive_last_chapter_at(series) if series else None,
         "last_checked": now_utc_iso(),
+        "notifications": notifications,
     }
     wl.append(record); save_watchlist(wl)
     return {"ok": True}
@@ -105,4 +120,47 @@ def set_status(series_id: int, body: StatusPatch, current_user: dict = Depends(r
             it["last_checked"] = now_utc_iso()
             save_watchlist(wl)
             return {"ok": True, "status": it["status"]}
+    raise HTTPException(404, "Not in watchlist")
+
+
+@router.patch("/api/watchlist/{series_id}/notifications")
+def update_notification_preferences(series_id: int, body: NotificationPreferencesPatch, current_user: dict = Depends(require_auth)):
+    """Update notification preferences for a specific series."""
+    wl = load_watchlist()
+    for it in wl:
+        if str(it.get("id")) == str(series_id):
+            # Initialize notifications object if it doesn't exist
+            if "notifications" not in it:
+                it["notifications"] = {}
+            
+            # Update only the provided fields
+            if body.enabled is not None:
+                it["notifications"]["enabled"] = body.enabled
+            if body.pushover is not None:
+                it["notifications"]["pushover"] = body.pushover
+            if body.discord is not None:
+                it["notifications"]["discord"] = body.discord
+            if body.only_when_reading is not None:
+                it["notifications"]["only_when_reading"] = body.only_when_reading
+            
+            it["last_checked"] = now_utc_iso()
+            save_watchlist(wl)
+            return {"ok": True, "notifications": it["notifications"]}
+    raise HTTPException(404, "Not in watchlist")
+
+
+@router.get("/api/watchlist/{series_id}/notifications")
+def get_notification_preferences(series_id: int, current_user: dict = Depends(require_auth)):
+    """Get notification preferences for a specific series."""
+    wl = load_watchlist()
+    for it in wl:
+        if str(it.get("id")) == str(series_id):
+            # Return default preferences if not set
+            notif_prefs = it.get("notifications", {
+                "enabled": True,
+                "pushover": True,
+                "discord": True,
+                "only_when_reading": True
+            })
+            return {"ok": True, "notifications": notif_prefs}
     raise HTTPException(404, "Not in watchlist")
