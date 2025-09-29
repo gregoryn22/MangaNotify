@@ -24,8 +24,8 @@ def test_full_auth_flow():
     })
     
     # Reload the config module to pick up new environment variables
-    import manganotify.core.config
-    importlib.reload(manganotify.core.config)
+    if "manganotify.core.config" in sys.modules:
+        importlib.reload(sys.modules["manganotify.core.config"])
     
     app = create_app()
     
@@ -75,6 +75,10 @@ def test_auth_disabled_full_access():
         "POLL_INTERVAL_SEC": "0"
     })
     
+    # Reload config module to pick up new environment variables
+    if "manganotify.core.config" in sys.modules:
+        importlib.reload(sys.modules["manganotify.core.config"])
+    
     app = create_app()
     
     with TestClient(app) as client:
@@ -102,6 +106,10 @@ def test_cors_with_auth():
         "DATA_DIR": "/tmp/test_data",
         "POLL_INTERVAL_SEC": "0"
     })
+
+    # Reload config module to pick up new environment variables
+    if "manganotify.core.config" in sys.modules:
+        importlib.reload(sys.modules["manganotify.core.config"])
 
     app = create_app()
     
@@ -133,6 +141,10 @@ def test_error_handling():
         "DATA_DIR": "/tmp/test_data",
         "POLL_INTERVAL_SEC": "0"
     })
+    
+    # Reload config module to pick up new environment variables
+    if "manganotify.core.config" in sys.modules:
+        importlib.reload(sys.modules["manganotify.core.config"])
     
     app = create_app()
     
@@ -167,6 +179,10 @@ def test_token_expiration():
         "DATA_DIR": "/tmp/test_data",
         "POLL_INTERVAL_SEC": "0"
     })
+
+    # Reload config module to pick up new environment variables
+    if "manganotify.core.config" in sys.modules:
+        importlib.reload(sys.modules["manganotify.core.config"])
 
     app = create_app()
     

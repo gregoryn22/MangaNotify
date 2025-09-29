@@ -14,7 +14,7 @@ importlib.reload(srv)
 
 def _reload_with_env(monkeypatch, **env):
     """
-    Set env vars and reload `server` so it picks them up.
+    Set env vars and reload modules so they pick them up.
     We explicitly set all Pushover keys to "" unless provided,
     so python-dotenv will NOT overwrite them from .env.
     """
@@ -26,6 +26,8 @@ def _reload_with_env(monkeypatch, **env):
         "PUSHOVER_USER": "",
         # Make sure polling doesn't start during tests
         "POLL_INTERVAL_SEC": "0",
+        # Disable auth for most tests
+        "AUTH_ENABLED": "false",
     }
 
     # Apply defaults first
@@ -45,12 +47,15 @@ def _reload_with_env(monkeypatch, **env):
     if data_dir:
         os.makedirs(data_dir, exist_ok=True)
 
-    # Fresh import of main.py with new env
+    # Reload config module to pick up new environment variables
+    if "manganotify.core.config" in sys.modules:
+        importlib.reload(sys.modules["manganotify.core.config"])
+    
+    # Reload main module
     if "manganotify.main" in sys.modules:
-        del sys.modules["manganotify.main"]
-    srv = importlib.import_module("manganotify.main")
-    importlib.reload(srv)
-    return srv
+        importlib.reload(sys.modules["manganotify.main"])
+    
+    return sys.modules["manganotify.main"]
 
 
 def test_notify_test_missing_creds(tmp_path, monkeypatch):

@@ -63,16 +63,25 @@ async def process_once(app: FastAPI):
 
 async def poll_loop(app: FastAPI):
     """Background loop with jitter and error isolation."""
-    base_interval = max(settings.POLL_INTERVAL_SEC, 0)
+    base_interval = settings.POLL_INTERVAL_SEC
     # track some basic stats for /api/health/details
     app.state.poll_stats = {"last_ok": None, "last_error": None}
-    while base_interval > 0:
+    
+    # Early exit if polling is disabled
+    if base_interval <= 0:
+        logging.info("Poller disabled (POLL_INTERVAL_SEC=%d)", base_interval)
+        return
+    
+    logging.info("Starting poller with interval %d seconds", base_interval)
+    
+    while True:  # Changed to True, but we'll break on cancellation
         try:
             await process_once(app)
             app.state.poll_stats["last_ok"] = now_utc_iso()
         except Exception as e:
             app.state.poll_stats["last_error"] = {"at": now_utc_iso(), "error": str(e)}
             logging.exception("poller: iteration failed: %s", e)
+        
         # add small jitter to avoid synchronized hits
         jitter = random.uniform(-0.1, 0.1) * base_interval
         sleep_for = max(1.0, base_interval + jitter)
@@ -80,4 +89,5 @@ async def poll_loop(app: FastAPI):
             await asyncio.sleep(sleep_for)
         except asyncio.CancelledError:
             # graceful shutdown
+            logging.info("Poller cancelled, shutting down")
             break

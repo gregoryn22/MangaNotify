@@ -42,13 +42,20 @@ def create_app() -> FastAPI:
         app.state.client = httpx.AsyncClient(timeout=20.0)
         app.state.settings = settings  # Store settings in app state
         app.state.poller_task = None
+        
+        # Only start poller if interval is positive
         if settings.POLL_INTERVAL_SEC > 0:
+            logger.info("Starting background poller with interval %d seconds", settings.POLL_INTERVAL_SEC)
             app.state.poller_task = asyncio.create_task(poll_loop(app))
+        else:
+            logger.info("Background poller disabled (POLL_INTERVAL_SEC=%d)", settings.POLL_INTERVAL_SEC)
+        
         try:
             yield
         finally:
             poller_task = getattr(app.state, "poller_task", None)
             if poller_task:
+                logger.info("Shutting down background poller")
                 poller_task.cancel()
                 with contextlib.suppress(asyncio.CancelledError):
                     await poller_task
