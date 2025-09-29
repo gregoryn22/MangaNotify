@@ -14,16 +14,25 @@ MangaNotify is a lightweight dashboard for tracking manga chapter releases via t
 - 📑 Watchlist with progress tracking and per-item status
   - Statuses: `reading`, `to-read`, `on-hold`, `finished`, `dropped`
   - Mark latest, +/- chapter, set exact last read
-- 🔔 Notifications
+- 🔔 Advanced Notifications
   - Pushover (token + user)
   - Discord webhook (optional, toggleable)
+  - Per-series notification preferences
+  - Quiet hours with customizable time ranges
+  - Notification batching (hourly/daily digests)
+  - Smart filtering (only notify when actively reading)
 - 🔐 Optional Authentication
   - JWT-based login system
   - Secure your instance behind reverse proxy
   - Configurable token expiration
-- 🖥️ Polished web UI
-  - Tabs/stacked layout (choose in Settings)
-  - Status filter and "Hide dropped"
+- 🖥️ Polished web UI with extensive customization
+  - Multiple layout options (tabs, stacked, custom arrangements)
+  - Layout density controls (compact, normal, spacious)
+  - Customizable font sizes and accent colors
+  - Information display toggles (IDs, timestamps, ratings, status badges)
+  - Emoji icon preferences and theme switching
+  - Auto-refresh intervals and sorting options
+  - Status filter and "Hide dropped" functionality
   - Details dialog, covers with lazy loading, cached searches
 - 🐳 Runs great in Docker (read-only FS, `/data` volume, healthcheck)
 
@@ -132,6 +141,50 @@ uvicorn manganotify.main:app --host 0.0.0.0 --port 8999
 ```
 
 Open [http://localhost:8999](http://localhost:8999).
+
+---
+
+## ⚙️ Settings & Customization
+
+MangaNotify offers extensive customization options accessible through the Settings panel (⚙️ icon):
+
+### 🎨 Display & Layout
+- **Layout Options**: Choose between tabs, stacked, or custom arrangements
+- **Layout Density**: Compact, normal, or spacious spacing
+- **Font Size**: Small, normal, or large text sizing
+- **Accent Color**: Custom color picker with reset option
+- **Theme**: Light/dark mode with system preference detection
+- **Emoji Icons**: Toggle emoji usage throughout the interface
+
+### 📊 Information Display
+- **Show Series IDs**: Display manga IDs in watchlist
+- **Show Last Checked**: Display timestamp of last chapter check
+- **Show Content Rating**: Display age/content rating badges
+- **Show Status Badges**: Display reading status indicators
+- **Show Covers**: Toggle cover images (saves bandwidth)
+
+### 📋 Watchlist Management
+- **Sorting Options**: Title, unread chapters, total chapters, last checked, or added date
+- **Sort Direction**: Ascending or descending
+- **Unread Only**: Filter to show only series with unread chapters
+- **Auto-refresh**: Set intervals (1min, 5min, 15min, or off)
+- **Bulk Actions**: Mark all visible items as latest, export/import watchlist
+
+### 🔔 Notification Preferences
+- **Quiet Hours**: Suppress notifications during specified time ranges
+- **Notification Batching**: 
+  - Off (immediate notifications)
+  - Hourly digest
+  - Daily digest
+- **Per-Series Settings**: Individual notification preferences for each manga
+- **Smart Filtering**: Only notify when series status is "reading"
+
+### 🔍 Search & Filters
+- **Client-side Filters**: Status, type, anime adaptation, content rating
+- **Search Persistence**: Cached searches and filter states
+- **Advanced Filtering**: Multiple criteria combinations
+
+All settings are automatically saved to browser localStorage and persist across sessions.
 
 ---
 
