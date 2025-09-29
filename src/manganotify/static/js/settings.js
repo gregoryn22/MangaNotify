@@ -109,7 +109,7 @@ export function initSettings(){
   /* Watchlist actions */
   $("#refresh")?.addEventListener("click", ()=> loadWatchlist());
   $("#refresh-now")?.addEventListener("click", async ()=>{
-    try{ await api.refreshNow(); toast("Server refresh requested"); }catch(e){ toast(`Failed: ${e}`,3000); }
+    try{ await api.refreshNow(); toast("Server refresh requested", 2200, "success"); }catch(e){ toast(`Failed: ${e}`,3000, "error"); }
   });
   $("#bulk-mark-latest")?.addEventListener("click", async ()=>{
     const rows = $$("#watchlist .watch-item"); let ok=0, fail=0;
@@ -121,13 +121,13 @@ export function initSettings(){
       if(total===null) return;
       try{ await api.setProgress(id,{ last_read: total }); ok++; } catch{ fail++; }
     }));
-    toast(`Marked latest · OK ${ok}${fail?` · Failed ${fail}`:""}`); loadWatchlist();
+    toast(`Marked latest · OK ${ok}${fail?` · Failed ${fail}`:""}`, 3000, fail > 0 ? "warning" : "success"); loadWatchlist();
   });
 
   /* Notifications controls */
   $("#notif-reload")?.addEventListener("click", loadNotifications);
-  $("#notif-clear")?.addEventListener("click", async ()=>{ try{ await api.clearNotifications(); toast("Cleared"); }catch(e){ toast(`Failed: ${e}`,3000);} loadNotifications(); });
-  $("#notify-test")?.addEventListener("click", async ()=>{ try{ await api.notifyTest(); toast("Test sent"); }catch(e){ toast(`Failed: ${e}`,3000);} loadNotifications(); });
+  $("#notif-clear")?.addEventListener("click", async ()=>{ try{ await api.clearNotifications(); toast("Cleared", 2200, "success"); }catch(e){ toast(`Failed: ${e}`,3000, "error");} loadNotifications(); });
+  $("#notify-test")?.addEventListener("click", async ()=>{ try{ await api.notifyTest(); toast("Test sent", 2200, "success"); }catch(e){ toast(`Failed: ${e}`,3000, "error");} loadNotifications(); });
 
   // --- Discord Notifications ---
   function updateDiscordTestBtn() {
@@ -174,10 +174,10 @@ export function initSettings(){
     }
     try {
       await api.setDiscordSettings({ webhook_url, enabled });
-      toast("Discord settings saved");
+      toast("Discord settings saved", 2200, "success");
       setDiscordStatus(enabled && webhook_url ? "Enabled" : "", enabled && webhook_url ? "ok" : "");
     } catch(e) {
-      toast("Failed to save Discord settings", 3000);
+      toast("Failed to save Discord settings", 3000, "error");
       setDiscordStatus("Save failed", "error");
       $("#discord-webhook").focus();
     }
@@ -190,10 +190,10 @@ export function initSettings(){
     setDiscordStatus("Testing…", "testing");
     try {
       await api.discordTest();
-      toast("Discord test sent");
+      toast("Discord test sent", 2200, "success");
       setDiscordStatus("Test sent!", "ok");
     } catch(e) {
-      toast("Failed to send Discord test", 3000);
+      toast("Failed to send Discord test", 3000, "error");
       setDiscordStatus("Test failed", "error");
     }
   });
