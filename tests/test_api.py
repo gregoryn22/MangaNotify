@@ -8,7 +8,8 @@ from fastapi.testclient import TestClient
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 
-srv = importlib.import_module("manganotify.server")
+# Updated to use main.py instead of server.py
+srv = importlib.import_module("manganotify.main")
 importlib.reload(srv)
 
 def _reload_with_env(monkeypatch, **env):
@@ -44,10 +45,10 @@ def _reload_with_env(monkeypatch, **env):
     if data_dir:
         os.makedirs(data_dir, exist_ok=True)
 
-    # Fresh import of server.py with new env
-    if "manganotify.server" in sys.modules:
-        del sys.modules["manganotify.server"]
-    srv = importlib.import_module("manganotify.server")  # ← was "server"
+    # Fresh import of main.py with new env
+    if "manganotify.main" in sys.modules:
+        del sys.modules["manganotify.main"]
+    srv = importlib.import_module("manganotify.main")
     importlib.reload(srv)
     return srv
 
@@ -63,7 +64,7 @@ def test_notify_test_missing_creds(tmp_path, monkeypatch):
     )
 
     # Use context manager so lifespan runs
-    with TestClient(srv.app) as client:
+    with TestClient(srv.create_app()) as client:
         r = client.post("/api/notify/test")
         # server returns 500 for missing creds (by design)
         assert r.status_code == 500
@@ -82,7 +83,7 @@ def test_notify_test_ok(tmp_path, monkeypatch):
         POLL_INTERVAL_SEC="0",
     )
 
-    with TestClient(srv.app) as client:
+    with TestClient(srv.create_app()) as client:
         # Mock the external Pushover API call
         with respx.mock(assert_all_called=True) as router:
             router.post("https://api.pushover.net/1/messages.json").respond(
