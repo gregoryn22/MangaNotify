@@ -2,6 +2,11 @@ import { state, MIN_QUERY_LEN, TYPE_DEBOUNCE_MS, searchCache, dtFormatter } from
 import api from "./api.js";
 import { auth } from "./auth.js";
 
+/* ===== Emoji/Text Helper ===== */
+export function getIcon(emoji, text) {
+  return state.useEmojis ? emoji : text;
+}
+
 /* ===== DOM utils & formatting ===== */
 export const $  = (s)=>document.querySelector(s);
 export const $$ = (s)=>Array.from(document.querySelectorAll(s));
@@ -225,6 +230,93 @@ async function openDetails(id, title){
   }
 }
 
+/* ===== Notification Settings Modal ===== */
+async function openNotificationSettings(id, title){
+  $("#modal-title").textContent = `Notification Settings - ${title || `Series ${id}`}`;
+  const body = $("#modal-body");
+  body.innerHTML = `<div class="subline">Loading…</div>`;
+  modal.showModal?.();
+  
+  try{
+    const js = await api.getNotificationPrefs(id);
+    const prefs = js.notifications || {
+      enabled: true,
+      pushover: true,
+      discord: true,
+      only_when_reading: true
+    };
+    
+    body.innerHTML = `
+      <div class="notification-settings">
+        <div class="setting-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="notif-enabled" ${prefs.enabled ? 'checked' : ''}>
+            <span>Enable notifications for this series</span>
+          </label>
+        </div>
+        
+        <div class="setting-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="notif-pushover" ${prefs.pushover ? 'checked' : ''} ${!prefs.enabled ? 'disabled' : ''}>
+            <span>Send Pushover notifications</span>
+          </label>
+        </div>
+        
+        <div class="setting-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="notif-discord" ${prefs.discord ? 'checked' : ''} ${!prefs.enabled ? 'disabled' : ''}>
+            <span>Send Discord notifications</span>
+          </label>
+        </div>
+        
+        <div class="setting-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="notif-only-reading" ${prefs.only_when_reading ? 'checked' : ''} ${!prefs.enabled ? 'disabled' : ''}>
+            <span>Only notify when status is "reading"</span>
+          </label>
+        </div>
+        
+        <div class="setting-actions">
+          <button class="btn" id="save-notifications">Save Settings</button>
+          <button class="btn secondary" onclick="modal.close()">Cancel</button>
+        </div>
+      </div>
+    `;
+    
+    // Wire up the save button
+    document.getElementById("save-notifications").onclick = async () => {
+      const enabled = document.getElementById("notif-enabled").checked;
+      const pushover = document.getElementById("notif-pushover").checked;
+      const discord = document.getElementById("notif-discord").checked;
+      const onlyReading = document.getElementById("notif-only-reading").checked;
+      
+      try {
+        await api.updateNotificationPrefs(id, {
+          enabled,
+          pushover,
+          discord,
+          only_when_reading: onlyReading
+        });
+        toast("Notification settings saved", 2200, "success");
+        modal.close();
+      } catch {
+        toast("Failed to save settings", 2600, "error");
+      }
+    };
+    
+    // Wire up the enabled checkbox to enable/disable others
+    document.getElementById("notif-enabled").onchange = (e) => {
+      const enabled = e.target.checked;
+      document.getElementById("notif-pushover").disabled = !enabled;
+      document.getElementById("notif-discord").disabled = !enabled;
+      document.getElementById("notif-only-reading").disabled = !enabled;
+    };
+    
+  }catch{
+    body.innerHTML = `<div class="subline">Failed to load notification settings.</div>`;
+  }
+}
+
 /* ===== Watchlist ===== */
 export async function loadWatchlist(){
   if (!auth.requireAuth()) return;
@@ -280,52 +372,58 @@ export async function loadWatchlist(){
     const row = document.createElement("div");
     row.className = "watch-item" + (behind ? " unread" : "");
     row.innerHTML = `
-      <div class="left3">
-        <span class="dot-spacer ${behind ? "unread" : ""}" aria-hidden="true"></span>
-        ${
-          state.showCovers && it.cover
-            ? `<img src="${it.cover}" alt="" width="40" height="60" loading="lazy" decoding="async"
-                   style="border-radius:6px; border:1px solid var(--border); object-fit:cover" />`
-            : `<div class="cover-ph" aria-hidden="true"></div>`
-        }
-        <div style="min-width:0">
-          <div style="font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap" title="${it.title || ""}">
-            ${it.title || "(no title)"} ${mergeTxt}
-          </div>
-          <div class="subline" title="${it.last_checked ? formatLocal(it.last_checked) : ""}">
-            ID: <code>${it.id}</code>
-            · Chapters: ${total ?? "—"}
-            ${lastCheckedTxt} ${lastChapterTxt}
-            ${it.status? ` · <span class="status-badge status-${(it.status||"reading").replace(/[^a-z-]/g,"")}">${it.status}</span>` : ""} ${it.content_rating? ` · ${it.content_rating}` : ""}
-          </div>
-          <div class="row" style="margin-top:6px; gap:8px">
-            <span class="badge ${behind ? "warn":"ok"}" title="Unread chapters">
-              ${behind ? "Unread" : "Up to date"}${total!==null ? `: ${unread}` : ""}
-            </span>
-            ${total!==null ? `<span class="badge">Read: ${String(lastRead).replace(/\.0$/,"")}/${total}</span>` : ""}
+      <div class="watch-item-main">
+        <div class="watch-item-left">
+          <span class="dot-spacer ${behind ? "unread" : ""}" aria-hidden="true"></span>
+          ${
+            state.showCovers && it.cover
+              ? `<img src="${it.cover}" alt="" width="40" height="60" loading="lazy" decoding="async"
+                     style="border-radius:6px; border:1px solid var(--border); object-fit:cover" />`
+              : `<div class="cover-ph" aria-hidden="true"></div>`
+          }
+          <div class="watch-item-info">
+            <div class="watch-item-title" title="${it.title || ""}">
+              ${it.title || "(no title)"} ${mergeTxt}
+            </div>
+            <div class="watch-item-meta" title="${it.last_checked ? formatLocal(it.last_checked) : ""}">
+              ${state.showIds ? `ID: <code>${it.id}</code> · ` : ""}Chapters: ${total ?? "—"}
+              ${state.showLastChecked ? lastCheckedTxt : ""} ${lastChapterTxt}
+              ${state.showStatus && it.status? ` · <span class="status-badge status-${(it.status||"reading").replace(/[^a-z-]/g,"")}">${it.status}</span>` : ""} ${state.showContentRating && it.content_rating? ` · ${it.content_rating}` : ""}
+            </div>
+            <div class="watch-item-badges">
+              <span class="badge ${behind ? "warn":"ok"}" title="Unread chapters">
+                ${behind ? "Unread" : "Up to date"}${total!==null ? `: ${unread}` : ""}
+              </span>
+              ${total!==null ? `<span class="badge">Read: ${String(lastRead).replace(/\.0$/,"")}/${total}</span>` : ""}
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="controls">
-        ${total!==null ? `
-          <button class="btn" data-prev="${it.id}" title="Decrement read (−1)">−1</button>
-          <input class="input-mini" type="number" min="0" ${total!==null ? `max="${total}"`:""}
-                 step="1" value="${String(lastRead).replace(/\.0$/,"")}" aria-label="Last read chapter" data-lr="${it.id}" />
-          <button class="btn" data-set="${it.id}" title="Set last read">Set</button>
-          <button class="btn" data-next="${it.id}" title="Increment read (+1)">+1</button>
-          <button class="btn" data-latest="${it.id}" title="Mark latest">Mark latest</button>
-        ` : ""}
-        <select class="btn" data-status="${it.id}" title="Set status" style="padding:6px 8px">
-          ${["reading","to-read","on-hold","finished","dropped"].map(s=>`<option value="${s}" ${String(it.status||"reading")==="${s}"?"selected":""}>${s}</option>`).join("")}
-        </select>
-        <button class="btn more-toggle" data-more="${it.id}" title="More">More ▾</button>
-      </div>
-      <div class="more-tray">
-        <button class="btn" data-details="${it.id}" title="Details">Details</button>
-        <button class="btn" data-open="${it.id}" title="Open series page">Open</button>
-        <button class="btn" data-copy="${it.id}" title="Copy ID">Copy ID</button>
-        <button class="btn" data-remove="${it.id}" title="Remove">🗑</button>
+        <div class="watch-item-actions">
+          <div class="primary-actions">
+            ${total!==null ? `
+              <div class="progress-controls">
+                <button class="btn btn-sm" data-prev="${it.id}" title="Decrement read (−1)">−1</button>
+                <input class="input-mini" type="number" min="0" ${total!==null ? `max="${total}"`:""}
+                       step="1" value="${String(lastRead).replace(/\.0$/,"")}" aria-label="Last read chapter" data-lr="${it.id}" />
+                <button class="btn btn-sm" data-set="${it.id}" title="Set last read">Set</button>
+                <button class="btn btn-sm" data-next="${it.id}" title="Increment read (+1)">+1</button>
+                <button class="btn btn-sm" data-latest="${it.id}" title="Mark latest">Latest</button>
+              </div>
+            ` : ""}
+            <select class="btn btn-sm" data-status="${it.id}" title="Set status">
+              ${["reading","to-read","on-hold","finished","dropped"].map(s=>`<option value="${s}" ${String(it.status||"reading")==="${s}"?"selected":""}>${s}</option>`).join("")}
+            </select>
+          </div>
+          
+          <div class="secondary-actions">
+            <button class="btn btn-icon" data-details="${it.id}" title="Details" data-emoji="${state.useEmojis}">${getIcon("📋", "Details")}</button>
+            <button class="btn btn-icon" data-open="${it.id}" title="Open series page" data-emoji="${state.useEmojis}">${getIcon("🔗", "Open")}</button>
+            <button class="btn btn-icon" data-copy="${it.id}" title="Copy ID" data-emoji="${state.useEmojis}">${getIcon("📋", "Copy")}</button>
+            <button class="btn btn-icon" data-notifications="${it.id}" title="Notification Settings" data-emoji="${state.useEmojis}">${getIcon("🔔", "Notify")}</button>
+            <button class="btn btn-icon btn-danger" data-remove="${it.id}" title="Remove" data-emoji="${state.useEmojis}">${getIcon("🗑", "Remove")}</button>
+          </div>
+        </div>
       </div>
     `;
 
@@ -334,6 +432,7 @@ export async function loadWatchlist(){
     row.querySelector(`[data-copy="${id}"]`).onclick = async ()=>{ try{ await navigator.clipboard.writeText(String(id)); toast("ID copied", 2200, "success"); }catch{ toast("Copy failed", 2200, "error"); } };
     row.querySelector(`[data-details="${id}"]`).onclick = ()=> openDetails(id, it.title || `Series ${id}`);
     row.querySelector(`[data-remove="${id}"]`).onclick = async ()=>{ try{ await api.removeWatch(id); toast("Removed", 2200, "success"); loadWatchlist(); }catch{ toast("Failed to remove",2600, "error");} };
+    row.querySelector(`[data-notifications="${id}"]`).onclick = ()=> openNotificationSettings(id, it.title || `Series ${id}`);
     row.querySelector(`[data-more="${id}"]`)?.addEventListener("click", ()=>{ row.classList.toggle("show-more"); });
 
     const inp = row.querySelector(`[data-lr="${id}"]`);

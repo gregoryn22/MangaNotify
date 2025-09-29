@@ -1,5 +1,5 @@
 import api from "./api.js";
-import { timeAgo } from "./ui.js";
+import { timeAgo, getIcon } from "./ui.js";
 import { auth } from "./auth.js";
 
 export function initNotifications(){
@@ -20,7 +20,7 @@ export async function loadNotifications(){
     if (!items.length) { 
       box.innerHTML = `
         <div class="empty-state">
-          <div class="empty-state-icon">🔔</div>
+          <div class="empty-state-icon">${getIcon("🔔", "📭")}</div>
           <div class="empty-state-title">No notifications yet</div>
           <div class="empty-state-description">You'll see notifications here when new manga chapters are released.</div>
         </div>`; 

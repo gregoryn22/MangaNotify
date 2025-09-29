@@ -40,6 +40,9 @@ export const api = {
   setProgress:     (id, body)=> jpatch(`/api/watchlist/${id}/progress`, body),
   setStatus:       (id, status)=> jpatch(`/api/watchlist/${id}/status`, { status }),
   refreshNow:      ()=> jpost("/api/watchlist/refresh"),
+  // Notification preferences
+  getNotificationPrefs: (id)=> jget(`/api/watchlist/${id}/notifications`),
+  updateNotificationPrefs: (id, prefs)=> jpatch(`/api/watchlist/${id}/notifications`, prefs),
   notifications:   ()=> jget("/api/notifications"),
   clearNotifications: ()=> jdel("/api/notifications"),
   notifyTest:      ()=> jpost("/api/notify/test"),

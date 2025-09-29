@@ -52,7 +52,7 @@
         <div id="user-info" class="chip" style="display:none"></div>
         <button id="login-btn" class="btn" title="Login" style="display:none">Login</button>
         <button id="logout-btn" class="btn" title="Logout" style="display:none">Logout</button>
-        <button id="open-settings" class="btn" title="Settings" aria-controls="settings-drawer" aria-expanded="false">⚙️ Settings</button>
+        <button id="open-settings" class="btn" title="Settings" aria-controls="settings-drawer" aria-expanded="false"><span id="settings-icon">⚙️</span> Settings</button>
       </div>
     </div>
   </header>
@@ -299,6 +299,73 @@
             <option value="search-first">Search → Watchlist → Notifications</option>
             <option value="watch-first">Watchlist → Search → Notifications</option>
             <option value="tabs">Tabs</option>
+          </select>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <label class="checkbox" title="Use emoji icons throughout the interface">
+            <input id="use-emojis" type="checkbox" checked> Use emoji icons
+          </label>
+        </div>
+        <div class="row" style="margin-top:12px; align-items:center; gap:10px">
+          <label class="subline" for="layout-density">Density</label>
+          <select id="layout-density" class="btn" style="padding:8px 10px" title="Layout density">
+            <option value="compact">Compact</option>
+            <option value="normal">Normal</option>
+            <option value="spacious">Spacious</option>
+          </select>
+          <label class="subline" for="font-size">Font Size</label>
+          <select id="font-size" class="btn" style="padding:8px 10px" title="Font size">
+            <option value="small">Small</option>
+            <option value="normal">Normal</option>
+            <option value="large">Large</option>
+          </select>
+        </div>
+        <div class="row" style="margin-top:12px; align-items:center; gap:10px">
+          <label class="subline" for="accent-color">Accent Color</label>
+          <input id="accent-color" type="color" class="btn" style="padding:4px; width:60px; height:32px" title="Custom accent color" />
+          <button id="reset-accent" class="btn" title="Reset to default">Reset</button>
+        </div>
+      </section>
+
+      <section class="s-section">
+        <h3 class="s-title">Information Display</h3>
+        <div class="row">
+          <label class="checkbox" title="Show series IDs in watchlist">
+            <input id="show-ids" type="checkbox" checked> Show IDs
+          </label>
+          <label class="checkbox" title="Show last checked timestamps">
+            <input id="show-last-checked" type="checkbox" checked> Show last checked
+          </label>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <label class="checkbox" title="Show content rating badges">
+            <input id="show-content-rating" type="checkbox" checked> Show content rating
+          </label>
+          <label class="checkbox" title="Show status badges">
+            <input id="show-status" type="checkbox" checked> Show status badges
+          </label>
+        </div>
+      </section>
+
+      <section class="s-section">
+        <h3 class="s-title">Notification Preferences</h3>
+        <div class="row" style="margin-top:8px">
+          <label class="checkbox" title="Enable quiet hours to suppress notifications">
+            <input id="quiet-hours-enabled" type="checkbox"> Enable quiet hours
+          </label>
+        </div>
+        <div class="row" style="margin-top:8px; align-items:center; gap:10px">
+          <label class="subline" for="quiet-hours-start">Quiet hours</label>
+          <input id="quiet-hours-start" type="time" class="btn" style="padding:8px 10px" value="22:00" />
+          <span class="subline">to</span>
+          <input id="quiet-hours-end" type="time" class="btn" style="padding:8px 10px" value="08:00" />
+        </div>
+        <div class="row" style="margin-top:12px; align-items:center; gap:10px">
+          <label class="subline" for="notification-batching">Batch notifications</label>
+          <select id="notification-batching" class="btn" style="padding:8px 10px" title="Notification batching">
+            <option value="off">Off (immediate)</option>
+            <option value="hourly">Hourly digest</option>
+            <option value="daily">Daily digest</option>
           </select>
         </div>
       </section>
