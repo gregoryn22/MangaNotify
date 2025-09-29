@@ -8,6 +8,7 @@ export const state = {
   sortDir: localStorage.getItem("mn-sort-dir") || "asc",
   unreadOnly: localStorage.getItem("mn-unread-only") === "true",
   showCovers: localStorage.getItem("mn-show-covers") !== "false",
+  hideDropped: localStorage.getItem("mn-hide-dropped") === "true",
   autoRefresh: +(localStorage.getItem("mn-auto-refresh") || "0"),
   autoTimer: null,
   lastRefreshTs: null,

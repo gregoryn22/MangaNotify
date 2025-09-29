@@ -7,6 +7,7 @@
   --muted: #9aa3b2;
   --accent: #7c9cff;
   --accent-strong: #4e75ff;
+  --accent-rgb: 124, 156, 255;
   --shadow: 0 10px 30px rgba(0,0,0,.35);
   --radius: 14px;
   --focus: 2px solid color-mix(in oklab, var(--accent) 65%, #fff);
@@ -15,6 +16,7 @@
   :root{
     --bg:#f7f8fb; --bg-soft:#ffffffcf; --card:#ffffffd6; --border:#e6e8ee;
     --text:#111827; --muted:#5b6472; --accent:#375dfb; --accent-strong:#2147f0;
+    --accent-rgb: 55, 93, 251;
     --shadow: 0 10px 28px rgba(17,23,39,.08);
   }
 }
@@ -111,13 +113,24 @@ a{color:var(--accent)}
 .badge.ok{ color:#16a34a; border-color:#16a34a33 }
 .badge.warn{ color:#ef4444; border-color:#ef444433 }
 
+/* Status badges */
+.status-badge{ display:inline-flex; align-items:center; gap:6px; font-size:11px; padding:3px 7px; border-radius:999px; border:1px solid var(--border); background:var(--bg-soft); text-transform: lowercase }
+.status-reading{ color:#60a5fa; border-color:#60a5fa33 }
+.status-to-read{ color:#22c55e; border-color:#22c55e33 }
+.status-on-hold{ color:#fbbf24; border-color:#fbbf2433 }
+.status-finished{ color:#a78bfa; border-color:#a78bfa33 }
+.status-dropped{ color:#ef4444; border-color:#ef444433 }
+
 /* tighter mini input so controls fit more often */
 .input-mini{ width:72px; padding:6px 8px; font-size:13px; background:transparent; border:1px solid var(--border); border-radius:10px; color:var(--text) }
 
 /* Controls stay on one row; scroll horizontally if needed */
-.controls{ display:flex; gap:8px; align-items:center; flex-wrap:nowrap; overflow-x:auto; overscroll-behavior-inline:contain }
+.controls{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
 .controls .btn{ padding:8px 10px; white-space:nowrap }
-@media (max-width:820px){ .controls{ flex-wrap:wrap; overflow-x:visible; } }
+/* More tray for secondary actions */
+.more-tray{ display:none; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px }
+.watch-item.show-more .more-tray{ display:flex }
+.more-toggle{ margin-left:auto }
 
 /* Old unread dot (kept for compatibility) */
 .unread-dot{ width:8px; height:8px; border-radius:999px; background: #ef4444; box-shadow: 0 0 0 0 rgba(239,68,68,.55); animation: pulse 1.8s ease-out infinite; flex: 0 0 auto; margin-top:4px }
@@ -136,10 +149,253 @@ a{color:var(--accent)}
 .checkbox{display:flex; align-items:center; gap:6px; font-size:13px; color:var(--muted)}
 
 /* modal */
-dialog { border:1px solid var(--border); border-radius:12px; background:var(--card); color:var(--text); padding:0; max-width:720px }
-dialog::backdrop { background: rgba(0,0,0,.4) }
-.modal-head{ display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border-bottom:1px solid var(--border) }
-.modal-body{ padding:12px 14px; display:grid; gap:10px }
+.modal-solid{ background: color-mix(in oklab, var(--card) 100%, #000 0%); }
+dialog { border:1px solid var(--border); border-radius:12px; background: var(--card); color:var(--text); padding:0; max-width:720px }
+dialog::backdrop { background: rgba(0,0,0,.55) }
+
+/* Auth UI */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Login Modal Styles */
+.login-modal {
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.login-modal .modal-head {
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  color: white;
+  border-radius: 12px 12px 0 0;
+  padding: 24px;
+  border-bottom: none;
+}
+
+.login-header h3 {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.login-subtitle {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 14px;
+}
+
+.btn-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0;
+}
+
+.btn-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.login-modal .modal-body {
+  padding: 24px;
+  background: var(--card);
+}
+
+.login-form {
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 16px;
+  transition: border-color 0.2s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.1);
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.btn-login {
+  padding: 12px 24px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-icon {
+  font-size: 16px;
+}
+
+.login-divider {
+  text-align: center;
+  margin: 20px 0;
+  position: relative;
+}
+
+.login-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--border);
+}
+
+.login-divider span {
+  background: var(--card);
+  padding: 0 16px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.login-setup {
+  text-align: center;
+}
+
+.setup-text {
+  margin: 0 0 12px 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.setup-btn {
+  padding: 12px 24px;
+  border: 2px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 auto;
+}
+
+.setup-btn:hover {
+  background: var(--accent);
+  color: white;
+}
+
+/* Setup Prompt Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-card {
+  background: var(--card);
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.setup-prompt .modal-header {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  padding: 24px;
+  border-radius: 12px 12px 0 0;
+}
+
+.setup-prompt .modal-header h2 {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.setup-prompt .modal-header p {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 16px;
+}
+
+.setup-prompt .modal-body {
+  padding: 24px;
+}
+
+.setup-prompt .modal-body p {
+  margin: 0 0 20px 0;
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.setup-options {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.setup-options .btn {
+  padding: 12px 24px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 140px;
+}
+
+@media (max-width: 480px) {
+  .setup-options {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .setup-options .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+.modal-head{ display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border-bottom:1px solid var(--border); background: var(--card) }
+.modal-body{ padding:12px 14px; display:grid; gap:10px; background: var(--card) }
+.modal-body .subline{ color: var(--text); opacity: .9 }
 .kvs{ font-size:13px; color:var(--muted) }
 .kvs code{ font-size:12px }
 .tags{ display:flex; flex-wrap:wrap; gap:6px }
