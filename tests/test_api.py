@@ -8,9 +8,8 @@ from fastapi.testclient import TestClient
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 
-# Updated to use main.py instead of server.py
-srv = importlib.import_module("manganotify.main")
-importlib.reload(srv)
+# Import main module but don't use the global app instance
+# Tests will create their own app instances
 
 def _reload_with_env(monkeypatch, **env):
     """

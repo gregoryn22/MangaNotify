@@ -420,9 +420,11 @@ def create_app() -> FastAPI:
     return app
 
 
-# Only create app when running directly, not when importing
+# Create app instance for uvicorn to import
+app = create_app()
+
+# Only run directly when executed as main
 if __name__ == "__main__":
-    app = create_app()
     # Run directly (no app_dir, no chdir, just pass the object)
     import uvicorn
     import os
@@ -432,7 +434,3 @@ if __name__ == "__main__":
         port=int(os.getenv("PORT", "8999")),
         reload=False,
     )
-else:
-    # For testing, don't create app at import time
-    # Tests will call create_app() directly
-    app = None
