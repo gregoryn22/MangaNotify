@@ -187,10 +187,14 @@ def test_token_expiration():
     app = create_app()
     
     with TestClient(app) as client:
+        # Get the test settings from the app
+        test_settings = app.state.settings
+        
         # Create a token that expires immediately
         expired_token = create_access_token(
             {"sub": "admin"}, 
-            expires_delta=timedelta(seconds=-1)  # Already expired
+            expires_delta=timedelta(seconds=-1),  # Already expired
+            settings_obj=test_settings
         )
         
         headers = {"Authorization": f"Bearer {expired_token}"}

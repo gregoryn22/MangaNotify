@@ -80,24 +80,40 @@ def test_notify_test_missing_creds(tmp_path, monkeypatch):
 
 
 def test_notify_test_ok(tmp_path, monkeypatch):
-    # Provide creds; disable poller for determinism; disable auth for test
+    # Provide creds; disable poller for determinism; enable auth for test
     monkeypatch.setenv("DATA_DIR", str(tmp_path))
     monkeypatch.setenv("PUSHOVER_APP_TOKEN", "tokenX")
     monkeypatch.setenv("PUSHOVER_USER_KEY", "userY")
     monkeypatch.setenv("POLL_INTERVAL_SEC", "0")
-    monkeypatch.setenv("AUTH_ENABLED", "false")
+    monkeypatch.setenv("AUTH_ENABLED", "true")
+    monkeypatch.setenv("AUTH_SECRET_KEY", "test-secret-key-12345678901234567890")
+    monkeypatch.setenv("AUTH_USERNAME", "admin")
+    monkeypatch.setenv("AUTH_PASSWORD", "password123")
+    
+    # Reload config module to pick up new environment variables
+    if "manganotify.core.config" in sys.modules:
+        importlib.reload(sys.modules["manganotify.core.config"])
     
     # Import and create app
     from manganotify.main import create_app
     app = create_app()
 
     with TestClient(app) as client:
+        # First login to get a token
+        login_response = client.post("/api/auth/login", json={
+            "username": "admin",
+            "password": "password123"
+        })
+        assert login_response.status_code == 200
+        token = login_response.json()["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+        
         # Mock the external Pushover API call
         with respx.mock(assert_all_called=True) as router:
             router.post("https://api.pushover.net/1/messages.json").respond(
                 200, json={"status": 1, "request": "abc123"}
             )
-            r = client.post("/api/notify/test")
+            r = client.post("/api/notify/test", headers=headers)
 
         assert r.status_code == 200
         js = r.json()
