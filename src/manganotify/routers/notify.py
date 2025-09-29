@@ -32,7 +32,7 @@ async def notify_test(request: Request, current_user: dict = Depends(require_aut
     
     if not (settings.PUSHOVER_APP_TOKEN and settings.PUSHOVER_USER_KEY):
         return JSONResponse(status_code=500, content={"ok": False, "message": "Missing Pushover env vars"})
-    res = await pushover(request.app.state.client, "MangaNotify", "✅ test")
+    res = await pushover(request.app.state.client, "MangaNotify", "✅ test", settings_obj=settings)
     add_notification("test", {"title": "MangaNotify test", "message": "Manual test", "push_ok": bool(res.get("ok"))})
     return JSONResponse(status_code=200 if res.get("ok") else 502, content=res)
 
