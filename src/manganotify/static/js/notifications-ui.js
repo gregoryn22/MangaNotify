@@ -17,7 +17,15 @@ export async function loadNotifications(){
     const items = js.data || js.results || [];
     count && (count.textContent = `${items.length} entr${items.length===1?"y":"ies"}`);
     if (!box) return;
-    if (!items.length) { box.innerHTML = `<div class="subline" style="padding:0 12px 12px">No notifications yet.</div>`; return; }
+    if (!items.length) { 
+      box.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">🔔</div>
+          <div class="empty-state-title">No notifications yet</div>
+          <div class="empty-state-description">You'll see notifications here when new manga chapters are released.</div>
+        </div>`; 
+      return; 
+    }
     box.innerHTML = items.map(n => {
       const when = n.detected_at || n.created_at || n.timestamp || n.time || "";
       const title = (n.title || n.series || "Notification").replace(/[<>]/g, "");

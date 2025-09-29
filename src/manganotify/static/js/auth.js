@@ -109,7 +109,7 @@ export const auth = {
       this.isAuthenticated = true;
       this.user = { username };
       this.updateUI();
-      toast("Logged in successfully");
+      toast("Logged in successfully", 2200, "success");
       
       // Close the login modal
       $("#login-modal")?.close();
@@ -119,7 +119,7 @@ export const auth = {
       
       return true;
     } catch (e) {
-      toast("Login failed: " + (e.message || "Invalid credentials"));
+      toast("Login failed: " + (e.message || "Invalid credentials"), 3000, "error");
       return false;
     }
   },
@@ -134,7 +134,7 @@ export const auth = {
     this.isAuthenticated = false;
     this.user = null;
     this.updateUI();
-    toast("Logged out");
+    toast("Logged out", 2200, "success");
   },
 
   async refreshData() {

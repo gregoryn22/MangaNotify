@@ -13,7 +13,24 @@ export function buildQuery(params){
 }
 
 export function getCoverUrl(c){ if(!c) return ""; if(typeof c==="string") return c; if(typeof c==="object") return c.small||c.default||c.raw||""; return ""; }
-export function toast(msg, ms=2200){ const t=$("#toast"); if(!t) return; t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), ms); }
+export function toast(msg, ms=2200, type="info"){ 
+  const t=$("#toast"); 
+  if(!t) return; 
+  
+  // Clear existing classes
+  t.className = "toast";
+  
+  // Set message and type
+  t.textContent=msg; 
+  t.classList.add("show", type); 
+  
+  // Auto-hide
+  setTimeout(()=>{
+    t.classList.remove("show", type);
+    // Reset class after animation
+    setTimeout(() => t.className = "toast", 300);
+  }, ms); 
+}
 export function setStatus(text){ const el=document.getElementById("status"); if(el) el.textContent=text||"—"; }
 export function parseProgress(v){ const n=parseFloat(String(v??"").replace(",",".")); return Number.isFinite(n)?Math.max(0,n):0; }
 export function unreadCount(total,lastRead){ const t=Number(total)||0; const r=parseProgress(lastRead); return Math.max(0,t-Math.floor(r)); }
@@ -84,11 +101,15 @@ export async function search(){
   setStatus("Searching…");
   $("#results-panel").hidden=false;
   $("#results").innerHTML = Array.from({length:8}).map(()=>`
-    <div class="card" role="listitem" aria-busy="true">
+    <div class="card loading" role="listitem" aria-busy="true">
       <div class="cover shimmer"></div>
       <div class="meta">
         <div class="title shimmer" style="height:16px;border-radius:6px"></div>
         <div class="subline shimmer" style="height:12px;border-radius:6px;width:70%"></div>
+        <div class="row" style="margin-top:8px">
+          <div class="shimmer" style="height:24px;width:60px;border-radius:6px"></div>
+          <div class="shimmer" style="height:24px;width:50px;border-radius:6px"></div>
+        </div>
       </div>
     </div>`).join("");
 
@@ -119,7 +140,12 @@ function renderResults(js){
   const box=$("#results");
   box.innerHTML="";
   if(!items.length){
-    box.innerHTML = `<div style="padding:18px" class="subline">No results.</div>`;
+    box.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">🔍</div>
+        <div class="empty-state-title">No results found</div>
+        <div class="empty-state-description">Try adjusting your search terms or filters to find more manga.</div>
+      </div>`;
     $("#pager").hidden=true; return;
   }
 
@@ -155,11 +181,11 @@ function renderResults(js){
         const statusSel = el.querySelector(`[data-add-status="${it.id}"]`);
         const status = statusSel ? statusSel.value : undefined;
         await api.addWatch({ id: it.id, title, total_chapters: total, last_read: 0, status });
-        toast("Added to watchlist"); await loadWatchlist();
-      }catch{ toast("Failed to add", 2600); }
+        toast("Added to watchlist", 2200, "success"); await loadWatchlist();
+      }catch{ toast("Failed to add", 2600, "error"); }
     };
     el.querySelector(`[data-open="${it.id}"]`).onclick = ()=> window.open(`https://mangabaka.dev/${it.id}`, "_blank");
-    el.querySelector(`[data-copy="${it.id}"]`).onclick = async ()=>{ try{ await navigator.clipboard.writeText(String(it.id)); toast("ID copied"); }catch{ toast("Copy failed", 2200); } };
+    el.querySelector(`[data-copy="${it.id}"]`).onclick = async ()=>{ try{ await navigator.clipboard.writeText(String(it.id)); toast("ID copied", 2200, "success"); }catch{ toast("Copy failed", 2200, "error"); } };
     el.querySelector(`[data-details="${it.id}"]`).onclick = ()=> openDetails(it.id, title);
   }
 
@@ -232,7 +258,12 @@ export async function loadWatchlist(){
   box.innerHTML = "";
 
   if(!list.length){
-    box.innerHTML = `<div class="subline" style="padding:0 12px 16px">Nothing here yet. Add items from the search results.</div>`;
+    box.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">📚</div>
+        <div class="empty-state-title">No manga in watchlist</div>
+        <div class="empty-state-description">Search for manga above and add them to your watchlist to track new chapters.</div>
+      </div>`;
     return;
   }
 
@@ -300,22 +331,22 @@ export async function loadWatchlist(){
 
     const id = it.id;
     row.querySelector(`[data-open="${id}"]`).onclick = ()=> window.open(`https://mangabaka.dev/${id}`, "_blank");
-    row.querySelector(`[data-copy="${id}"]`).onclick = async ()=>{ try{ await navigator.clipboard.writeText(String(id)); toast("ID copied"); }catch{ toast("Copy failed", 2200); } };
+    row.querySelector(`[data-copy="${id}"]`).onclick = async ()=>{ try{ await navigator.clipboard.writeText(String(id)); toast("ID copied", 2200, "success"); }catch{ toast("Copy failed", 2200, "error"); } };
     row.querySelector(`[data-details="${id}"]`).onclick = ()=> openDetails(id, it.title || `Series ${id}`);
-    row.querySelector(`[data-remove="${id}"]`).onclick = async ()=>{ try{ await api.removeWatch(id); toast("Removed"); loadWatchlist(); }catch{ toast("Failed to remove",2600);} };
+    row.querySelector(`[data-remove="${id}"]`).onclick = async ()=>{ try{ await api.removeWatch(id); toast("Removed", 2200, "success"); loadWatchlist(); }catch{ toast("Failed to remove",2600, "error");} };
     row.querySelector(`[data-more="${id}"]`)?.addEventListener("click", ()=>{ row.classList.toggle("show-more"); });
 
     const inp = row.querySelector(`[data-lr="${id}"]`);
     row.querySelector(`[data-set="${id}"]`)?.addEventListener("click", async ()=>{
       const val = parseProgress(inp.value);
-      try{ await api.setProgress(id, { last_read: val }); toast("Progress updated"); loadWatchlist(); }
-      catch{ toast("Failed to update", 2600); }
+      try{ await api.setProgress(id, { last_read: val }); toast("Progress updated", 2200, "success"); loadWatchlist(); }
+      catch{ toast("Failed to update", 2600, "error"); }
     });
     row.querySelector(`[data-next="${id}"]`)?.addEventListener("click", async ()=>{
-      try{ await api.readNext(id); toast("+1 read"); loadWatchlist(); } catch{ toast("Failed to bump",2600); }
+      try{ await api.readNext(id); toast("+1 read", 2200, "success"); loadWatchlist(); } catch{ toast("Failed to bump",2600, "error"); }
     });
     row.querySelector(`[data-prev="${id}"]`)?.addEventListener("click", async ()=>{
-      try{ await api.setProgress(id, { decrement: 1 }); toast("−1 read"); loadWatchlist(); } catch{ toast("Failed to decrement",2600); }
+      try{ await api.setProgress(id, { decrement: 1 }); toast("−1 read", 2200, "success"); loadWatchlist(); } catch{ toast("Failed to decrement",2600, "error"); }
     });
 
     // Status change handler (optimistic)
@@ -325,11 +356,11 @@ export async function loadWatchlist(){
       const prev = it.status || "reading";
       try{
         await api.setStatus(id, newStatus);
-        toast(`Status: ${newStatus}`);
+        toast(`Status: ${newStatus}`, 2200, "success");
       }catch{
         // rollback UI value on failure
         statusSel.value = prev;
-        toast("Failed to set status", 2600);
+        toast("Failed to set status", 2600, "error");
       }
     });
 
@@ -346,10 +377,10 @@ document.getElementById("watchlist")?.addEventListener("click", async (e) => {
   const id = btn.getAttribute("data-latest");
   try{
     await api.setProgress(id, { mark_latest: true });
-    toast("Marked latest");
+    toast("Marked latest", 2200, "success");
     loadWatchlist();
   }catch{
-    toast("Failed", 2500);
+    toast("Failed", 2500, "error");
   }
 });
 
