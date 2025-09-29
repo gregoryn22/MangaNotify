@@ -22,6 +22,10 @@ def _create_test_app(**env_vars):
     os.environ.setdefault("DATA_DIR", "/tmp/test_data")
     os.environ.setdefault("POLL_INTERVAL_SEC", "0")
     
+    # Reload config module to pick up new environment variables
+    if "manganotify.core.config" in sys.modules:
+        importlib.reload(sys.modules["manganotify.core.config"])
+    
     # Create app - it will pick up the new environment variables
     app = create_app()
     return app

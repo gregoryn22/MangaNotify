@@ -32,9 +32,13 @@ jobs:
 
       - name: Run pytest
         env:
-          PYTHONPATH: ${{ github.workspace }}
+          PYTHONPATH: ${{ github.workspace }}/src
           MANGABAKA_BASE: "https://api.mangabaka.dev"
           POLL_INTERVAL_SEC: "0"
+          AUTH_ENABLED: "false"
+          DATA_DIR: "/tmp/test_data"
+          PUSHOVER_APP_TOKEN: ""
+          PUSHOVER_USER_KEY: ""
         run: pytest -q
 
   docker:
