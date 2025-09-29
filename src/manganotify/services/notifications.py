@@ -21,10 +21,13 @@ def add_notification(kind: str, payload: Dict[str, Any]) -> Dict[str, Any]:
     save_notifications(items)
     return rec
 
-async def pushover(client: httpx.AsyncClient, title: str, message: str) -> Dict[str, Any]:
+async def pushover(client: httpx.AsyncClient, title: str, message: str, settings_obj=None) -> Dict[str, Any]:
+    # Use provided settings or fall back to global settings
+    settings_to_use = settings_obj or settings
+    
     # Get decrypted credentials
-    app_token = settings.get_decrypted_pushover_app_token()
-    user_key = settings.get_decrypted_pushover_user_key()
+    app_token = settings_to_use.get_decrypted_pushover_app_token()
+    user_key = settings_to_use.get_decrypted_pushover_user_key()
     
     if not (app_token and user_key):
         return {"ok": False, "reason": "Missing PUSHOVER_* envs"}
