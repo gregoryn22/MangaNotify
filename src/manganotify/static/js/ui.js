@@ -1,5 +1,6 @@
 import { state, MIN_QUERY_LEN, TYPE_DEBOUNCE_MS, searchCache, dtFormatter } from "./state.js";
 import api from "./api.js";
+import { auth } from "./auth.js";
 
 /* ===== DOM utils & formatting ===== */
 export const $  = (s)=>document.querySelector(s);
@@ -74,6 +75,8 @@ function searchParams(){
 }
 
 export async function search(){
+  if (!auth.requireAuth()) return;
+  
   if(!state.q){ $("#results-panel").hidden=true; return; }
   if(state.aborter){ state.aborter.abort(); }
   state.aborter = new AbortController();
@@ -98,7 +101,8 @@ export async function search(){
     setStatus("Done");
   }catch(e){
     if(e.name==="AbortError") return;
-    $("#results").innerHTML = `<div style="padding:18px" class="subline">Search failed. ${e}</div>`;
+    const errorMsg = e.toString().replace(/[<>]/g, "");
+    $("#results").innerHTML = `<div style="padding:18px" class="subline">Search failed. ${errorMsg}</div>`;
     setStatus("Search failed");
   }
 }
@@ -135,6 +139,9 @@ function renderResults(js){
         <h3 class="title" title="${title}">${title}</h3>
         <div class="subline">ID: <code>${it.id}</code>${authors ? ` · ${authors}` : ""} · Chapters: ${total}${status?` · ${status}`:""}${cr?` · ${cr}`:""}</div>
         <div class="row">
+          <select class="btn" data-add-status="${it.id}" title="Initial status" style="padding:6px 8px">
+            ${["reading","to-read","on-hold","finished","dropped"].map(s=>`<option value="${s}" ${s==="reading"?"selected":""}>${s}</option>`).join("")}
+          </select>
           <button class="btn" data-add="${it.id}">Watch</button>
           <button class="btn" data-open="${it.id}">Open</button>
           <button class="btn" data-details="${it.id}">Details</button>
@@ -145,7 +152,9 @@ function renderResults(js){
 
     el.querySelector(`[data-add="${it.id}"]`).onclick = async ()=>{
       try{
-        await api.addWatch({ id: it.id, title, total_chapters: total, last_read: 0, cover });
+        const statusSel = el.querySelector(`[data-add-status="${it.id}"]`);
+        const status = statusSel ? statusSel.value : undefined;
+        await api.addWatch({ id: it.id, title, total_chapters: total, last_read: 0, status });
         toast("Added to watchlist"); await loadWatchlist();
       }catch{ toast("Failed to add", 2600); }
     };
@@ -192,7 +201,10 @@ async function openDetails(id, title){
 
 /* ===== Watchlist ===== */
 export async function loadWatchlist(){
-  const js = await api.watchlist();
+  if (!auth.requireAuth()) return;
+  
+  const statusFilter = document.getElementById("wl-status-filter")?.value || "";
+  const js = await api.watchlist(statusFilter ? { status: statusFilter } : undefined);
   let list = js.data || [];
 
   if(state.unreadOnly){
@@ -203,6 +215,9 @@ export async function loadWatchlist(){
       return unread > 0;
     });
   }
+
+  // Optionally hide dropped
+  if(state.hideDropped){ list = list.filter(it => (it.status || "reading") !== "dropped"); }
 
   list = sortWatchlist(list);
 
@@ -250,7 +265,7 @@ export async function loadWatchlist(){
             ID: <code>${it.id}</code>
             · Chapters: ${total ?? "—"}
             ${lastCheckedTxt} ${lastChapterTxt}
-            ${it.status? ` · ${it.status}` : ""} ${it.content_rating? ` · ${it.content_rating}` : ""}
+            ${it.status? ` · <span class="status-badge status-${(it.status||"reading").replace(/[^a-z-]/g,"")}">${it.status}</span>` : ""} ${it.content_rating? ` · ${it.content_rating}` : ""}
           </div>
           <div class="row" style="margin-top:6px; gap:8px">
             <span class="badge ${behind ? "warn":"ok"}" title="Unread chapters">
@@ -270,6 +285,12 @@ export async function loadWatchlist(){
           <button class="btn" data-next="${it.id}" title="Increment read (+1)">+1</button>
           <button class="btn" data-latest="${it.id}" title="Mark latest">Mark latest</button>
         ` : ""}
+        <select class="btn" data-status="${it.id}" title="Set status" style="padding:6px 8px">
+          ${["reading","to-read","on-hold","finished","dropped"].map(s=>`<option value="${s}" ${String(it.status||"reading")==="${s}"?"selected":""}>${s}</option>`).join("")}
+        </select>
+        <button class="btn more-toggle" data-more="${it.id}" title="More">More ▾</button>
+      </div>
+      <div class="more-tray">
         <button class="btn" data-details="${it.id}" title="Details">Details</button>
         <button class="btn" data-open="${it.id}" title="Open series page">Open</button>
         <button class="btn" data-copy="${it.id}" title="Copy ID">Copy ID</button>
@@ -282,6 +303,7 @@ export async function loadWatchlist(){
     row.querySelector(`[data-copy="${id}"]`).onclick = async ()=>{ try{ await navigator.clipboard.writeText(String(id)); toast("ID copied"); }catch{ toast("Copy failed", 2200); } };
     row.querySelector(`[data-details="${id}"]`).onclick = ()=> openDetails(id, it.title || `Series ${id}`);
     row.querySelector(`[data-remove="${id}"]`).onclick = async ()=>{ try{ await api.removeWatch(id); toast("Removed"); loadWatchlist(); }catch{ toast("Failed to remove",2600);} };
+    row.querySelector(`[data-more="${id}"]`)?.addEventListener("click", ()=>{ row.classList.toggle("show-more"); });
 
     const inp = row.querySelector(`[data-lr="${id}"]`);
     row.querySelector(`[data-set="${id}"]`)?.addEventListener("click", async ()=>{
@@ -294,6 +316,21 @@ export async function loadWatchlist(){
     });
     row.querySelector(`[data-prev="${id}"]`)?.addEventListener("click", async ()=>{
       try{ await api.setProgress(id, { decrement: 1 }); toast("−1 read"); loadWatchlist(); } catch{ toast("Failed to decrement",2600); }
+    });
+
+    // Status change handler (optimistic)
+    const statusSel = row.querySelector(`[data-status="${id}"]`);
+    statusSel?.addEventListener("change", async (e)=>{
+      const newStatus = e.target.value;
+      const prev = it.status || "reading";
+      try{
+        await api.setStatus(id, newStatus);
+        toast(`Status: ${newStatus}`);
+      }catch{
+        // rollback UI value on failure
+        statusSel.value = prev;
+        toast("Failed to set status", 2600);
+      }
     });
 
     $("#watchlist").appendChild(row);

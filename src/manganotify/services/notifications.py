@@ -22,11 +22,16 @@ def add_notification(kind: str, payload: Dict[str, Any]) -> Dict[str, Any]:
     return rec
 
 async def pushover(client: httpx.AsyncClient, title: str, message: str) -> Dict[str, Any]:
-    if not (settings.PUSHOVER_APP_TOKEN and settings.PUSHOVER_USER_KEY):
+    # Get decrypted credentials
+    app_token = settings.get_decrypted_pushover_app_token()
+    user_key = settings.get_decrypted_pushover_user_key()
+    
+    if not (app_token and user_key):
         return {"ok": False, "reason": "Missing PUSHOVER_* envs"}
+    
     r = await client.post(
         "https://api.pushover.net/1/messages.json",
-        data={"token": settings.PUSHOVER_APP_TOKEN, "user": settings.PUSHOVER_USER_KEY,
+        data={"token": app_token, "user": user_key,
               "title": title, "message": message},
         timeout=15.0,
     )
@@ -34,3 +39,27 @@ async def pushover(client: httpx.AsyncClient, title: str, message: str) -> Dict[
     try: js = r.json()
     except Exception: pass
     return {"ok": r.status_code == 200 and js.get("status") == 1, "status": r.status_code, "raw": js}
+
+async def discord_notify(client: httpx.AsyncClient, title: str, message: str) -> Dict[str, Any]:
+    # Get decrypted webhook URL
+    webhook_url = settings.get_decrypted_discord_webhook_url()
+    
+    if not (settings.DISCORD_ENABLED and webhook_url):
+        return {"ok": False, "reason": "Discord notifications not enabled or webhook missing"}
+    
+    payload = {
+        "embeds": [{
+            "title": title,
+            "description": message,
+            "color": 0x5865F2  # Discord blurple
+        }]
+    }
+    try:
+        r = await client.post(
+            webhook_url,
+            json=payload,
+            timeout=15.0,
+        )
+        return {"ok": r.status_code in (200, 204), "status": r.status_code, "raw": await r.aread()}
+    except Exception as e:
+        return {"ok": False, "reason": str(e)}

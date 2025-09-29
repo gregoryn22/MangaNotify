@@ -31,6 +31,18 @@ export function initSettings(){
   window.addEventListener("offline", updateNet);
   updateNet();
 
+  /* Watchlist status filter */
+  const wlFilter = document.getElementById("wl-status-filter");
+  if(wlFilter){
+    // restore persisted UI selection
+    wlFilter.value = localStorage.getItem("mn-wl-status") || "";
+    wlFilter.addEventListener("change", ()=>{
+      localStorage.setItem("mn-wl-status", wlFilter.value || "");
+      // no need to sync to URL; just reload the list
+      import("./ui.js").then(m => m.loadWatchlist());
+    });
+  }
+
   /* Filters */
   function persistFilters(){
     localStorage.setItem("mn-f-status", state.filters.status || "");
@@ -58,8 +70,7 @@ export function initSettings(){
   window.addEventListener("keydown",(e)=>{ if(e.key==="Escape") closeSettings(); });
 
   /* Layout / Tabs */
-  $("#layout")?.addEventListener("change", e=> applyLayout(e.target.value));
-  $("#layout-alt")?.addEventListener("change", e=>{ $("#layout").value=e.target.value; applyLayout(e.target.value); });
+  $("#layout-alt")?.addEventListener("change", e=>{ applyLayout(e.target.value); });
   $("#tab-watch")?.addEventListener("click", ()=> selectTab("watch"));
   $("#tab-search")?.addEventListener("click", ()=> selectTab("search"));
   $("#tab-notif")?.addEventListener("click", ()=> selectTab("notif"));
@@ -71,6 +82,10 @@ export function initSettings(){
   $("#unread-only")?.addEventListener("change", e=>{ state.unreadOnly = !!e.target.checked; localStorage.setItem("mn-unread-only", String(state.unreadOnly)); loadWatchlist(); });
   $("#show-covers") && ($("#show-covers").checked = state.showCovers);
   $("#show-covers")?.addEventListener("change", e=>{ state.showCovers = !!e.target.checked; localStorage.setItem("mn-show-covers", String(state.showCovers)); loadWatchlist(); });
+
+  // Hide dropped toggle
+  $("#hide-dropped") && ($("#hide-dropped").checked = state.hideDropped);
+  $("#hide-dropped")?.addEventListener("change", e=>{ state.hideDropped = !!e.target.checked; localStorage.setItem("mn-hide-dropped", String(state.hideDropped)); loadWatchlist(); });
 
   /* Auto refresh + ticker */
   function refreshTicker(){
@@ -114,10 +129,79 @@ export function initSettings(){
   $("#notif-clear")?.addEventListener("click", async ()=>{ try{ await api.clearNotifications(); toast("Cleared"); }catch(e){ toast(`Failed: ${e}`,3000);} loadNotifications(); });
   $("#notify-test")?.addEventListener("click", async ()=>{ try{ await api.notifyTest(); toast("Test sent"); }catch(e){ toast(`Failed: ${e}`,3000);} loadNotifications(); });
 
+  // --- Discord Notifications ---
+  function updateDiscordTestBtn() {
+    const enabled = $("#discord-enabled").checked;
+    const url = $("#discord-webhook").value.trim();
+    $("#discord-test").disabled = !(enabled && url.length > 0);
+  }
+  function setDiscordStatus(text, type="") {
+    const el = $("#discord-status");
+    el.textContent = text;
+    el.style.display = text ? "" : "none";
+    el.style.background = "";
+    el.style.color = "";
+    if (type === "ok") {
+      el.style.background = "#5865F2";
+      el.style.color = "#fff";
+    } else if (type === "error") {
+      el.style.background = "#ef4444";
+      el.style.color = "#fff";
+    } else if (type === "testing") {
+      el.style.background = "#fbbf24";
+      el.style.color = "#222";
+    }
+    el.setAttribute("aria-live", "polite");
+  }
+  async function loadDiscordSettings() {
+    try {
+      const js = await api.getDiscordSettings();
+      $("#discord-webhook").value = js.webhook_url || "";
+      $("#discord-enabled").checked = !!js.enabled;
+      updateDiscordTestBtn();
+      setDiscordStatus(js.enabled && js.webhook_url ? "Enabled" : "", js.enabled && js.webhook_url ? "ok" : "");
+    } catch {}
+  }
+  async function saveDiscordSettings() {
+    const webhook_url = $("#discord-webhook").value.trim();
+    const enabled = $("#discord-enabled").checked;
+    if (enabled && !/^https:\/\/discord\.com\/api\/webhooks\//.test(webhook_url)) {
+      toast("Invalid Discord webhook URL", 3000);
+      setDiscordStatus("Invalid URL", "error");
+      $("#discord-webhook").focus();
+      updateDiscordTestBtn();
+      return;
+    }
+    try {
+      await api.setDiscordSettings({ webhook_url, enabled });
+      toast("Discord settings saved");
+      setDiscordStatus(enabled && webhook_url ? "Enabled" : "", enabled && webhook_url ? "ok" : "");
+    } catch(e) {
+      toast("Failed to save Discord settings", 3000);
+      setDiscordStatus("Save failed", "error");
+      $("#discord-webhook").focus();
+    }
+    updateDiscordTestBtn();
+  }
+  $("#discord-webhook")?.addEventListener("input", ()=>{ updateDiscordTestBtn(); });
+  $("#discord-webhook")?.addEventListener("change", saveDiscordSettings);
+  $("#discord-enabled")?.addEventListener("change", ()=>{ saveDiscordSettings(); updateDiscordTestBtn(); });
+  $("#discord-test")?.addEventListener("click", async ()=>{
+    setDiscordStatus("Testing…", "testing");
+    try {
+      await api.discordTest();
+      toast("Discord test sent");
+      setDiscordStatus("Test sent!", "ok");
+    } catch(e) {
+      toast("Failed to send Discord test", 3000);
+      setDiscordStatus("Test failed", "error");
+    }
+  });
+  loadDiscordSettings();
+
   // initial UI reflect
   $("#sort-dir").textContent = state.sortDir==="asc" ? "⬆︎" : "⬇︎";
   $("#sort-by") && ($("#sort-by").value = state.sortBy);
-  $("#layout") && ($("#layout").value = state.layout);
   $("#layout-alt") && ($("#layout-alt").value = state.layout);
 
   // URL → controls

@@ -1,5 +1,6 @@
 import api from "./api.js";
 import { timeAgo } from "./ui.js";
+import { auth } from "./auth.js";
 
 export function initNotifications(){
   // nothing extra; buttons are wired in settings.js
@@ -7,6 +8,8 @@ export function initNotifications(){
 }
 
 export async function loadNotifications(){
+  if (!auth.requireAuth()) return;
+  
   const box = document.getElementById("notif-list");
   const count = document.getElementById("notif-count");
   try{
@@ -17,15 +20,18 @@ export async function loadNotifications(){
     if (!items.length) { box.innerHTML = `<div class="subline" style="padding:0 12px 12px">No notifications yet.</div>`; return; }
     box.innerHTML = items.map(n => {
       const when = n.detected_at || n.created_at || n.timestamp || n.time || "";
+      const title = (n.title || n.series || "Notification").replace(/[<>]/g, "");
+      const message = n.message ? n.message.replace(/[<>]/g, "") : "";
+      const id = n.id ? n.id.toString().replace(/[<>]/g, "") : "";
       return `
       <div class="notif-item">
         <div class="notif-left">
-          <div class="notif-title">${n.title || n.series || "Notification"}</div>
-          <div class="notif-meta">${when ? timeAgo(when) : ""} · <span class="mono">${n.id || ""}</span></div>
-          ${n.message ? `<div class="subline" style="margin-top:4px">${n.message}</div>` : ""}
+          <div class="notif-title">${title}</div>
+          <div class="notif-meta">${when ? timeAgo(when) : ""} · <span class="mono">${id}</span></div>
+          ${message ? `<div class="subline" style="margin-top:4px">${message}</div>` : ""}
         </div>
         <div class="notif-actions">
-          ${n.id ? `<button class="btn" data-copy="${n.id}">Copy ID</button>` : ""}
+          ${id ? `<button class="btn" data-copy="${id}">Copy ID</button>` : ""}
         </div>
       </div>`;
     }).join("");
@@ -37,6 +43,7 @@ export async function loadNotifications(){
       });
     });
   }catch(e){
-    box && (box.innerHTML = `<div class="subline" style="padding:10px 12px">Failed to load: ${e}</div>`);
+    const errorMsg = e.toString().replace(/[<>]/g, "");
+    box && (box.innerHTML = `<div class="subline" style="padding:10px 12px">Failed to load: ${errorMsg}</div>`);
   }
 }

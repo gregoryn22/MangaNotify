@@ -3,4 +3,10 @@ uvicorn[standard]
 httpx
 pytest
 respx
-httpx
+python-dotenv
+pydantic
+pydantic-settings
+PyJWT[crypto]
+passlib[bcrypt]
+tenacity
+cryptography

@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MangaNotify Setup</title>
+    <link rel="stylesheet" href="/static/styles/main.css">
+    <style>
+        .setup-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+        .setup-step {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .setup-step h3 {
+            margin-top: 0;
+            color: var(--text);
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text);
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--bg);
+            color: var(--text);
+        }
+        .form-group textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-secondary {
+            background: var(--bg-soft);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+        .status-success { background: #10b981; }
+        .status-warning { background: #f59e0b; }
+        .status-error { background: #ef4444; }
+        .env-output {
+            background: var(--bg-soft);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 1rem;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .test-results {
+            margin-top: 1rem;
+        }
+        
+        /* Instructions Styles */
+        .instructions {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border: 1px solid #0ea5e9;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .instructions-content {
+            display: grid;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .instruction-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .step-number {
+            background: #0ea5e9;
+            color: white;
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        
+        .step-content h4 {
+            margin: 0 0 0.5rem 0;
+            color: #1e40af;
+        }
+        
+        .step-content p {
+            margin: 0;
+            color: #374151;
+        }
+        
+        /* Section Info Styles */
+        .section-info {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .section-info p {
+            margin: 0;
+            color: #475569;
+        }
+        
+        /* Form Hints */
+        .form-hint {
+            display: block;
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+        
+        .form-hint a {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+        
+        .form-hint a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Notification Sections */
+        .notification-section {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .notification-section h4 {
+            margin: 0 0 0.5rem 0;
+            color: #1f2937;
+        }
+        
+        .notification-desc {
+            margin: 0 0 1rem 0;
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+        
+        /* Config Options */
+        .config-options {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+        }
+        
+        .config-options li {
+            margin-bottom: 0.5rem;
+            color: #374151;
+        }
+        
+        /* Save Instructions */
+        .save-instructions {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .save-instructions h5 {
+            margin: 0 0 0.5rem 0;
+            color: #166534;
+        }
+        
+        .save-instructions ol {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+        }
+        
+        .save-instructions li {
+            margin-bottom: 0.25rem;
+            color: #374151;
+        }
+        
+        .security-note {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 6px;
+            padding: 0.75rem;
+            margin: 0.75rem 0 0 0;
+            color: #92400e;
+        }
+        
+        /* Test Button */
+        .test-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+        }
+        
+        .test-btn:hover {
+            background: #059669;
+        }
+        
+        /* Help Section */
+        .help-section {
+            background: linear-gradient(135deg, #fefce8, #fef3c7);
+            border: 1px solid #f59e0b;
+            border-radius: 12px;
+        }
+        
+        .help-content {
+            margin-top: 1rem;
+        }
+        
+        .help-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .help-item {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .help-item h4 {
+            margin: 0 0 0.75rem 0;
+            color: #92400e;
+            font-size: 1rem;
+        }
+        
+        .help-item ul {
+            margin: 0;
+            padding-left: 1.25rem;
+        }
+        
+        .help-item li {
+            margin-bottom: 0.5rem;
+            color: #374151;
+            font-size: 0.875rem;
+        }
+        
+        .help-item a {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+        
+        .help-item a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Security Warning */
+        .security-warning {
+            background: linear-gradient(135deg, #fef2f2, #fee2e2);
+            border: 2px solid #dc2626;
+            border-radius: 12px;
+        }
+        
+        .security-warning h3 {
+            color: #dc2626;
+            margin-bottom: 1rem;
+        }
+        
+        .warning-content {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .warning-content p {
+            margin: 0 0 0.75rem 0;
+            color: #374151;
+            font-weight: 600;
+        }
+        
+        .warning-content ul {
+            margin: 0;
+            padding-left: 1.25rem;
+        }
+        
+        .warning-content li {
+            margin-bottom: 0.5rem;
+            color: #374151;
+            font-size: 0.875rem;
+        }
+        
+        .warning-content code {
+            background: #f3f4f6;
+            padding: 0.125rem 0.25rem;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 0.8em;
+        }
+        .test-result {
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+        .test-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .test-error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+    <div class="setup-container">
+        <h1>🔧 MangaNotify Setup Wizard</h1>
+        <p>Configure your MangaNotify instance with secure credential management.</p>
+        
+        <!-- Instructions Section -->
+        <div class="setup-step instructions">
+            <h3>📋 Setup Instructions</h3>
+            <div class="instructions-content">
+                <div class="instruction-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>Configure Authentication</h4>
+                        <p>Set up a secure username and password to protect your manga watchlist. This is <strong>highly recommended</strong> for production use.</p>
+                    </div>
+                </div>
+                <div class="instruction-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>Add Notifications (Optional)</h4>
+                        <p>Configure Pushover or Discord notifications to get alerts when new manga chapters are released.</p>
+                    </div>
+                </div>
+                <div class="instruction-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>Generate Configuration</h4>
+                        <p>Click "Generate Secure Configuration" to create your encrypted settings file.</p>
+                    </div>
+                </div>
+                <div class="instruction-step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h4>Save & Restart</h4>
+                        <p>Copy the generated configuration to your <code>.env</code> file and restart the application.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Setup Status -->
+        <div class="setup-step">
+            <h3>Current Status</h3>
+            <div id="setup-status">
+                <p>Loading setup status...</p>
+            </div>
+        </div>
+
+        <!-- Authentication Setup -->
+        <div class="setup-step">
+            <h3>🔐 Authentication</h3>
+            <div class="section-info">
+                <p>Authentication protects your manga watchlist from unauthorized access. <strong>Highly recommended</strong> for any deployment.</p>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="auth-enabled" checked>
+                    Enable authentication (recommended)
+                </label>
+            </div>
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" value="admin" required>
+                <small class="form-hint">Choose a username for logging into MangaNotify</small>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Enter a strong password (min 8 chars)" required>
+                <small class="form-hint">Use a strong password with at least 8 characters. It will be securely hashed.</small>
+            </div>
+        </div>
+
+        <!-- Notification Setup -->
+        <div class="setup-step">
+            <h3>📱 Notifications (Optional)</h3>
+            <div class="section-info">
+                <p>Get notified when new manga chapters are released. You can configure one or both notification methods.</p>
+            </div>
+            
+            <div class="notification-section">
+                <h4>🔔 Pushover</h4>
+                <p class="notification-desc">Send notifications to your mobile device via Pushover.</p>
+                <div class="form-group">
+                    <label for="pushover-app-token">Pushover App Token</label>
+                    <input type="text" id="pushover-app-token" placeholder="Your Pushover app token">
+                    <small class="form-hint">Get this from <a href="https://pushover.net/apps/build" target="_blank">pushover.net/apps/build</a></small>
+                </div>
+                <div class="form-group">
+                    <label for="pushover-user-key">Pushover User Key</label>
+                    <input type="text" id="pushover-user-key" placeholder="Your Pushover user key">
+                    <small class="form-hint">Your user key from Pushover dashboard</small>
+                </div>
+            </div>
+            
+            <div class="notification-section">
+                <h4>💬 Discord</h4>
+                <p class="notification-desc">Send notifications to a Discord channel via webhook.</p>
+                <div class="form-group">
+                    <label for="discord-webhook">Discord Webhook URL</label>
+                    <input type="url" id="discord-webhook" placeholder="https://discord.com/api/webhooks/...">
+                    <small class="form-hint">Create a webhook in your Discord server settings</small>
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-secondary test-btn" onclick="testCredentials()">🧪 Test Credentials</button>
+            </div>
+            <div id="test-results" class="test-results" style="display: none;"></div>
+        </div>
+
+        <!-- Generate Configuration -->
+        <div class="setup-step">
+            <h3>⚙️ Generate Configuration</h3>
+            <div class="section-info">
+                <p>Generate your secure configuration file. Choose the option that works best for your setup:</p>
+                <ul class="config-options">
+                    <li><strong>Generate Secure Configuration:</strong> Creates encrypted credentials with your settings</li>
+                    <li><strong>Generate .env File:</strong> Creates a sample .env file with secure defaults</li>
+                </ul>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="generateConfig()">🔐 Generate Secure Configuration</button>
+                <button class="btn btn-secondary" onclick="generateEnvFile()">📄 Generate .env File</button>
+            </div>
+            <div id="config-output" style="display: none;">
+                <h4>Generated Configuration:</h4>
+                <div class="env-output" id="env-content"></div>
+                <div class="save-instructions">
+                    <h5>📝 How to Save:</h5>
+                    <ol>
+                        <li>Copy the configuration above</li>
+                        <li>Create or edit your <code>.env</code> file in the project root</li>
+                        <li>Paste the configuration</li>
+                        <li>Restart the application</li>
+                    </ol>
+                    <p class="security-note">🔒 <strong>Security:</strong> Keep your <code>.env</code> file secure and never commit it to version control!</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Security Warning -->
+        <div class="setup-step security-warning">
+            <h3>⚠️ Security Warning</h3>
+            <div class="warning-content">
+                <p><strong>Before deploying to production:</strong></p>
+                <ul>
+                    <li>✅ Change <code>CORS_ALLOW_ORIGINS</code> from <code>*</code> to your actual domain</li>
+                    <li>✅ Use HTTPS with a valid SSL certificate</li>
+                    <li>✅ Set up a reverse proxy (Nginx/Apache) with proper security headers</li>
+                    <li>✅ Keep your <code>.env</code> file secure and never commit it to version control</li>
+                    <li>✅ Regularly update dependencies and monitor for security vulnerabilities</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Help & Resources -->
+        <div class="setup-step help-section">
+            <h3>💡 Help & Resources</h3>
+            <div class="help-content">
+                <div class="help-grid">
+                    <div class="help-item">
+                        <h4>🔗 Quick Links</h4>
+                        <ul>
+                            <li><a href="https://pushover.net/apps/build" target="_blank">Create Pushover App</a></li>
+                            <li><a href="https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks" target="_blank">Discord Webhook Guide</a></li>
+                            <li><a href="https://github.com/your-repo/MangaNotify" target="_blank">GitHub Repository</a></li>
+                        </ul>
+                    </div>
+                    <div class="help-item">
+                        <h4>🛠️ Troubleshooting</h4>
+                        <ul>
+                            <li>Make sure your password is at least 8 characters</li>
+                            <li>Test notification credentials before saving</li>
+                            <li>Restart the application after updating .env</li>
+                            <li>Check application logs for errors</li>
+                        </ul>
+                    </div>
+                    <div class="help-item">
+                        <h4>🔒 Security Tips</h4>
+                        <ul>
+                            <li>Use a strong, unique password</li>
+                            <li>Never share your .env file</li>
+                            <li>Keep your master key secure</li>
+                            <li>Use HTTPS in production</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load setup status on page load
+        document.addEventListener('DOMContentLoaded', loadSetupStatus);
+
+        async function loadSetupStatus() {
+            try {
+                const response = await fetch('/api/setup/status');
+                const status = await response.json();
+                
+                const statusHtml = `
+                    <div>
+                        <span class="status-indicator ${status.is_configured ? 'status-success' : 'status-warning'}"></span>
+                        <strong>Configuration Status:</strong> ${status.is_configured ? 'Complete' : 'Incomplete'}
+                    </div>
+                    <div>
+                        <span class="status-indicator ${status.auth_enabled ? 'status-success' : 'status-warning'}"></span>
+                        <strong>Authentication:</strong> ${status.auth_enabled ? 'Enabled' : 'Disabled'}
+                    </div>
+                    <div>
+                        <span class="status-indicator ${status.has_credentials ? 'status-success' : 'status-warning'}"></span>
+                        <strong>Notifications:</strong> ${status.has_credentials ? 'Configured' : 'Not configured'}
+                    </div>
+                    ${status.missing_items.length > 0 ? `
+                        <div style="margin-top: 1rem;">
+                            <strong>Missing items:</strong>
+                            <ul>
+                                ${status.missing_items.map(item => `<li>${item}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                `;
+                
+                document.getElementById('setup-status').innerHTML = statusHtml;
+            } catch (error) {
+                document.getElementById('setup-status').innerHTML = 
+                    '<span class="status-indicator status-error"></span>Error loading setup status';
+            }
+        }
+
+        async function testCredentials() {
+            const pushoverAppToken = document.getElementById('pushover-app-token').value;
+            const pushoverUserKey = document.getElementById('pushover-user-key').value;
+            const discordWebhook = document.getElementById('discord-webhook').value;
+
+            if (!pushoverAppToken && !pushoverUserKey && !discordWebhook) {
+                alert('Please enter at least one notification credential to test.');
+                return;
+            }
+
+            const testResults = document.getElementById('test-results');
+            testResults.style.display = 'block';
+            testResults.innerHTML = '<p>Testing credentials...</p>';
+
+            try {
+                const params = new URLSearchParams();
+                if (pushoverAppToken) params.append('pushover_app_token', pushoverAppToken);
+                if (pushoverUserKey) params.append('pushover_user_key', pushoverUserKey);
+                if (discordWebhook) params.append('discord_webhook_url', discordWebhook);
+
+                const response = await fetch(`/api/setup/test-credentials?${params}`);
+                const result = await response.json();
+
+                let html = '';
+                for (const [service, testResult] of Object.entries(result.results)) {
+                    const className = testResult.success ? 'test-success' : 'test-error';
+                    const icon = testResult.success ? '✅' : '❌';
+                    html += `
+                        <div class="test-result ${className}">
+                            ${icon} <strong>${service.charAt(0).toUpperCase() + service.slice(1)}:</strong>
+                            ${testResult.success ? 'Test successful!' : `Error: ${testResult.error || 'Unknown error'}`}
+                        </div>
+                    `;
+                }
+
+                testResults.innerHTML = html;
+            } catch (error) {
+                testResults.innerHTML = `
+                    <div class="test-result test-error">
+                        ❌ <strong>Error:</strong> Failed to test credentials: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function generateConfig() {
+            const authEnabled = document.getElementById('auth-enabled').checked;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const pushoverAppToken = document.getElementById('pushover-app-token').value;
+            const pushoverUserKey = document.getElementById('pushover-user-key').value;
+            const discordWebhook = document.getElementById('discord-webhook').value;
+
+            if (authEnabled && (!username || !password)) {
+                alert('Please enter username and password when authentication is enabled.');
+                return;
+            }
+
+            if (authEnabled && password.length < 8) {
+                alert('Password must be at least 8 characters long.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/setup/configure', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        auth_enabled: authEnabled,
+                        username: username,
+                        password: password,
+                        pushover_app_token: pushoverAppToken || null,
+                        pushover_user_key: pushoverUserKey || null,
+                        discord_webhook_url: discordWebhook || null,
+                    }),
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    displayConfig(result.env_config, result.master_key);
+                } else {
+                    alert('Error generating configuration: ' + result.message);
+                }
+            } catch (error) {
+                alert('Error generating configuration: ' + error.message);
+            }
+        }
+
+        async function generateEnvFile() {
+            try {
+                const response = await fetch('/api/setup/generate-env');
+                const result = await response.json();
+                
+                const configOutput = document.getElementById('config-output');
+                const envContent = document.getElementById('env-content');
+                
+                envContent.textContent = result.env_content;
+                configOutput.style.display = 'block';
+            } catch (error) {
+                alert('Error generating .env file: ' + error.message);
+            }
+        }
+
+        function displayConfig(envConfig, masterKey) {
+            const configOutput = document.getElementById('config-output');
+            const envContent = document.getElementById('env-content');
+            
+            let envText = '# MangaNotify Configuration\n';
+            envText += '# Generated by setup wizard\n\n';
+            
+            for (const [key, value] of Object.entries(envConfig)) {
+                envText += `${key}=${value}\n`;
+            }
+            
+            if (masterKey) {
+                envText += `\n# Master encryption key (KEEP SECURE!)\n`;
+                envText += `MASTER_KEY=${masterKey}\n`;
+            }
+            
+            envContent.textContent = envText;
+            configOutput.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

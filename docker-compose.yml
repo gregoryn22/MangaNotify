@@ -11,27 +11,78 @@ services:
       - "${HOST_PORT:-8999}:8999"
 
     environment:
+      # App config
       MANGABAKA_BASE: ${MANGABAKA_BASE:-https://api.mangabaka.dev}
       PORT: "8999"
-      DATA_DIR: /data
+      DATA_DIR: /data  # Docker always uses /data (mapped to volume)
       POLL_INTERVAL_SEC: ${POLL_INTERVAL_SEC:-600}
+      # CORS (comma-separated list or *). Example: https://your.site, http://localhost:5173
+      CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-*}
+
+      # Authentication (fill via .env or environment)
+      AUTH_ENABLED: ${AUTH_ENABLED:-false}
+      AUTH_SECRET_KEY: ${AUTH_SECRET_KEY:-}
+      AUTH_USERNAME: ${AUTH_USERNAME:-admin}
+      AUTH_PASSWORD: ${AUTH_PASSWORD:-}
+      AUTH_TOKEN_EXPIRE_HOURS: ${AUTH_TOKEN_EXPIRE_HOURS:-24}
+
+      # Notifications (fill via .env or environment)
       PUSHOVER_USER_KEY: ${PUSHOVER_USER_KEY:-}
       PUSHOVER_APP_TOKEN: ${PUSHOVER_APP_TOKEN:-}
+      # Discord (optional)
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-}
+      DISCORD_ENABLED: ${DISCORD_ENABLED:-false}
 
-    # Use a named volume so Docker owns perms correctly
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-DEBUG}
+      LOG_FORMAT: ${LOG_FORMAT:-plain}
+
+      # Ops / ergonomics
+      TZ: America/New_York
+      PYTHONDONTWRITEBYTECODE: "1"   # play nice with read_only FS
+
+    # Persist app data to a named volume (Docker manages perms)
     volumes:
       - manganotify-data:/data
-      # optional live-edit (read-only is fine)
+      # Optional live-edit for UI assets (safe as read-only)
       - ./src/manganotify/static:/app/src/manganotify/static:ro
 
-    # Let the image's default user (appuser, uid 10001) run the process
-    # user:  <-- intentionally omitted
-
+    # Keep the container up on reboots/crashes
     restart: unless-stopped
+
+    # Lightweight hardening
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+
+    # Healthcheck without curl/wget (uses Python in the image)
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python - << 'PY'\nimport urllib.request, sys\ntry:\n  urllib.request.urlopen('http://localhost:8999/api/health', timeout=5)\n  sys.exit(0)\nexcept Exception:\n  sys.exit(1)\nPY"
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+    # Graceful shutdowns
+    stop_grace_period: 20s
+
+    # Tidy logs
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
     labels:
       net.unraid.docker.webui: "http://[IP]:[PORT:8999]/"
       net.unraid.docker.icon: "https://raw.githubusercontent.com/gregoryn22/MangaNotify/refs/heads/master/images/manganotify_logo.png"
+      # --- If you add a reverse proxy later, drop in labels here ---
 
 volumes:
   manganotify-data:

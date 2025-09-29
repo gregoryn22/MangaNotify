@@ -48,13 +48,10 @@
           <button id="go" class="btn primary" aria-label="Run search">Search</button>
         </div>
 
-        <select id="layout" class="btn hide-sm" style="padding:8px 10px" title="Layout">
-          <option value="stack">Layout: Stacked</option>
-          <option value="search-first">Layout: Search → Watchlist → Notifications</option>
-          <option value="watch-first">Layout: Watchlist → Search → Notifications</option>
-          <option value="tabs">Layout: Tabs</option>
-        </select>
         <button id="theme" class="btn hide-sm" title="Toggle theme">Theme</button>
+        <div id="user-info" class="chip" style="display:none"></div>
+        <button id="login-btn" class="btn" title="Login" style="display:none">Login</button>
+        <button id="logout-btn" class="btn" title="Logout" style="display:none">Logout</button>
         <button id="open-settings" class="btn" title="Settings" aria-controls="settings-drawer" aria-expanded="false">⚙️ Settings</button>
       </div>
     </div>
@@ -170,6 +167,18 @@
             <button id="refresh-now" class="btn" title="Ask server to refresh now">Refresh now (server)</button>
           </div>
           <div class="right-tools">
+            <label class="subline" for="wl-status-filter">Status</label>
+            <select id="wl-status-filter" class="btn" style="padding:8px 10px">
+              <option value="">All</option>
+              <option value="reading">reading</option>
+              <option value="to-read">to-read</option>
+              <option value="on-hold">on-hold</option>
+              <option value="finished">finished</option>
+              <option value="dropped">dropped</option>
+            </select>
+            <label class="checkbox" title="Hide dropped items">
+              <input id="hide-dropped" type="checkbox"> Hide dropped
+            </label>
             <button id="open-settings-2" class="btn" title="Open settings">⚙️ Settings</button>
           </div>
         </div>
@@ -184,7 +193,7 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <!-- Details Modal -->
-  <dialog id="modal">
+  <dialog id="modal" class="modal-solid">
     <div class="modal-head">
       <div class="row">
         <strong id="modal-title">Details</strong>
@@ -195,6 +204,46 @@
       <div id="modal-body"></div>
     </div>
   </dialog>
+
+        <!-- Login Modal -->
+        <dialog id="login-modal" class="modal-solid login-modal">
+          <div class="modal-head">
+            <div class="login-header">
+              <h3>🔐 Login to MangaNotify</h3>
+              <p class="login-subtitle">Enter your credentials to access your manga watchlist</p>
+            </div>
+            <button id="login-close" class="btn btn-close" title="Close">×</button>
+          </div>
+          <div class="modal-body">
+            <form id="login-form" class="login-form">
+              <div class="form-group">
+                <label for="login-username" class="form-label">Username</label>
+                <input id="login-username" class="form-input" type="text" required autocomplete="username" placeholder="Enter your username" />
+              </div>
+              <div class="form-group">
+                <label for="login-password" class="form-label">Password</label>
+                <input id="login-password" class="form-input" type="password" required autocomplete="current-password" placeholder="Enter your password" />
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-login">
+                  <span class="btn-icon">🚀</span>
+                  Login
+                </button>
+                <button type="button" id="login-cancel" class="btn btn-secondary">Cancel</button>
+              </div>
+            </form>
+            <div class="login-divider">
+              <span>or</span>
+            </div>
+            <div class="login-setup">
+              <p class="setup-text">Don't have an account yet?</p>
+              <button id="create-login-btn" class="btn btn-outline setup-btn">
+                <span class="btn-icon">🔧</span>
+                Create Login & Setup
+              </button>
+            </div>
+          </div>
+        </dialog>
 
   <!-- Settings Drawer (off-canvas) -->
   <aside id="settings-drawer" aria-label="Settings" aria-hidden="true">
@@ -252,6 +301,41 @@
             <option value="tabs">Tabs</option>
           </select>
         </div>
+      </section>
+
+      <!-- Discord Notifications Section -->
+      <section class="s-section" style="position:relative;">
+        <h3 class="s-title" style="display:flex;align-items:center;gap:8px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="vertical-align:middle;">
+            <path d="M20.317 4.369A19.791 19.791 0 0 0 16.885 3.2a.084.084 0 0 0-.09.042c-.388.695-.822 1.6-1.127 2.32a18.524 18.524 0 0 0-5.426 0 12.51 12.51 0 0 0-1.13-2.32.084.084 0 0 0-.09-.042A19.736 19.736 0 0 0 3.684 4.369a.076.076 0 0 0-.032.027C.533 8.457-.32 12.44.099 16.378a.09.09 0 0 0 .031.062A19.9 19.9 0 0 0 7.13 20.8a.084.084 0 0 0 .091-.012c.703-.963 1.332-1.98 1.885-3.045a.084.084 0 0 0-.045-.116c-.516-.195-1.008-.418-1.484-.661a.084.084 0 0 1-.008-.143c.1-.075.2-.153.297-.231a.084.084 0 0 1 .086-.01c3.927 1.793 8.18 1.793 12.062 0a.084.084 0 0 1 .087.009c.098.078.197.156.297.231a.084.084 0 0 1-.008.143c-.476.243-.968.466-1.484.661a.084.084 0 0 0-.045.116c.553 1.065 1.182 2.082 1.885 3.045a.084.084 0 0 0 .091.012 19.876 19.876 0 0 0 7-4.36.09.09 0 0 0 .031-.062c.5-4.09-.838-8.073-3.553-11.982a.076.076 0 0 0-.032-.027ZM8.02 15.331c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.418 2.157-2.418 1.213 0 2.177 1.095 2.157 2.418 0 1.334-.955 2.419-2.157 2.419Zm7.96 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.418 2.157-2.418 1.213 0 2.177 1.095 2.157 2.418 0 1.334-.944 2.419-2.157 2.419Z" fill="#5865F2"/>
+          </svg>
+          Discord Notifications
+        </h3>
+        <div class="subline" style="margin-bottom:6px">
+          Enter a Discord webhook URL to receive notifications in your server/channel.
+        </div>
+        <div class="row" style="align-items:center; gap:10px">
+          <label class="subline" for="discord-webhook">Webhook URL</label>
+          <input id="discord-webhook" class="input" type="url" placeholder="https://discord.com/api/webhooks/..." style="flex:1; min-width:200px" autocomplete="off" />
+        </div>
+        <div class="row" style="margin-top:8px; align-items:center; gap:10px">
+          <label class="checkbox">
+            <input id="discord-enabled" type="checkbox"> Enable Discord notifications
+          </label>
+          <button id="discord-test" class="btn" type="button" disabled>Send test notification</button>
+          <span id="discord-status" class="chip" style="font-size:12px;display:none" aria-live="polite" title="Shows the status of the last Discord test or save"></span>
+        </div>
+      </section>
+      <hr style="border:none;border-top:1px solid var(--border);margin:18px 0 0 0;opacity:.25">
+
+      <!-- Debug Section (hidden by default) -->
+      <section class="s-section" id="debug-section" style="display:none">
+        <h3 class="s-title">Debug</h3>
+        <div class="row" style="gap:8px">
+          <button id="debug-clear" class="btn ghost" title="Clear debug log">Clear log</button>
+          <button id="debug-download" class="btn ghost" title="Download debug log">Download log</button>
+        </div>
+        <div id="debug-log" class="debug-log" style="margin-top:8px; padding:10px; background-color:var(--card-bg); border-radius:8px; font-family:monospace; font-size:13px; overflow:auto; max-height:200px"></div>
       </section>
     </div>
   </aside>

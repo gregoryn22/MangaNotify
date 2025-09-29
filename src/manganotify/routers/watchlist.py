@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Query, Depends
+from ..models.schemas import WatchlistAdd, ProgressPatch, StatusPatch, StatusLiteral
+from ..auth import require_auth
 from ..services.watchlist import load_watchlist, save_watchlist, pick_cover, derive_last_chapter_at
 from ..services.manga_api import api_series_by_id
 from ..core.utils import to_int, now_utc_iso
@@ -6,22 +8,23 @@ from ..core.utils import to_int, now_utc_iso
 router = APIRouter()
 
 @router.get("/api/watchlist")
-def get_watchlist():
+def get_watchlist(status: StatusLiteral | None = Query(default=None), current_user: dict = Depends(require_auth)):
     wl = load_watchlist()
     out = []
     for it in wl:
         total = to_int(it.get("total_chapters")) or 0
         last  = to_int(it.get("last_read")) or 0
         unread = max(total - last, 0)
-        out.append({**it, "total_chapters": total or None, "last_read": last or 0,
-                    "unread": unread, "is_behind": unread>0})
+        rec = {**it, "total_chapters": total or None, "last_read": last or 0,
+               "unread": unread, "is_behind": unread>0}
+        if status is None or rec.get("status") == status:
+            out.append(rec)
     return {"data": out}
 
 @router.post("/api/watchlist")
-async def add_watch(item: dict, request: Request):
-    if "id" not in item: raise HTTPException(400, "Missing 'id'")
+async def add_watch(item: WatchlistAdd, request: Request, current_user: dict = Depends(require_auth)):
     wl = load_watchlist()
-    sid = str(item["id"])
+    sid = str(item.id)
     if any(str(x.get("id")) == sid for x in wl):
         return {"ok": True, "message": "Already in watchlist"}
     # hydrate
@@ -36,12 +39,13 @@ async def add_watch(item: dict, request: Request):
     except Exception:
         pass
 
-    total = to_int(item.get("total_chapters")) or to_int(series.get("total_chapters"))
+    total = to_int(item.total_chapters) or to_int(series.get("total_chapters"))
     record = {
         "id": int(sid),
-        "title": item.get("title") or series.get("title"),
+        "title": item.title or series.get("title"),
         "total_chapters": total,
-        "last_read": to_int(item.get("last_read")) or 0,
+        "last_read": to_int(item.last_read) or 0,
+        "status": (item.status or "reading"),
         "cover": pick_cover(series) if series else None,
         "added_at": now_utc_iso(),
         "last_chapter_at": derive_last_chapter_at(series) if series else None,
@@ -51,7 +55,7 @@ async def add_watch(item: dict, request: Request):
     return {"ok": True}
 
 @router.delete("/api/watchlist/{series_id}")
-def remove(series_id: int):
+def remove(series_id: int, current_user: dict = Depends(require_auth)):
     wl = load_watchlist()
     before = len(wl)
     wl = [x for x in wl if str(x.get("id")) != str(series_id)]
@@ -59,18 +63,18 @@ def remove(series_id: int):
     return {"removed": before - len(wl)}
 
 @router.patch("/api/watchlist/{series_id}/progress")
-def set_progress(series_id: int, body: dict):
+def set_progress(series_id: int, body: ProgressPatch, current_user: dict = Depends(require_auth)):
     wl = load_watchlist()
     for it in wl:
         if str(it.get("id")) == str(series_id):
             total = to_int(it.get("total_chapters"))
             last  = to_int(it.get("last_read")) or 0
-            if body.get("mark_latest"):
+            if body.mark_latest:
                 it["last_read"] = total if total is not None else last
-            elif "decrement" in body:
-                it["last_read"] = max(0, last - (to_int(body.get("decrement")) or 1))
-            elif "last_read" in body:
-                lr = to_int(body.get("last_read"))
+            elif body.decrement is not None:
+                it["last_read"] = max(0, last - (to_int(body.decrement) or 1))
+            elif body.last_read is not None:
+                lr = to_int(body.last_read)
                 if lr is None: raise HTTPException(400, "last_read must be an integer")
                 it["last_read"] = max(0, lr)
             else:
@@ -81,7 +85,7 @@ def set_progress(series_id: int, body: dict):
     raise HTTPException(404, "Not in watchlist")
 
 @router.post("/api/watchlist/{series_id}/read/next")
-def read_next(series_id: int):
+def read_next(series_id: int, current_user: dict = Depends(require_auth)):
     wl = load_watchlist()
     for it in wl:
         if str(it.get("id")) == str(series_id):
@@ -89,4 +93,16 @@ def read_next(series_id: int):
             it["last_checked"] = now_utc_iso()
             save_watchlist(wl)
             return {"ok": True, "last_read": it["last_read"]}
+    raise HTTPException(404, "Not in watchlist")
+
+
+@router.patch("/api/watchlist/{series_id}/status")
+def set_status(series_id: int, body: StatusPatch, current_user: dict = Depends(require_auth)):
+    wl = load_watchlist()
+    for it in wl:
+        if str(it.get("id")) == str(series_id):
+            it["status"] = body.status
+            it["last_checked"] = now_utc_iso()
+            save_watchlist(wl)
+            return {"ok": True, "status": it["status"]}
     raise HTTPException(404, "Not in watchlist")

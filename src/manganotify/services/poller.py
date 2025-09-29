@@ -1,4 +1,4 @@
-import asyncio, httpx
+import asyncio, random, httpx, logging
 from fastapi import FastAPI
 from .manga_api import api_series_by_id
 from .watchlist import load_watchlist, save_watchlist, pick_cover, derive_last_chapter_at
@@ -7,13 +7,28 @@ from ..core.config import settings
 from ..core.utils import to_int, now_utc_iso
 
 async def process_once(app: FastAPI):
+    """One pass over the watchlist; resilient per-item handling."""
     client: httpx.AsyncClient = app.state.client
     wl = load_watchlist()
     for it in wl:
         sid = it.get("id")
         if not sid: continue
         try:
-            data   = await api_series_by_id(client, sid, full=True)
+            # basic retry for transient upstream issues
+            attempts = 0
+            last_exc = None
+            while attempts < 3:
+                try:
+                    data = await api_series_by_id(client, sid, full=True)
+                    break
+                except Exception as e:
+                    last_exc = e
+                    attempts += 1
+                    await asyncio.sleep(0.5 * attempts)
+            if attempts >= 3 and last_exc is not None:
+                logging.warning("poller: failed to fetch series %s after retries: %s", sid, last_exc)
+                continue
+            # normal path after successful fetch
             series = data.get("data") or data
 
             if str(series.get("state")) == "merged" and series.get("merged_with"):
@@ -40,16 +55,29 @@ async def process_once(app: FastAPI):
             if (c := pick_cover(series)): it["cover"] = c
             it["last_chapter_at"] = derive_last_chapter_at(series)
             it["last_checked"] = now_utc_iso()
-        except Exception:
+        except Exception as e:
+            logging.exception("poller: error processing series %s: %s", sid, e)
             continue
     save_watchlist(wl)
     return {"checked": len(wl)}
 
 async def poll_loop(app: FastAPI):
-    interval = max(settings.POLL_INTERVAL_SEC, 0)
-    while interval > 0:
+    """Background loop with jitter and error isolation."""
+    base_interval = max(settings.POLL_INTERVAL_SEC, 0)
+    # track some basic stats for /api/health/details
+    app.state.poll_stats = {"last_ok": None, "last_error": None}
+    while base_interval > 0:
         try:
             await process_once(app)
-        except Exception:
-            pass
-        await asyncio.sleep(interval)
+            app.state.poll_stats["last_ok"] = now_utc_iso()
+        except Exception as e:
+            app.state.poll_stats["last_error"] = {"at": now_utc_iso(), "error": str(e)}
+            logging.exception("poller: iteration failed: %s", e)
+        # add small jitter to avoid synchronized hits
+        jitter = random.uniform(-0.1, 0.1) * base_interval
+        sleep_for = max(1.0, base_interval + jitter)
+        try:
+            await asyncio.sleep(sleep_for)
+        except asyncio.CancelledError:
+            # graceful shutdown
+            break

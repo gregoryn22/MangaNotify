@@ -1,7 +1,37 @@
 from datetime import datetime, timezone
+import json, logging, sys
 
 def now_utc_iso() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+class JsonFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord) -> str:
+        data = {
+            "ts": datetime.utcfromtimestamp(record.created).isoformat() + "Z",
+            "level": record.levelname,
+            "name": record.name,
+            "msg": record.getMessage(),
+        }
+        if record.exc_info:
+            data["exc_info"] = self.formatException(record.exc_info)
+        return json.dumps(data, ensure_ascii=False)
+
+
+def setup_logging(level: str = "INFO", fmt: str = "plain") -> None:
+    lvl = getattr(logging, str(level).upper(), logging.INFO)
+    root = logging.getLogger()
+    root.setLevel(lvl)
+    # remove default handlers
+    for h in list(root.handlers):
+        root.removeHandler(h)
+
+    handler = logging.StreamHandler(sys.stdout)
+    if fmt == "json":
+        handler.setFormatter(JsonFormatter())
+    else:
+        handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
+    root.addHandler(handler)
 
 def to_int(v):
     if v is None: return None

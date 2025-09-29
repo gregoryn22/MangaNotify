@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends
 from fastapi.responses import JSONResponse
-from ..services.notifications import load_notifications, save_notifications, add_notification, pushover
+from pydantic import BaseModel
+from ..services.notifications import load_notifications, save_notifications, add_notification, pushover, discord_notify
 from ..core.config import settings
+from ..auth import require_auth
 
 router = APIRouter()
 
@@ -9,7 +11,8 @@ router = APIRouter()
 def health(): return {"ok": True}
 
 @router.get("/api/notify/debug")
-def notify_debug():
+def notify_debug(current_user: dict = Depends(require_auth)):
+    """Debug endpoint - requires authentication to prevent information disclosure."""
     def mask(s: str | None, keep=4):
         if not s: return ""
         return (s[:keep] + "…") if len(s) > keep else "…"
@@ -21,7 +24,7 @@ def notify_debug():
     }
 
 @router.post("/api/notify/test")
-async def notify_test(request: Request):
+async def notify_test(request: Request, current_user: dict = Depends(require_auth)):
     if not (settings.PUSHOVER_APP_TOKEN and settings.PUSHOVER_USER_KEY):
         return JSONResponse(status_code=500, content={"ok": False, "message": "Missing Pushover env vars"})
     res = await pushover(request.app.state.client, "MangaNotify", "✅ test")
@@ -29,12 +32,12 @@ async def notify_test(request: Request):
     return JSONResponse(status_code=200 if res.get("ok") else 502, content=res)
 
 @router.get("/api/notifications")
-def list_notifications(limit: int = 200):
+def list_notifications(limit: int = 200, current_user: dict = Depends(require_auth)):
     items = load_notifications()
     return {"data": items[: max(1, min(limit, 1000))]}
 
 @router.delete("/api/notifications/{nid}")
-def delete_notification(nid: int):
+def delete_notification(nid: int, current_user: dict = Depends(require_auth)):
     items = load_notifications()
     before = len(items)
     items = [x for x in items if int(x.get("id", -1)) != int(nid)]
@@ -42,5 +45,30 @@ def delete_notification(nid: int):
     return {"removed": before - len(items)}
 
 @router.delete("/api/notifications")
-def clear_notifications():
+def clear_notifications(current_user: dict = Depends(require_auth)):
     save_notifications([]); return {"removed": "all"}
+
+class DiscordSettings(BaseModel):
+    webhook_url: str = ""
+    enabled: bool = False
+
+@router.get("/api/discord/settings")
+async def get_discord_settings(current_user: dict = Depends(require_auth)):
+    return {
+        "webhook_url": settings.DISCORD_WEBHOOK_URL or "",
+        "enabled": bool(settings.DISCORD_ENABLED),
+    }
+
+@router.post("/api/discord/settings")
+async def set_discord_settings(body: DiscordSettings, current_user: dict = Depends(require_auth)):
+    # Save to settings (and persist if needed)
+    settings.DISCORD_WEBHOOK_URL = body.webhook_url
+    settings.DISCORD_ENABLED = body.enabled
+    # Optionally: persist to disk or .env here
+    return {"ok": True}
+
+@router.post("/api/discord/test")
+async def discord_test(request: Request, current_user: dict = Depends(require_auth)):
+    client = request.app.state.client
+    result = await discord_notify(client, "MangaNotify Test", "This is a test notification from MangaNotify.")
+    return JSONResponse(result)
