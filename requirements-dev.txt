@@ -78,6 +78,8 @@ pytest==8.4.2
     #   pytest-asyncio
 pytest-asyncio==1.2.0
     # via -r requirements-dev.in
+pytest-cov==6.0.0
+    # via -r requirements-dev.in
 python-dotenv==1.1.1
     # via
     #   -r requirements.in
