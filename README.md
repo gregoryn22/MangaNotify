@@ -302,3 +302,12 @@ The test suite includes:
 ## 🤝 Contributing
 This is still early and experimental — feedback, issues, and PRs are very welcome!  
 If I can make it 20% functional, imagine what you can do 😉
+
+---
+## Data Attribution
+- [MangaBaka](https://mangabaka.dev)
+- [AniList](https://anilist.co)
+- [Kitsu](https://kitsu.app)
+- [MangaDex](https://mangadex.org)
+- [MangaUpdates](https://www.mangaupdates.com)
+- [MyAnimeList](https://myanimelist.net)
