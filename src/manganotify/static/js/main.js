@@ -187,18 +187,7 @@ queueMicrotask(async () => {
       }
     });
     
-    // main.js
-    const ENABLE_SHORTCUTS = false;
-    if (ENABLE_SHORTCUTS) {
-      const { initKeyboard } = await import("/keyboard.js");
-      initKeyboard({
-        focusSearch: () => document.getElementById("q")?.focus(),
-        refreshWatchlist: () => loadWatchlist(),
-        openSettings: () => openSettings(),
-        toggleTheme: () => document.getElementById("theme")?.click(),
-        selectTab: (name) => selectTab(name)
-      });
-    }
+    // Keyboard shortcuts have been removed - feature scrapped
 
     // initial data (only if authenticated)
     if (auth.requireAuth()) {

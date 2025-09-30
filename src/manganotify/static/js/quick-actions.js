@@ -65,7 +65,7 @@ export function initializeQuickActions() {
   });
   
   document.getElementById('qa-theme')?.addEventListener('click', () => {
-    document.getElementById('theme')?.click();
+    document.getElementById('theme-alt')?.click();
   });
   
   document.getElementById('qa-scroll-top')?.addEventListener('click', () => {

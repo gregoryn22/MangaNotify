@@ -15,7 +15,6 @@ export function initSettings(){
       document.documentElement.setAttribute("data-theme", next);
       localStorage.setItem("mn-theme", next);
     };
-    $("#theme")?.addEventListener("click", toggle);
     $("#theme-alt")?.addEventListener("click", toggle);
   })();
 

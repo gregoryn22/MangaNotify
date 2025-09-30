@@ -4,6 +4,31 @@ function getAuthHeaders() {
   return token ? { 'Authorization': `Bearer ${token}` } : {};
 }
 
+// Input sanitization helper
+function sanitizeInput(input) {
+  if (typeof input !== 'string') return input;
+  return input.replace(/[<>\"'&]/g, (match) => {
+    const escapeMap = {
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#x27;',
+      '&': '&amp;'
+    };
+    return escapeMap[match];
+  });
+}
+
+// URL validation helper
+function isValidUrl(url) {
+  try {
+    const urlObj = new URL(url);
+    return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 async function jget(url, init){ 
   const headers = { ...getAuthHeaders(), ...(init?.headers || {}) };
   const r = await fetch(url, { ...init, headers }); 
