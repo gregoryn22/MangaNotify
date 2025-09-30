@@ -164,3 +164,65 @@ def get_notification_preferences(series_id: int, current_user: dict = Depends(re
             })
             return {"ok": True, "notifications": notif_prefs}
     raise HTTPException(404, "Not in watchlist")
+
+
+@router.post("/api/watchlist/import")
+async def import_watchlist(request: Request, current_user: dict = Depends(require_auth)):
+    """Import a watchlist from JSON data."""
+    try:
+        import_data = await request.json()
+    except Exception:
+        raise HTTPException(400, "Invalid JSON data")
+    
+    if not isinstance(import_data, list):
+        raise HTTPException(400, "Import data must be an array")
+    
+    wl = load_watchlist()
+    imported_count = 0
+    skipped_count = 0
+    
+    for item in import_data:
+        # Validate required fields
+        if not isinstance(item, dict) or not item.get("id"):
+            continue
+            
+        # Check if already exists
+        if any(str(x.get("id")) == str(item.get("id")) for x in wl):
+            skipped_count += 1
+            continue
+        
+        # Create new watchlist entry
+        record = {
+            "id": int(item.get("id")),
+            "title": item.get("title", ""),
+            "total_chapters": to_int(item.get("total_chapters")) or 0,
+            "last_read": to_int(item.get("last_read")) or 0,
+            "status": item.get("status", "reading"),
+            "cover": item.get("cover"),
+            "added_at": item.get("added_at", now_utc_iso()),
+            "last_chapter_at": item.get("last_chapter_at"),
+            "last_checked": item.get("last_checked", now_utc_iso()),
+            "content_rating": item.get("content_rating"),
+            "authors": item.get("authors", []),
+            "artists": item.get("artists", []),
+            "links": item.get("links", []),
+            "relationships": item.get("relationships", {}),
+            "notifications": item.get("notifications", {
+                "enabled": True,
+                "pushover": True,
+                "discord": True,
+                "only_when_reading": True
+            })
+        }
+        
+        wl.append(record)
+        imported_count += 1
+    
+    save_watchlist(wl)
+    
+    return {
+        "ok": True,
+        "imported": imported_count,
+        "skipped": skipped_count,
+        "message": f"Imported {imported_count} items, skipped {skipped_count} duplicates"
+    }

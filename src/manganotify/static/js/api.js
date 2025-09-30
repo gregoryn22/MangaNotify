@@ -80,6 +80,8 @@ export const api = {
   logout:          ()=> jpost("/api/auth/logout"),
   getMe:           ()=> jget("/api/auth/me"),
   authStatus:      ()=> jget("/api/auth/status"),
+  // Import/Export
+  importWatchlist: (data)=> jpost("/api/watchlist/import", data),
 };
 
 export default api;
