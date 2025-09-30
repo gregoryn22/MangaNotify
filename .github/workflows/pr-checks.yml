@@ -1,0 +1,138 @@
+name: Pull Request Checks
+
+on:
+  pull_request:
+    branches: [ main, master ]
+  pull_request_target:
+    branches: [ main, master ]
+
+jobs:
+  quick-checks:
+    name: Quick PR Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.12
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements-dev.txt
+    
+    - name: Run critical tests (fast)
+      env:
+        PYTHONPATH: ${{ github.workspace }}/src
+        MANGABAKA_BASE: "https://api.mangabaka.dev"
+        POLL_INTERVAL_SEC: "0"
+        AUTH_ENABLED: "false"
+        DATA_DIR: "/tmp/test_data"
+        PUSHOVER_APP_TOKEN: ""
+        PUSHOVER_USER_KEY: ""
+      run: |
+        # Run only the most critical tests for PRs
+        pytest tests/test_poller.py::TestPollerLogic -v
+        pytest tests/test_api_endpoints.py::TestWatchlistEndpoints::test_get_watchlist -v
+        pytest tests/test_config.py::TestConfiguration::test_default_settings -v
+    
+    - name: Run Chainsaw Man scenario test
+      env:
+        PYTHONPATH: ${{ github.workspace }}/src
+        MANGABAKA_BASE: "https://api.mangabaka.dev"
+        POLL_INTERVAL_SEC: "0"
+        AUTH_ENABLED: "false"
+        DATA_DIR: "/tmp/test_data"
+      run: |
+        # Test the specific scenario that failed
+        pytest tests/test_poller.py::TestMissedNotificationScenario::test_missed_update_scenario -v
+    
+    - name: Security scan
+      run: |
+        bandit -r src/ -f json -o bandit-report.json || true
+        safety check --json --output safety-report.json || true
+    
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: pr-security-reports
+        path: |
+          bandit-report.json
+          safety-report.json
+
+  docker-build-test:
+    name: Test Docker Build
+    runs-on: ubuntu-latest
+    needs: quick-checks
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build Docker image
+      run: |
+        docker build -t manganotify-pr-test .
+    
+    - name: Test Docker container startup
+      run: |
+        # Test that container starts and responds
+        docker run -d --name manganotify-pr-test \
+          -p 8999:8999 \
+          -e POLL_INTERVAL_SEC=0 \
+          -e AUTH_ENABLED=false \
+          manganotify-pr-test
+        
+        # Wait for startup
+        sleep 15
+        
+        # Test health endpoint
+        curl -f http://localhost:8999/api/health || exit 1
+        
+        # Test watchlist endpoint
+        curl -f http://localhost:8999/api/watchlist || exit 1
+        
+        # Clean up
+        docker stop manganotify-pr-test
+        docker rm manganotify-pr-test
+
+  lint-and-format:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.12
+    
+    - name: Install linting tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 black isort mypy
+    
+    - name: Run Black formatter check
+      run: black --check src/ tests/
+    
+    - name: Run isort import sorting check
+      run: isort --check-only src/ tests/
+    
+    - name: Run flake8 linting
+      run: flake8 src/ tests/ --max-line-length=88 --extend-ignore=E203
+    
+    - name: Run mypy type checking
+      run: mypy src/ --ignore-missing-imports || true

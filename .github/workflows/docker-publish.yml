@@ -30,7 +30,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
 
-      - name: Run pytest
+      - name: Run comprehensive test suite
         env:
           PYTHONPATH: ${{ github.workspace }}/src
           MANGABAKA_BASE: "https://api.mangabaka.dev"
@@ -39,7 +39,11 @@ jobs:
           DATA_DIR: "/tmp/test_data"
           PUSHOVER_APP_TOKEN: ""
           PUSHOVER_USER_KEY: ""
-        run: pytest -q
+        run: |
+          # Run comprehensive tests including the missed update scenario
+          python scripts/run_tests.py --coverage
+          # Specifically test the poller functionality
+          pytest tests/test_poller.py::TestMissedNotificationScenario -v
 
   docker:
     name: Build & push image

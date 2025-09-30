@@ -1,13 +1,15 @@
 from typing import Dict, Any, List, Optional
-from ..core.config import WATCHLIST_PATH
+from ..core.config import settings
 from ..storage.json_store import load_json, save_json
 from ..core.utils import to_int, now_utc_iso
 
 def load_watchlist() -> List[Dict[str, Any]]:
-    return load_json(WATCHLIST_PATH, [])
+    watchlist_path = settings.DATA_DIR / "watchlist.json"
+    return load_json(watchlist_path, [])
 
 def save_watchlist(items: List[Dict[str, Any]]):
-    save_json(WATCHLIST_PATH, items)
+    watchlist_path = settings.DATA_DIR / "watchlist.json"
+    save_json(watchlist_path, items)
 
 def pick_cover(series: Dict[str, Any]) -> Optional[str]:
     cov = series.get("cover") or {}
