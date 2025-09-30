@@ -1,14 +1,16 @@
 from typing import Dict, Any, List, Optional
 import httpx
-from ..core.config import NOTIFY_PATH, settings
+from ..core.config import settings
 from ..storage.json_store import load_json, save_json
 from ..core.utils import now_utc_iso
 
 def load_notifications() -> List[Dict[str, Any]]:
-    return load_json(NOTIFY_PATH, [])
+    notify_path = settings.DATA_DIR / "notifications.json"
+    return load_json(notify_path, [])
 
 def save_notifications(items: List[Dict[str, Any]]):
-    save_json(NOTIFY_PATH, items, compact=True)
+    notify_path = settings.DATA_DIR / "notifications.json"
+    save_json(notify_path, items, compact=True)
 
 def next_notification_id(items: List[Dict[str, Any]]) -> int:
     try: return max((int(x.get("id", 0)) for x in items), default=0) + 1
