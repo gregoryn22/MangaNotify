@@ -6,9 +6,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="dark light" />
   <meta name="description" content="Track manga updates, watchlist, and notifications." />
+  
+  <!-- Security headers -->
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <meta http-equiv="X-Frame-Options" content="DENY" />
+  <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+  <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+  <meta name="format-detection" content="telephone=no" />
 
   <!-- Favicons -->
-  <link rel="icon" href="/images/favicon.ico">
+  <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
   <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16.png">
   <link rel="apple-touch-icon" href="/images/favicon-180.png">
@@ -18,47 +25,47 @@
   <meta name="theme-color" content="#f7f8fb" media="(prefers-color-scheme: light)">
 
   <!-- CSS -->
-  <link rel="stylesheet" href="/static/styles/main.css">
+  <link rel="stylesheet" href="/static/styles/main.css" type="text/css">
 
-  <!-- Speed up first paint by preloading modules -->
-  <link rel="modulepreload" href="/static/js/api.js">
-  <link rel="modulepreload" href="/static/js/state.js">
-  <link rel="modulepreload" href="/static/js/ui.js">
-  <link rel="modulepreload" href="/static/js/settings.js">
-  <link rel="modulepreload" href="/static/js/notifications-ui.js">
+  <!-- Speed up first paint by preloading critical modules -->
+  <link rel="modulepreload" href="/static/js/api.js" crossorigin="anonymous">
+  <link rel="modulepreload" href="/static/js/state.js" crossorigin="anonymous">
+  <link rel="modulepreload" href="/static/js/ui.js" crossorigin="anonymous">
+  <link rel="modulepreload" href="/static/js/settings.js" crossorigin="anonymous">
+  <link rel="modulepreload" href="/static/js/notifications-ui.js" crossorigin="anonymous">
 </head>
 
 <body>
   <header class="header" role="banner">
-    <div class="head-inner wrap" style="padding-inline:20px;">
+    <div class="head-inner wrap px-5">
       <div class="brand" aria-label="App brand">
         <div class="logo" aria-hidden="true">
-          <img src="/images/manganotify_logo.png" alt="" decoding="async">
+          <img src="/images/manganotify_logo.png" alt="MangaNotify logo" decoding="async" loading="eager">
         </div>
         <h1 aria-label="MangaNotify">MangaNotify</h1>
       </div>
 
       <div class="actions" role="search">
-        <div class="pill" style="gap:6px;">
+        <div class="pill pill-search">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M21 21l-3.6-3.6M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
           </svg>
-          <input id="q" class="input" placeholder="Search series…" autocomplete="off" aria-label="Search series" />
-          <button id="clear-q" class="btn ghost" title="Clear search" aria-label="Clear search" style="padding:6px 8px">✕</button>
-          <button id="go" class="btn primary" aria-label="Run search" style="padding:10px 20px;">Search</button>
+          <input id="q" class="input" placeholder="Search series…" autocomplete="off" aria-label="Search series" spellcheck="false" />
+          <button id="clear-q" class="btn ghost btn-clear" title="Clear search" aria-label="Clear search">✕</button>
+          <button id="go" class="btn primary btn-search" aria-label="Run search">Search</button>
         </div>
 
         <button id="theme" class="btn hide-sm" title="Toggle theme">Theme</button>
-        <div id="user-info" class="chip" style="display:none"></div>
-        <button id="login-btn" class="btn" title="Login" style="display:none">Login</button>
-        <button id="logout-btn" class="btn" title="Logout" style="display:none">Logout</button>
+        <div id="user-info" class="chip hidden"></div>
+        <button id="login-btn" class="btn hidden" title="Login">Login</button>
+        <button id="logout-btn" class="btn hidden" title="Logout">Logout</button>
         <button id="open-settings" class="btn" title="Settings" aria-controls="settings-drawer" aria-expanded="false"><span id="settings-icon">⚙️</span> Settings</button>
       </div>
     </div>
   </header>
 
   <main class="wrap" id="main" tabindex="-1">
-    <div class="row" style="margin-top:10px; align-items:baseline">
+    <div class="row mt-2 align-baseline">
       <div class="chip" id="status" aria-live="polite">Ready</div>
       <div class="chip hide-sm" id="result-info"></div>
       <div class="chip" id="net" title="Network status">Online</div>
@@ -76,10 +83,10 @@
       <!-- SEARCH GROUP (filters + results) -->
       <section id="search-group" aria-label="Search">
         <!-- Advanced Filter Panel -->
-        <section class="filter-panel" style="margin-top:12px; padding:16px; background:var(--card); border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow)">
+        <section class="filter-panel mt-3 p-4 bg-card border rounded-lg shadow-sm">
           <div class="filter-header">
             <h3 class="filter-title">🔍 Search Filters</h3>
-            <button id="clear-filters" class="btn btn-sm" style="padding:4px 8px; font-size:12px">Clear All</button>
+            <button id="clear-filters" class="btn btn-sm btn-clear-filters">Clear All</button>
           </div>
           
           <div class="filter-grid">
@@ -134,7 +141,7 @@
           </div>
           
           <!-- Active Filters Display -->
-          <div id="active-filters" class="active-filters" style="display:none">
+          <div id="active-filters" class="active-filters hidden">
             <span class="active-filters-label">Active filters:</span>
             <div id="active-filter-chips" class="active-filter-chips"></div>
           </div>
@@ -151,19 +158,19 @@
       </section>
 
       <!-- Notifications -->
-      <section class="panel" id="notifications" style="margin-top:16px; overflow:hidden" aria-label="Notifications" role="tabpanel" aria-labelledby="tab-notif">
-        <div class="row" style="justify-content:space-between; padding:12px 12px 0 12px">
-          <h2 style="margin:0">Notifications</h2>
+      <section class="panel mt-4 overflow-hidden" id="notifications" aria-label="Notifications" role="tabpanel" aria-labelledby="tab-notif">
+        <div class="row justify-between p-3 pb-0">
+          <h2 class="mt-0">Notifications</h2>
           <div class="row">
             <button id="notify-test" class="btn">Send test</button>
             <button id="debug-toggle" class="btn ghost" aria-expanded="false" aria-controls="notify-debug">Debug</button>
           </div>
         </div>
-        <div id="notify-debug" style="display:none; padding:10px 12px 14px; color:var(--muted); font-size:13px"></div>
+        <div id="notify-debug" class="hidden p-3 pb-4 text-muted text-sm"></div>
 
         <!-- History UI -->
         <div class="notif-toolbar">
-          <div class="row" style="gap:8px; align-items:center">
+          <div class="row gap-2 align-center">
             <div id="notif-count" class="notif-count">0 entries</div>
           </div>
           <div class="notif-actions">
@@ -175,25 +182,25 @@
       </section>
 
       <!-- Watchlist -->
-      <section class="panel" id="watchlist-panel" style="margin-top:16px;" aria-label="Watchlist" role="tabpanel" aria-labelledby="tab-watch">
+      <section class="panel mt-4" id="watchlist-panel" aria-label="Watchlist" role="tabpanel" aria-labelledby="tab-watch">
         <!-- Watchlist Controls Panel -->
-        <div class="watchlist-controls" style="margin-bottom: 16px; padding: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 12px;">
+        <div class="watchlist-controls mb-4 p-3 bg-card border rounded-lg">
           <!-- Search within watchlist -->
-          <div class="watchlist-search" style="margin-bottom: 12px;">
-            <div class="search-input-wrapper" style="position: relative;">
+          <div class="watchlist-search mb-3">
+            <div class="search-input-wrapper relative">
               <input id="watchlist-search" type="text" placeholder="Search within watchlist..." 
-                     style="width: 100%; padding: 8px 12px 8px 36px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font-size: 14px;">
-              <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 16px;">🔍</span>
-              <button id="clear-watchlist-search" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--muted); cursor: pointer; display: none;">✕</button>
+                     class="w-full p-2 pl-9 border rounded bg-bg text-sm" autocomplete="off" spellcheck="false">
+              <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted text-base">🔍</span>
+              <button id="clear-watchlist-search" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-transparent border-none text-muted cursor-pointer hidden">✕</button>
             </div>
           </div>
           
           <!-- Sorting and filtering controls -->
-          <div class="watchlist-filters" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+          <div class="watchlist-filters flex flex-wrap gap-3 align-center">
             <!-- Sort controls -->
-            <div class="sort-controls" style="display: flex; align-items: center; gap: 8px;">
-              <label class="filter-label" style="font-size: 12px; color: var(--muted); font-weight: 500;">Sort:</label>
-              <select id="sort-by" class="btn btn-sm" style="padding: 6px 8px; font-size: 12px;" aria-label="Sort by">
+            <div class="sort-controls flex align-center gap-2">
+              <label class="filter-label text-xs text-muted font-medium">Sort:</label>
+              <select id="sort-by" class="btn btn-sm text-xs" aria-label="Sort by">
                 <option value="title">Title (A→Z)</option>
                 <option value="unread">Unread chapters (high→low)</option>
                 <option value="chapters">Total chapters (high→low)</option>
@@ -201,14 +208,14 @@
                 <option value="added_at">Added (new→old)</option>
                 <option value="custom">Custom Order (drag to reorder)</option>
               </select>
-              <button id="sort-dir" class="btn btn-sm" title="Toggle sort direction" style="padding: 6px 8px; font-size: 12px;">⬆︎</button>
-              <button id="clear-custom-order" class="btn btn-sm" title="Clear custom order" style="display:none; padding: 4px 8px; font-size: 11px;">Clear Order</button>
+              <button id="sort-dir" class="btn btn-sm text-xs" title="Toggle sort direction">⬆︎</button>
+              <button id="clear-custom-order" class="btn btn-xs hidden" title="Clear custom order">Clear Order</button>
             </div>
             
             <!-- Tag filters -->
-            <div class="tag-filters" style="display: flex; align-items: center; gap: 8px;">
-              <label class="filter-label" style="font-size: 12px; color: var(--muted); font-weight: 500;">Tags:</label>
-              <select id="tag-filter" class="btn btn-sm" style="padding: 6px 8px; font-size: 12px;" aria-label="Filter by tags">
+            <div class="tag-filters flex align-center gap-2">
+              <label class="filter-label text-xs text-muted font-medium">Tags:</label>
+              <select id="tag-filter" class="btn btn-sm text-xs" aria-label="Filter by tags">
                 <option value="">All tags</option>
                 <!-- Tags will be populated dynamically -->
               </select>
@@ -525,12 +532,12 @@
 
       <!-- Discord Notifications Section -->
       <section class="s-section">
-        <h3 class="s-title" style="display:flex;align-items:center;gap:12px">
-          <div style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:#5865F2;border-radius:8px;flex-shrink:0;padding:2px;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="filter:drop-shadow(0 1px 2px rgba(0,0,0,0.3));">
-              <path d="M20.317 4.369A19.791 19.791 0 0 0 16.885 3.2a.084.084 0 0 0-.09.042c-.388.695-.822 1.6-1.127 2.32a18.524 18.524 0 0 0-5.426 0 12.51 12.51 0 0 0-1.13-2.32.084.084 0 0 0-.09-.042A19.736 19.736 0 0 0 3.684 4.369a.076.076 0 0 0-.032.027C.533 8.457-.32 12.44.099 16.378a.09.09 0 0 0 .031.062A19.9 19.9 0 0 0 7.13 20.8a.084.084 0 0 0 .091-.012c.703-.963 1.332-1.98 1.885-3.045a.084.084 0 0 0-.045-.116c-.516-.195-1.008-.418-1.484-.661a.084.084 0 0 1-.008-.143c.1-.075.2-.153.297-.231a.084.084 0 0 1 .086-.01c3.927 1.793 8.18 1.793 12.062 0a.084.084 0 0 1 .087.009c.098.078.197.156.297.231a.084.084 0 0 1-.008.143c-.476.243-.968.466-1.484.661a.084.084 0 0 0-.045.116c.553 1.065 1.182 2.082 1.885 3.045a.084.084 0 0 0 .091.012 19.876 19.876 0 0 0 7-4.36.09.09 0 0 0 .031-.062c.5-4.09-.838-8.073-3.553-11.982a.076.076 0 0 0-.032-.027ZM8.02 15.331c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.418 2.157-2.418 1.213 0 2.177 1.095 2.157 2.418 0 1.334-.955 2.419-2.157 2.419Zm7.96 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.418 2.157-2.418 1.213 0 2.177 1.095 2.157 2.418 0 1.334-.944 2.419-2.157 2.419Z" fill="white"/>
+        <h3 class="s-title s-title--with-icon">
+          <span class="icon--discord" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-discord" viewBox="0 0 16 16">
+              <path d="M13.545 2.907a13.2 13.2 0 0 0-3.257-1.011.05.05 0 0 0-.052.025c-.141.25-.297.577-.406.833a12.2 12.2 0 0 0-3.658 0 8 8 0 0 0-.412-.833.05.05 0 0 0-.052-.025c-1.125.194-2.22.534-3.257 1.011a.04.04 0 0 0-.021.018C.356 6.024-.213 9.047.066 12.032q.003.022.021.037a13.3 13.3 0 0 0 3.995 2.02.05.05 0 0 0 .056-.019q.463-.63.818-1.329a.05.05 0 0 0-.01-.059l-.018-.011a9 9 0 0 1-1.248-.595.05.05 0 0 1-.02-.066l.015-.019q.127-.095.248-.195a.05.05 0 0 1 .051-.007c2.619 1.196 5.454 1.196 8.041 0a.05.05 0 0 1 .053.007q.121.1.248.195a.05.05 0 0 1-.004.085 8 8 0 0 1-1.249.594.05.05 0 0 0-.03.03.05.05 0 0 0 .003.041c.24.465.515.909.817 1.329a.05.05 0 0 0 .056.019 13.2 13.2 0 0 0 4.001-2.02.05.05 0 0 0 .021-.037c.334-3.451-.559-6.449-2.366-9.106a.03.03 0 0 0-.02-.019m-8.198 7.307c-.789 0-1.438-.724-1.438-1.612s.637-1.613 1.438-1.613c.807 0 1.45.73 1.438 1.613 0 .888-.637 1.612-1.438 1.612m5.316 0c-.788 0-1.438-.724-1.438-1.612s.637-1.613 1.438-1.613c.807 0 1.451.73 1.438 1.613 0 .888-.631 1.612-1.438 1.612"/>
             </svg>
-          </div>
+          </span>
           Discord Notifications
         </h3>
         
@@ -541,7 +548,7 @@
               <div class="setting-description">Enter your Discord webhook URL to receive notifications</div>
             </div>
             <div class="setting-control">
-              <input id="discord-webhook" class="input" type="url" placeholder="https://discord.com/api/webhooks/..." autocomplete="off" />
+              <input id="discord-webhook" class="input" type="url" placeholder="https://discord.com/api/webhooks/..." autocomplete="off" spellcheck="false" inputmode="url" />
             </div>
           </div>
           
