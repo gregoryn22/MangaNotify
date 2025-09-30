@@ -90,10 +90,14 @@ class TestConfiguration:
             "AUTH_PASSWORD": "password123"
         }
         
-        # Store original values
+        # Store original values and clear AUTH_SECRET_KEY
         for key, value in test_env.items():
             original_env[key] = os.environ.get(key)
             os.environ[key] = value
+        
+        # Explicitly clear AUTH_SECRET_KEY to test missing key scenario
+        original_env["AUTH_SECRET_KEY"] = os.environ.get("AUTH_SECRET_KEY")
+        os.environ.pop("AUTH_SECRET_KEY", None)
         
         try:
             settings = create_settings()

@@ -147,9 +147,11 @@ class TestPollerIntegration:
             assert result["checked"] == 1
             
             # Check that the watchlist was updated
-            updated_watchlist = load_watchlist()
-            chainsaw_man = next(item for item in updated_watchlist if item["id"] == 1677)
-            assert chainsaw_man["total_chapters"] == 216
+            assert updated_watchlist is not None, "save_watchlist should have been called"
+            test_series_items = [item for item in updated_watchlist if item["id"] == 1677]
+            assert len(test_series_items) > 0, f"No test series found in watchlist: {updated_watchlist}"
+            test_series = test_series_items[0]
+            assert test_series["total_chapters"] == 216
             
             # Check that a notification was created
             notifications = load_notifications()
@@ -245,9 +247,11 @@ class TestPollerIntegration:
             assert result["checked"] == 1
             
             # Should have updated the watchlist
-            updated_watchlist = load_watchlist()
-            chainsaw_man = next(item for item in updated_watchlist if item["id"] == 1677)
-            assert chainsaw_man["total_chapters"] == 216
+            assert updated_watchlist is not None, "save_watchlist should have been called"
+            test_series_items = [item for item in updated_watchlist if item["id"] == 1677]
+            assert len(test_series_items) > 0, f"No test series found in watchlist: {updated_watchlist}"
+            test_series = test_series_items[0]
+            assert test_series["total_chapters"] == 216
     
     @pytest.mark.asyncio
     async def test_poller_no_notification_when_disabled(self, temp_data_dir):
@@ -289,11 +293,23 @@ class TestPollerIntegration:
             mock_app = MagicMock()
             mock_app.state.client = AsyncMock()
             
-            # Run the poller once
-            result = await process_once(mock_app)
+            # Mock the load_watchlist function to return our test data
+            def mock_load_watchlist():
+                return watchlist_data
+            
+            # Track the updated watchlist
+            updated_watchlist = None
+            def mock_save_watchlist(wl):
+                nonlocal updated_watchlist
+                updated_watchlist = wl
+            
+            with patch('manganotify.services.poller.load_watchlist', side_effect=mock_load_watchlist), \
+                 patch('manganotify.services.poller.save_watchlist', side_effect=mock_save_watchlist):
+                # Run the poller once
+                result = await process_once(mock_app)
             
             # Should still update the watchlist
-            updated_watchlist = load_watchlist()
+            assert updated_watchlist is not None, "save_watchlist should have been called"
             test_series_items = [item for item in updated_watchlist if item["id"] == 1677]
             assert len(test_series_items) > 0, f"No test series found in watchlist: {updated_watchlist}"
             test_series = test_series_items[0]
