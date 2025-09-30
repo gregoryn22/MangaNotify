@@ -45,7 +45,7 @@
           </svg>
           <input id="q" class="input" placeholder="Search series…" autocomplete="off" aria-label="Search series" />
           <button id="clear-q" class="btn ghost" title="Clear search" aria-label="Clear search" style="padding:6px 8px">✕</button>
-          <button id="go" class="btn primary" aria-label="Run search">Search</button>
+          <button id="go" class="btn primary" aria-label="Run search" style="padding:10px 20px;">Search</button>
         </div>
 
         <button id="theme" class="btn hide-sm" title="Toggle theme">Theme</button>
@@ -75,42 +75,68 @@
     <div id="sections">
       <!-- SEARCH GROUP (filters + results) -->
       <section id="search-group" aria-label="Search">
-        <section class="panel" style="margin-top:12px; padding:10px 12px">
-          <div class="row" style="gap:8px; align-items:center; flex-wrap:wrap">
-            <label class="subline" for="f-status">Status</label>
-            <select id="f-status" class="btn" style="padding:8px 10px">
-              <option value="">Any</option>
-              <option>releasing</option>
-              <option>finished</option>
-              <option>hiatus</option>
-              <option>cancelled</option>
-              <option>upcoming</option>
-            </select>
-
-            <label class="subline" for="f-type">Type</label>
-            <select id="f-type" class="btn" style="padding:8px 10px">
-              <option value="">Any</option>
-              <option value="manga">manga</option>
-              <option value="manhwa">manhwa</option>
-              <option value="manhua">manhua</option>
-              <option value="novel">novel</option>
-              <option value="one_shot">one_shot</option>
-            </select>
-
-            <label class="checkbox">
-              <input id="f-has-anime" type="checkbox"> Has anime
-            </label>
-
-            <label class="subline" for="f-cr">Content</label>
-            <select id="f-cr" class="btn" style="padding:8px 10px">
-              <option value="">Any</option>
-              <option value="safe">safe</option>
-              <option value="suggestive">suggestive</option>
-              <option value="erotica">erotica</option>
-              <option value="pornographic">pornographic</option>
-            </select>
-
-            <button id="f-clear" class="btn">Clear filters</button>
+        <!-- Advanced Filter Panel -->
+        <section class="filter-panel" style="margin-top:12px; padding:16px; background:var(--card); border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow)">
+          <div class="filter-header">
+            <h3 class="filter-title">🔍 Search Filters</h3>
+            <button id="clear-filters" class="btn btn-sm" style="padding:4px 8px; font-size:12px">Clear All</button>
+          </div>
+          
+          <div class="filter-grid">
+            <!-- Status Filter -->
+            <div class="filter-group">
+              <label class="filter-label">Status</label>
+              <div class="filter-chips">
+                <button class="filter-chip" data-filter="status" data-value="">All</button>
+                <button class="filter-chip" data-filter="status" data-value="releasing">Releasing</button>
+                <button class="filter-chip" data-filter="status" data-value="finished">Finished</button>
+                <button class="filter-chip" data-filter="status" data-value="hiatus">Hiatus</button>
+                <button class="filter-chip" data-filter="status" data-value="cancelled">Cancelled</button>
+                <button class="filter-chip" data-filter="status" data-value="upcoming">Upcoming</button>
+              </div>
+            </div>
+            
+            <!-- Type Filter -->
+            <div class="filter-group">
+              <label class="filter-label">Type</label>
+              <div class="filter-chips">
+                <button class="filter-chip" data-filter="type" data-value="">All</button>
+                <button class="filter-chip" data-filter="type" data-value="manga">Manga</button>
+                <button class="filter-chip" data-filter="type" data-value="manhwa">Manhwa</button>
+                <button class="filter-chip" data-filter="type" data-value="manhua">Manhua</button>
+                <button class="filter-chip" data-filter="type" data-value="novel">Novel</button>
+                <button class="filter-chip" data-filter="type" data-value="one_shot">Oneshot</button>
+              </div>
+            </div>
+            
+            <!-- Content Rating Filter -->
+            <div class="filter-group">
+              <label class="filter-label">Content Rating</label>
+              <div class="filter-chips">
+                <button class="filter-chip" data-filter="content_rating" data-value="">All</button>
+                <button class="filter-chip" data-filter="content_rating" data-value="safe">Safe</button>
+                <button class="filter-chip" data-filter="content_rating" data-value="suggestive">Suggestive</button>
+                <button class="filter-chip" data-filter="content_rating" data-value="erotica">Erotica</button>
+                <button class="filter-chip" data-filter="content_rating" data-value="pornographic">Pornographic</button>
+              </div>
+            </div>
+            
+            <!-- Additional Filters -->
+            <div class="filter-group">
+              <label class="filter-label">Options</label>
+              <div class="filter-options">
+                <label class="filter-checkbox">
+                  <input id="f-has-anime" type="checkbox">
+                  <span>Has Anime</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Active Filters Display -->
+          <div id="active-filters" class="active-filters" style="display:none">
+            <span class="active-filters-label">Active filters:</span>
+            <div id="active-filter-chips" class="active-filter-chips"></div>
           </div>
         </section>
 
@@ -150,6 +176,56 @@
 
       <!-- Watchlist -->
       <section class="panel" id="watchlist-panel" style="margin-top:16px;" aria-label="Watchlist" role="tabpanel" aria-labelledby="tab-watch">
+        <!-- Watchlist Controls Panel -->
+        <div class="watchlist-controls" style="margin-bottom: 16px; padding: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 12px;">
+          <!-- Search within watchlist -->
+          <div class="watchlist-search" style="margin-bottom: 12px;">
+            <div class="search-input-wrapper" style="position: relative;">
+              <input id="watchlist-search" type="text" placeholder="Search within watchlist..." 
+                     style="width: 100%; padding: 8px 12px 8px 36px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font-size: 14px;">
+              <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 16px;">🔍</span>
+              <button id="clear-watchlist-search" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--muted); cursor: pointer; display: none;">✕</button>
+            </div>
+          </div>
+          
+          <!-- Sorting and filtering controls -->
+          <div class="watchlist-filters" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+            <!-- Sort controls -->
+            <div class="sort-controls" style="display: flex; align-items: center; gap: 8px;">
+              <label class="filter-label" style="font-size: 12px; color: var(--muted); font-weight: 500;">Sort:</label>
+              <select id="sort-by" class="btn btn-sm" style="padding: 6px 8px; font-size: 12px;" aria-label="Sort by">
+                <option value="title">Title (A→Z)</option>
+                <option value="unread">Unread chapters (high→low)</option>
+                <option value="chapters">Total chapters (high→low)</option>
+                <option value="last_checked">Last checked (new→old)</option>
+                <option value="added_at">Added (new→old)</option>
+                <option value="custom">Custom Order (drag to reorder)</option>
+              </select>
+              <button id="sort-dir" class="btn btn-sm" title="Toggle sort direction" style="padding: 6px 8px; font-size: 12px;">⬆︎</button>
+              <button id="clear-custom-order" class="btn btn-sm" title="Clear custom order" style="display:none; padding: 4px 8px; font-size: 11px;">Clear Order</button>
+            </div>
+            
+            <!-- Tag filters -->
+            <div class="tag-filters" style="display: flex; align-items: center; gap: 8px;">
+              <label class="filter-label" style="font-size: 12px; color: var(--muted); font-weight: 500;">Tags:</label>
+              <select id="tag-filter" class="btn btn-sm" style="padding: 6px 8px; font-size: 12px;" aria-label="Filter by tags">
+                <option value="">All tags</option>
+                <!-- Tags will be populated dynamically -->
+              </select>
+            </div>
+            
+            <!-- Quick filters -->
+            <div class="quick-filters" style="display: flex; align-items: center; gap: 8px;">
+              <label class="checkbox" style="font-size: 12px;">
+                <input id="unread-only" type="checkbox"> Unread only
+              </label>
+              <label class="checkbox" style="font-size: 12px;">
+                <input id="show-covers" type="checkbox"> Show covers
+              </label>
+            </div>
+          </div>
+        </div>
+        
         <div class="watch">
           <div class="row" style="justify-content:space-between; align-items:center">
             <h2 style="margin:0">Watchlist</h2>
@@ -191,6 +267,32 @@
   </main>
 
   <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Quick Actions Toolbar -->
+  <div id="quick-actions" class="quick-actions" style="display: none;">
+    <div class="quick-actions-content">
+      <button id="qa-refresh" class="quick-action" title="Refresh watchlist">
+        <span class="qa-icon">↻</span>
+        <span class="qa-label">Refresh</span>
+      </button>
+      <button id="qa-search" class="quick-action" title="Focus search">
+        <span class="qa-icon">🔍</span>
+        <span class="qa-label">Search</span>
+      </button>
+      <button id="qa-settings" class="quick-action" title="Open settings">
+        <span class="qa-icon">⚙️</span>
+        <span class="qa-label">Settings</span>
+      </button>
+      <button id="qa-theme" class="quick-action" title="Toggle theme">
+        <span class="qa-icon">🌙</span>
+        <span class="qa-label">Theme</span>
+      </button>
+      <button id="qa-scroll-top" class="quick-action" title="Scroll to top">
+        <span class="qa-icon">↑</span>
+        <span class="qa-label">Top</span>
+      </button>
+    </div>
+  </div>
 
   <!-- Details Modal -->
   <dialog id="modal" class="modal-solid">
@@ -254,76 +356,127 @@
     <div class="s-body">
       <section class="s-section">
         <h3 class="s-title">Watchlist</h3>
-        <div class="row" style="align-items:center; gap:10px">
-          <label class="subline" for="sort-by">Sort</label>
-          <select id="sort-by" class="btn" style="padding:8px 10px" aria-label="Sort by">
-            <option value="title">Title (A→Z)</option>
-            <option value="unread">Unread chapters (high→low)</option>
-            <option value="chapters">Total chapters (high→low)</option>
-            <option value="last_checked">Last checked (new→old)</option>
-            <option value="added_at">Added (new→old)</option>
-          </select>
-          <button id="sort-dir" class="btn" title="Toggle sort direction">⬆︎</button>
+        
+        <div class="setting-group">
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Hide dropped series</div>
+              <div class="setting-description">Remove dropped manga from the watchlist</div>
+            </div>
+            <div class="setting-control">
+              <label class="checkbox">
+                <input id="hide-dropped" type="checkbox">
+              </label>
+            </div>
+          </div>
+          
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Auto-refresh</div>
+              <div class="setting-description">Automatically check for new chapters</div>
+            </div>
+            <div class="setting-control">
+              <select id="auto-refresh" aria-label="Auto-refresh interval">
+                <option value="0">Off</option>
+                <option value="60">1 min</option>
+                <option value="300">5 min</option>
+                <option value="900">15 min</option>
+              </select>
+            </div>
+          </div>
         </div>
-        <div class="row" style="margin-top:8px">
-          <label class="checkbox" title="Only show series with unread chapters">
-            <input id="unread-only" type="checkbox"> Show unread only
-          </label>
-          <label class="checkbox" title="Toggle cover images in list (saves bandwidth)">
-            <input id="show-covers" type="checkbox" checked> Show covers
-          </label>
-        </div>
-        <div class="row" style="margin-top:8px; align-items:center">
-          <label class="subline" for="auto-refresh">Auto-refresh</label>
-          <select id="auto-refresh" class="btn" style="padding:8px 10px" aria-label="Auto-refresh interval">
-            <option value="0">Off</option>
-            <option value="60">1 min</option>
-            <option value="300">5 min</option>
-            <option value="900">15 min</option>
-          </select>
-        </div>
-        <div class="row" style="margin-top:12px">
-          <button id="bulk-mark-latest" class="btn" title="Mark visible items as latest">Mark all latest (visible)</button>
-          <button id="export" class="btn" title="Export watchlist to JSON">Export</button>
-          <label class="btn" for="import-file" title="Import watchlist from JSON" style="cursor:pointer">Import</label>
-          <input id="import-file" type="file" accept="application/json" style="display:none" />
+        
+        <div class="setting-group">
+          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <button id="bulk-mark-latest" class="btn" title="Mark visible items as latest">Mark Latest</button>
+            <button id="export" class="btn" title="Export watchlist to JSON">Export</button>
+            <button id="import-btn" class="btn" title="Import watchlist from JSON">Import</button>
+            <input id="import-file" type="file" accept="application/json" style="display:none" />
+          </div>
         </div>
       </section>
 
       <section class="s-section">
         <h3 class="s-title">Display</h3>
-        <div class="row">
-          <button id="theme-alt" class="btn" title="Toggle theme">Toggle Theme</button>
-          <select id="layout-alt" class="btn" style="padding:8px 10px" title="Layout">
-            <option value="stack">Stacked</option>
-            <option value="search-first">Search → Watchlist → Notifications</option>
-            <option value="watch-first">Watchlist → Search → Notifications</option>
-            <option value="tabs">Tabs</option>
-          </select>
-        </div>
-        <div class="row" style="margin-top:8px">
-          <label class="checkbox" title="Use emoji icons throughout the interface">
-            <input id="use-emojis" type="checkbox" checked> Use emoji icons
-          </label>
-        </div>
-        <div class="row" style="margin-top:12px; align-items:center; gap:10px">
-          <label class="subline" for="layout-density">Density</label>
-          <select id="layout-density" class="btn" style="padding:8px 10px" title="Layout density">
-            <option value="compact">Compact</option>
-            <option value="normal">Normal</option>
-            <option value="spacious">Spacious</option>
-          </select>
-          <label class="subline" for="font-size">Font Size</label>
-          <select id="font-size" class="btn" style="padding:8px 10px" title="Font size">
-            <option value="small">Small</option>
-            <option value="normal">Normal</option>
-            <option value="large">Large</option>
-          </select>
-        </div>
-        <div class="row" style="margin-top:12px; align-items:center; gap:10px">
-          <label class="subline" for="accent-color">Accent Color</label>
-          <input id="accent-color" type="color" class="btn" style="padding:4px; width:60px; height:32px" title="Custom accent color" />
-          <button id="reset-accent" class="btn" title="Reset to default">Reset</button>
+        
+        <div class="setting-group">
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Theme</div>
+              <div class="setting-description">Switch between light and dark themes</div>
+            </div>
+            <div class="setting-control">
+              <button id="theme-alt" class="btn" title="Toggle theme">Toggle Theme</button>
+            </div>
+          </div>
+          
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Layout</div>
+              <div class="setting-description">Choose your preferred layout style</div>
+            </div>
+            <div class="setting-control">
+              <select id="layout-alt" aria-label="Layout style">
+                <option value="stack">Stacked</option>
+                <option value="search-first">Search → Watchlist → Notifications</option>
+                <option value="watch-first">Watchlist → Search → Notifications</option>
+                <option value="tabs">Tabs</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Use emoji icons</div>
+              <div class="setting-description">Show emoji icons throughout the interface</div>
+            </div>
+            <div class="setting-control">
+              <label class="checkbox">
+                <input id="use-emojis" type="checkbox" checked>
+              </label>
+            </div>
+          </div>
+          
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Layout density</div>
+              <div class="setting-description">Adjust spacing and sizing</div>
+            </div>
+            <div class="setting-control">
+              <select id="layout-density" aria-label="Layout density">
+                <option value="compact">Compact</option>
+                <option value="normal">Normal</option>
+                <option value="spacious">Spacious</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Font size</div>
+              <div class="setting-description">Adjust text size for better readability</div>
+            </div>
+            <div class="setting-control">
+              <select id="font-size" aria-label="Font size">
+                <option value="small">Small</option>
+                <option value="normal">Normal</option>
+                <option value="large">Large</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Accent color</div>
+              <div class="setting-description">Customize the primary accent color</div>
+            </div>
+            <div class="setting-control">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <input id="accent-color" type="color" value="#3b82f6" style="width: 40px; height: 32px; border: none; border-radius: 6px; cursor: pointer;">
+                <button id="reset-accent" class="btn" style="padding: 6px 12px; font-size: 12px;">Reset</button>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -371,26 +524,51 @@
       </section>
 
       <!-- Discord Notifications Section -->
-      <section class="s-section" style="position:relative;">
-        <h3 class="s-title" style="display:flex;align-items:center;gap:8px">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="vertical-align:middle;">
-            <path d="M20.317 4.369A19.791 19.791 0 0 0 16.885 3.2a.084.084 0 0 0-.09.042c-.388.695-.822 1.6-1.127 2.32a18.524 18.524 0 0 0-5.426 0 12.51 12.51 0 0 0-1.13-2.32.084.084 0 0 0-.09-.042A19.736 19.736 0 0 0 3.684 4.369a.076.076 0 0 0-.032.027C.533 8.457-.32 12.44.099 16.378a.09.09 0 0 0 .031.062A19.9 19.9 0 0 0 7.13 20.8a.084.084 0 0 0 .091-.012c.703-.963 1.332-1.98 1.885-3.045a.084.084 0 0 0-.045-.116c-.516-.195-1.008-.418-1.484-.661a.084.084 0 0 1-.008-.143c.1-.075.2-.153.297-.231a.084.084 0 0 1 .086-.01c3.927 1.793 8.18 1.793 12.062 0a.084.084 0 0 1 .087.009c.098.078.197.156.297.231a.084.084 0 0 1-.008.143c-.476.243-.968.466-1.484.661a.084.084 0 0 0-.045.116c.553 1.065 1.182 2.082 1.885 3.045a.084.084 0 0 0 .091.012 19.876 19.876 0 0 0 7-4.36.09.09 0 0 0 .031-.062c.5-4.09-.838-8.073-3.553-11.982a.076.076 0 0 0-.032-.027ZM8.02 15.331c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.418 2.157-2.418 1.213 0 2.177 1.095 2.157 2.418 0 1.334-.955 2.419-2.157 2.419Zm7.96 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.418 2.157-2.418 1.213 0 2.177 1.095 2.157 2.418 0 1.334-.944 2.419-2.157 2.419Z" fill="#5865F2"/>
-          </svg>
+      <section class="s-section">
+        <h3 class="s-title" style="display:flex;align-items:center;gap:12px">
+          <div style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:#5865F2;border-radius:8px;flex-shrink:0;padding:2px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="filter:drop-shadow(0 1px 2px rgba(0,0,0,0.3));">
+              <path d="M20.317 4.369A19.791 19.791 0 0 0 16.885 3.2a.084.084 0 0 0-.09.042c-.388.695-.822 1.6-1.127 2.32a18.524 18.524 0 0 0-5.426 0 12.51 12.51 0 0 0-1.13-2.32.084.084 0 0 0-.09-.042A19.736 19.736 0 0 0 3.684 4.369a.076.076 0 0 0-.032.027C.533 8.457-.32 12.44.099 16.378a.09.09 0 0 0 .031.062A19.9 19.9 0 0 0 7.13 20.8a.084.084 0 0 0 .091-.012c.703-.963 1.332-1.98 1.885-3.045a.084.084 0 0 0-.045-.116c-.516-.195-1.008-.418-1.484-.661a.084.084 0 0 1-.008-.143c.1-.075.2-.153.297-.231a.084.084 0 0 1 .086-.01c3.927 1.793 8.18 1.793 12.062 0a.084.084 0 0 1 .087.009c.098.078.197.156.297.231a.084.084 0 0 1-.008.143c-.476.243-.968.466-1.484.661a.084.084 0 0 0-.045.116c.553 1.065 1.182 2.082 1.885 3.045a.084.084 0 0 0 .091.012 19.876 19.876 0 0 0 7-4.36.09.09 0 0 0 .031-.062c.5-4.09-.838-8.073-3.553-11.982a.076.076 0 0 0-.032-.027ZM8.02 15.331c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.418 2.157-2.418 1.213 0 2.177 1.095 2.157 2.418 0 1.334-.955 2.419-2.157 2.419Zm7.96 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.418 2.157-2.418 1.213 0 2.177 1.095 2.157 2.418 0 1.334-.944 2.419-2.157 2.419Z" fill="white"/>
+            </svg>
+          </div>
           Discord Notifications
         </h3>
-        <div class="subline" style="margin-bottom:6px">
-          Enter a Discord webhook URL to receive notifications in your server/channel.
-        </div>
-        <div class="row" style="align-items:center; gap:10px">
-          <label class="subline" for="discord-webhook">Webhook URL</label>
-          <input id="discord-webhook" class="input" type="url" placeholder="https://discord.com/api/webhooks/..." style="flex:1; min-width:200px" autocomplete="off" />
-        </div>
-        <div class="row" style="margin-top:8px; align-items:center; gap:10px">
-          <label class="checkbox">
-            <input id="discord-enabled" type="checkbox"> Enable Discord notifications
-          </label>
-          <button id="discord-test" class="btn" type="button" disabled>Send test notification</button>
-          <span id="discord-status" class="chip" style="font-size:12px;display:none" aria-live="polite" title="Shows the status of the last Discord test or save"></span>
+        
+        <div class="setting-group">
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Webhook URL</div>
+              <div class="setting-description">Enter your Discord webhook URL to receive notifications</div>
+            </div>
+            <div class="setting-control">
+              <input id="discord-webhook" class="input" type="url" placeholder="https://discord.com/api/webhooks/..." autocomplete="off" />
+            </div>
+          </div>
+          
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Enable Discord notifications</div>
+              <div class="setting-description">Send notifications to your Discord server</div>
+            </div>
+            <div class="setting-control">
+              <label class="checkbox">
+                <input id="discord-enabled" type="checkbox">
+              </label>
+            </div>
+          </div>
+          
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Test notification</div>
+              <div class="setting-description">Send a test message to verify your webhook</div>
+            </div>
+            <div class="setting-control">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <button id="discord-test" class="btn" type="button" disabled>Send Test</button>
+                <span id="discord-status" class="chip" style="font-size:12px;display:none" aria-live="polite" title="Shows the status of the last Discord test or save"></span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
       <hr style="border:none;border-top:1px solid var(--border);margin:18px 0 0 0;opacity:.25">
