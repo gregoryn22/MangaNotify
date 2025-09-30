@@ -76,8 +76,59 @@ export function initSettings(){
   $("#tab-notif")?.addEventListener("click", ()=> selectTab("notif"));
 
   /* Sorting / toggles */
-  $("#sort-by")?.addEventListener("change", e=>{ state.sortBy = e.target.value; localStorage.setItem("mn-sort-by", state.sortBy); loadWatchlist(); });
+  $("#sort-by")?.addEventListener("change", e=>{ 
+    state.sortBy = e.target.value; 
+    localStorage.setItem("mn-sort-by", state.sortBy); 
+    updateCustomOrderUI();
+    loadWatchlist(); 
+  });
   $("#sort-dir")?.addEventListener("click", ()=>{ state.sortDir = state.sortDir==="asc" ? "desc" : "asc"; $("#sort-dir").textContent = state.sortDir==="asc" ? "⬆︎" : "⬇︎"; localStorage.setItem("mn-sort-dir", state.sortDir); loadWatchlist(); });
+  
+  // Clear custom order button
+  $("#clear-custom-order")?.addEventListener("click", () => {
+    localStorage.removeItem('mn-custom-order');
+    state.sortBy = 'title'; // Switch back to title sort
+    localStorage.setItem('mn-sort-by', 'title');
+    $("#sort-by").value = 'title';
+    updateCustomOrderUI();
+    loadWatchlist();
+    toast('Custom order cleared', 1500, 'success');
+  });
+  
+  // Initialize custom order UI
+  updateCustomOrderUI();
+  
+  // Import button functionality
+  $("#import-btn")?.addEventListener("click", () => {
+    $("#import-file")?.click();
+  });
+  
+  $("#import-file")?.addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      
+      // Validate the imported data structure
+      if (!Array.isArray(data)) {
+        throw new Error("Invalid file format");
+      }
+      
+      // Import the watchlist
+      await api.post("/api/watchlist/import", data);
+      await loadWatchlist();
+      toast("Watchlist imported successfully", 2000, "success");
+      
+    } catch (error) {
+      console.error("Import failed:", error);
+      toast("Import failed: " + error.message, 3000, "error");
+    }
+    
+    // Reset the file input
+    e.target.value = "";
+  });
   $("#unread-only") && ($("#unread-only").checked = state.unreadOnly);
   $("#unread-only")?.addEventListener("change", e=>{ state.unreadOnly = !!e.target.checked; localStorage.setItem("mn-unread-only", String(state.unreadOnly)); loadWatchlist(); });
   $("#show-covers") && ($("#show-covers").checked = state.showCovers);
@@ -319,6 +370,22 @@ export function initSettings(){
   applyLayoutDensity();
   applyFontSize();
   applyCustomAccentColor();
+}
+
+// Update UI based on custom order state
+export function updateCustomOrderUI() {
+  const clearButton = $("#clear-custom-order");
+  const sortDirButton = $("#sort-dir");
+  
+  if (state.sortBy === 'custom') {
+    // Show clear button, hide sort direction button
+    if (clearButton) clearButton.style.display = 'inline-block';
+    if (sortDirButton) sortDirButton.style.display = 'none';
+  } else {
+    // Hide clear button, show sort direction button
+    if (clearButton) clearButton.style.display = 'none';
+    if (sortDirButton) sortDirButton.style.display = 'inline-block';
+  }
 }
 
 /* ===== Customization Helper Functions ===== */
