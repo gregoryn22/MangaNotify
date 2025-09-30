@@ -173,20 +173,30 @@ class TestPollerIntegration:
             with patch('manganotify.services.poller.pushover', new_callable=AsyncMock) as mock_pushover:
                 mock_pushover.return_value = {"ok": True}
                 
-                # Mock the settings to use the test data directory
-                with patch('manganotify.services.poller.settings') as mock_settings:
-                    mock_settings.DATA_DIR = Path(temp_data_dir)
-                    
+                # Mock the load_watchlist function to return our test data
+                def mock_load_watchlist():
+                    return temp_watchlist
+                
+                # Track the updated watchlist
+                updated_watchlist = None
+                def mock_save_watchlist(wl):
+                    nonlocal updated_watchlist
+                    updated_watchlist = wl
+                
+                with patch('manganotify.services.poller.load_watchlist', side_effect=mock_load_watchlist), \
+                     patch('manganotify.services.poller.save_watchlist', side_effect=mock_save_watchlist):
                     # Run the poller once - should not crash
                     result = await process_once(mock_app)
             
-            # Should still report that it checked the series
+            # Should still report that it checked the series (even if API failed)
             assert result["checked"] == 1
             
-            # Watchlist should remain unchanged
-            updated_watchlist = load_watchlist()
-            chainsaw_man = next(item for item in updated_watchlist if item["id"] == 1677)
-            assert chainsaw_man["total_chapters"] == 215  # Unchanged
+            # Watchlist should remain unchanged (since API failed)
+            assert updated_watchlist is not None, "save_watchlist should have been called"
+            test_series_items = [item for item in updated_watchlist if item["id"] == 1677]
+            assert len(test_series_items) > 0, f"No test series found in watchlist: {updated_watchlist}"
+            test_series = test_series_items[0]
+            assert test_series["total_chapters"] == 215  # Unchanged
     
     @pytest.mark.asyncio
     async def test_poller_retry_logic(self, temp_watchlist, temp_data_dir):
