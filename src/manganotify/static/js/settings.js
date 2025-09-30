@@ -116,7 +116,7 @@ export function initSettings(){
       }
       
       // Import the watchlist
-      await api.post("/api/watchlist/import", data);
+      await api.importWatchlist(data);
       await loadWatchlist();
       toast("Watchlist imported successfully", 2000, "success");
       
@@ -356,6 +356,46 @@ export function initSettings(){
     }
   });
   loadDiscordSettings();
+  
+  // Debug toggle button
+  $("#debug-toggle")?.addEventListener("click", () => {
+    const debugSection = document.getElementById("debug-section");
+    const debugToggle = document.getElementById("debug-toggle");
+    if (debugSection && debugToggle) {
+      const isHidden = debugSection.style.display === "none";
+      debugSection.style.display = isHidden ? "block" : "none";
+      debugToggle.setAttribute("aria-expanded", isHidden ? "true" : "false");
+    }
+  });
+  
+  // Debug clear button
+  $("#debug-clear")?.addEventListener("click", () => {
+    const debugLog = document.getElementById("debug-log");
+    if (debugLog) {
+      debugLog.textContent = "";
+      toast("Debug log cleared", 2000, "success");
+    }
+  });
+  
+  // Debug download button
+  $("#debug-download")?.addEventListener("click", () => {
+    const debugLog = document.getElementById("debug-log");
+    if (debugLog) {
+      const logContent = debugLog.textContent;
+      if (logContent.trim()) {
+        const blob = new Blob([logContent], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `manganotify-debug-${new Date().toISOString().split('T')[0]}.log`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast("Debug log downloaded", 2000, "success");
+      } else {
+        toast("Debug log is empty", 2000, "warning");
+      }
+    }
+  });
 
   // initial UI reflect
   $("#sort-dir").textContent = state.sortDir==="asc" ? "⬆︎" : "⬇︎";
@@ -369,6 +409,54 @@ export function initSettings(){
   applyLayoutDensity();
   applyFontSize();
   applyCustomAccentColor();
+  
+  // Export button functionality
+  const exportBtn = document.getElementById('export');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', async () => {
+      try {
+        // Get the full watchlist using the API helper
+        const data = await api.watchlist();
+        
+        // Create export data
+        const exportData = data.data.map(item => ({
+          title: item.title,
+          status: item.status,
+          last_read: item.last_read,
+          total_chapters: item.total_chapters,
+          id: item.id,
+          added_at: item.added_at,
+          last_checked: item.last_checked,
+          cover: item.cover,
+          content_rating: item.content_rating,
+          authors: item.authors,
+          artists: item.artists,
+          links: item.links,
+          relationships: item.relationships,
+          last_chapter_at: item.last_chapter_at
+        }));
+        
+        // Download as JSON file
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `manganotify-watchlist-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        // Show success message
+        if (window.toast) {
+          window.toast(`Exported ${exportData.length} items`, 2000, 'success');
+        }
+      } catch (error) {
+        console.error('Export failed:', error);
+        if (window.toast) {
+          window.toast('Export failed', 2000, 'error');
+        }
+      }
+    });
+  }
 }
 
 // Update UI based on custom order state

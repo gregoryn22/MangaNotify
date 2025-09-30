@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   manganotify:
     # If you publish an image, prefer this:
