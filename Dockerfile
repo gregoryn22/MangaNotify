@@ -11,8 +11,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl build-essential && rm -rf /var/lib/apt/lists/*
 
-# non-root user
-RUN useradd -m -u 10001 appuser
+# non-root user (Unraid standard: nobody:users)
+RUN useradd -m -u 99 -g 100 appuser
 
 WORKDIR /app
 
