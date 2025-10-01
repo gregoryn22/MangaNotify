@@ -10,13 +10,24 @@
   <Support>https://github.com/gregoryn22/MangaNotify</Support>
   <Project>https://github.com/gregoryn22/MangaNotify</Project>
   <Overview>
+    🎌 MangaNotify - Advanced manga tracking and notification system
+    
+    Features:
+    • 📚 Track manga updates from MangaBaka API
+    • 🔔 Push notifications via Pushover & Discord
+    • 🔐 Optional authentication & security
+    • 📱 Modern responsive web interface
+    • ⚡ Real-time polling and updates
+    • 🎨 Customizable themes and layouts
+    • 📊 Comprehensive watchlist management
+    
     Perfect for manga enthusiasts who want to stay updated on their favorite series!
   </Overview>
   <Category>MediaServer:Tools</Category>
   <WebUI>http://[IP]:[PORT:8999]</WebUI>
   <Icon>https://raw.githubusercontent.com/gregoryn22/MangaNotify/master/images/manganotify_logo.png</Icon>
 
-  <!-- Core Configuration -->
+  <!-- Essential Configuration Only -->
   <Config Name="AppData Config Path" Target="/data" Default="/mnt/user/appdata/manganotify" Mode="rw" Description="📁 App storage directory for watchlist, notifications, and settings" Type="Path" Display="always" Required="true" Mask="false"/>
   <Config Name="Web Port" Target="8999" Default="8999" Mode="tcp" Description="🌐 Web UI Port (change if 8999 conflicts)" Type="Port" Display="always" Required="true" Mask="false"/>
   
@@ -24,94 +35,17 @@
   <Config Name="User ID" Target="PUID" Default="10001" Mode="" Description="👤 User ID for file permissions (keep default unless you know what you're doing)" Type="Variable" Display="always" Required="false" Mask="false"/>
   <Config Name="Group ID" Target="PGID" Default="10001" Mode="" Description="👥 Group ID for file permissions (keep default unless you know what you're doing)" Type="Variable" Display="always" Required="false" Mask="false"/>
 
-  <!-- Authentication & Security -->
+  <!-- Authentication (Optional but Recommended) -->
   <Config Name="Enable Authentication" Target="AUTH_ENABLED" Default="false" Mode="" Description="🔐 Enable login protection (recommended for production)" Type="Variable" Display="always" Required="false" Mask="false"/>
   <Config Name="Admin Username" Target="AUTH_USERNAME" Default="admin" Mode="" Description="👤 Admin username (only used if auth enabled)" Type="Variable" Display="always" Required="false" Mask="false"/>
   <Config Name="Admin Password" Target="AUTH_PASSWORD" Default="" Mode="" Description="🔑 Admin password (only used if auth enabled)" Type="Variable" Display="always" Required="false" Mask="true"/>
-  <Config Name="JWT Secret Key" Target="AUTH_SECRET_KEY" Default="" Mode="" Description="🔐 JWT secret key for tokens (auto-generated if empty)" Type="Variable" Display="always" Required="false" Mask="true"/>
-  <Config Name="Token Expire Hours" Target="AUTH_TOKEN_EXPIRE_HOURS" Default="24" Mode="" Description="⏰ JWT token expiration in hours" Type="Variable" Display="always" Required="false" Mask="false"/>
 
-  <!-- Notification Services -->
+  <!-- Notification Services (Optional) -->
   <Config Name="Pushover App Token" Target="PUSHOVER_APP_TOKEN" Default="" Mode="" Description="📱 Pushover app token for mobile notifications" Type="Variable" Display="always" Required="false" Mask="true"/>
   <Config Name="Pushover User Key" Target="PUSHOVER_USER_KEY" Default="" Mode="" Description="👤 Pushover user key for mobile notifications" Type="Variable" Display="always" Required="false" Mask="true"/>
   <Config Name="Discord Webhook URL" Target="DISCORD_WEBHOOK_URL" Default="" Mode="" Description="💬 Discord webhook URL for server notifications" Type="Variable" Display="always" Required="false" Mask="true"/>
-  <Config Name="Enable Discord" Target="DISCORD_ENABLED" Default="false" Mode="" Description="💬 Enable Discord notifications" Type="Variable" Display="always" Required="false" Mask="false"/>
-
-  <!-- Polling & Updates -->
-  <Config Name="Poll Interval (seconds)" Target="POLL_INTERVAL_SEC" Default="1800" Mode="" Description="⏰ Polling interval in seconds (0=disabled, 1800=30min, 3600=1hr)" Type="Variable" Display="always" Required="false" Mask="false"/>
-
-  <!-- API Configuration -->
-  <Config Name="MangaBaka API Base" Target="MANGABAKA_BASE" Default="https://api.mangabaka.dev" Mode="" Description="🌐 MangaBaka API base URL (usually keep default)" Type="Variable" Display="always" Required="false" Mask="false"/>
-
-  <!-- CORS & Security -->
-  <Config Name="CORS Allowed Origins" Target="CORS_ALLOW_ORIGINS" Default="*" Mode="" Description="🔒 CORS allowed origins (* for all, comma-separated for specific)" Type="Variable" Display="always" Required="false" Mask="false"/>
-
-  <!-- Logging & Debugging -->
-  <Config Name="Log Level" Target="LOG_LEVEL" Default="INFO" Mode="" Description="📝 Logging level (DEBUG, INFO, WARNING, ERROR)" Type="Variable" Display="always" Required="false" Mask="false"/>
-  <Config Name="Log Format" Target="LOG_FORMAT" Default="plain" Mode="" Description="📄 Log format (plain or json)" Type="Variable" Display="always" Required="false" Mask="false"/>
 
   <!-- System Configuration -->
   <Config Name="Timezone" Target="TZ" Default="America/New_York" Mode="" Description="🌍 Timezone (e.g., America/New_York, Europe/London, Asia/Tokyo)" Type="Variable" Display="always" Required="false" Mask="false"/>
-  <Config Name="Master Key" Target="MASTER_KEY" Default="" Mode="" Description="🔐 Master key for credential encryption (auto-generated if empty)" Type="Variable" Display="always" Required="false" Mask="true"/>
-
-  <!-- Performance & Optimization -->
-  <Config Name="Python No Bytecode" Target="PYTHONDONTWRITEBYTECODE" Default="1" Mode="" Description="⚡ Disable Python bytecode generation (recommended)" Type="Variable" Display="always" Required="false" Mask="false"/>
-
-  <!-- Health Check -->
-  <Config Name="Health Check Interval" Target="HEALTH_CHECK_INTERVAL" Default="30" Mode="" Description="🏥 Health check interval in seconds" Type="Variable" Display="always" Required="false" Mask="false"/>
-
-  <!-- Advanced Features -->
-  <Config Name="Enable Debug Mode" Target="DEBUG" Default="false" Mode="" Description="🐛 Enable debug mode (shows additional info in UI)" Type="Variable" Display="always" Required="false" Mask="false"/>
-  <Config Name="Max Watchlist Items" Target="MAX_WATCHLIST_ITEMS" Default="1000" Mode="" Description="📚 Maximum watchlist items (0=unlimited)" Type="Variable" Display="always" Required="false" Mask="false"/>
-
-  <!-- Backup & Maintenance -->
-  <Config Name="Auto Backup Enabled" Target="AUTO_BACKUP_ENABLED" Default="true" Mode="" Description="💾 Enable automatic data backup" Type="Variable" Display="always" Required="false" Mask="false"/>
-  <Config Name="Backup Interval Hours" Target="BACKUP_INTERVAL_HOURS" Default="24" Mode="" Description="⏰ Backup interval in hours" Type="Variable" Display="always" Required="false" Mask="false"/>
-
-  <!-- Network & Performance -->
-  <Config Name="Request Timeout" Target="REQUEST_TIMEOUT" Default="30" Mode="" Description="⏱️ Request timeout in seconds" Type="Variable" Display="always" Required="false" Mask="false"/>
-  <Config Name="Max Concurrent Requests" Target="MAX_CONCURRENT_REQUESTS" Default="10" Mode="" Description="🔄 Maximum concurrent API requests" Type="Variable" Display="always" Required="false" Mask="false"/>
-
-  <!-- UI Customization -->
-  <Config Name="Default Theme" Target="DEFAULT_THEME" Default="dark" Mode="" Description="🎨 Default theme (light, dark, auto)" Type="Variable" Display="always" Required="false" Mask="false"/>
-  <Config Name="Items Per Page" Target="ITEMS_PER_PAGE" Default="20" Mode="" Description="📄 Items per page in lists" Type="Variable" Display="always" Required="false" Mask="false"/>
-
-  <!-- Notification Preferences -->
-  <Config Name="Notification Batch Size" Target="NOTIFICATION_BATCH_SIZE" Default="5" Mode="" Description="📦 Maximum notifications per batch" Type="Variable" Display="always" Required="false" Mask="false"/>
-  <Config Name="Quiet Hours Start" Target="QUIET_HOURS_START" Default="22:00" Mode="" Description="🌙 Quiet hours start time (HH:MM)" Type="Variable" Display="always" Required="false" Mask="false"/>
-  <Config Name="Quiet Hours End" Target="QUIET_HOURS_END" Default="08:00" Mode="" Description="🌅 Quiet hours end time (HH:MM)" Type="Variable" Display="always" Required="false" Mask="false"/>
-
-  <!-- Development & Testing -->
-  <Config Name="Enable Test Mode" Target="TEST_MODE" Default="false" Mode="" Description="🧪 Enable test mode (for development)" Type="Variable" Display="always" Required="false" Mask="false"/>
-  <Config Name="Mock API Responses" Target="MOCK_API_RESPONSES" Default="false" Mode="" Description="🎭 Mock API responses (for testing)" Type="Variable" Display="always" Required="false" Mask="false"/>
-
-  <!-- Container Health & Monitoring -->
-  <Config Name="Enable Metrics" Target="ENABLE_METRICS" Default="true" Mode="" Description="📊 Enable application metrics" Type="Variable" Display="always" Required="false" Mask="false"/>
-  <Config Name="Metrics Port" Target="METRICS_PORT" Default="9090" Mode="" Description="📈 Metrics port (if enabled)" Type="Variable" Display="always" Required="false" Mask="false"/>
-
-  <!-- Security Headers -->
-  <Config Name="Enable Security Headers" Target="ENABLE_SECURITY_HEADERS" Default="true" Mode="" Description="🛡️ Enable security headers" Type="Variable" Display="always" Required="false" Mask="false"/>
-  <Config Name="Rate Limit Requests" Target="RATE_LIMIT_REQUESTS" Default="100" Mode="" Description="🚦 Rate limit requests per minute" Type="Variable" Display="always" Required="false" Mask="false"/>
-
-  <!-- Data Management -->
-  <Config Name="Data Retention Days" Target="DATA_RETENTION_DAYS" Default="365" Mode="" Description="🗄️ Data retention period in days" Type="Variable" Display="always" Required="false" Mask="false"/>
-  <Config Name="Cleanup Interval Hours" Target="CLEANUP_INTERVAL_HOURS" Default="24" Mode="" Description="🧹 Cleanup interval in hours" Type="Variable" Display="always" Required="false" Mask="false"/>
-
-  <!-- Feature Flags -->
-  <Config Name="Enable Advanced Search" Target="ENABLE_ADVANCED_SEARCH" Default="true" Mode="" Description="🔍 Enable advanced search features" Type="Variable" Display="always" Required="false" Mask="false"/>
-  <Config Name="Enable Watchlist Import" Target="ENABLE_WATCHLIST_IMPORT" Default="true" Mode="" Description="📥 Enable watchlist import/export" Type="Variable" Display="always" Required="false" Mask="false"/>
-  <Config Name="Enable Bulk Operations" Target="ENABLE_BULK_OPERATIONS" Default="true" Mode="" Description="⚡ Enable bulk watchlist operations" Type="Variable" Display="always" Required="false" Mask="false"/>
-
-  <!-- Mobile & PWA -->
-  <Config Name="Enable PWA" Target="ENABLE_PWA" Default="true" Mode="" Description="📱 Enable Progressive Web App features" Type="Variable" Display="always" Required="false" Mask="false"/>
-  <Config Name="PWA Cache Strategy" Target="PWA_CACHE_STRATEGY" Default="cache-first" Mode="" Description="💾 PWA cache strategy" Type="Variable" Display="always" Required="false" Mask="false"/>
-
-  <!-- Integration Features -->
-  <Config Name="Enable API Access" Target="ENABLE_API_ACCESS" Default="true" Mode="" Description="🔌 Enable external API access" Type="Variable" Display="always" Required="false" Mask="false"/>
-  <Config Name="API Rate Limit" Target="API_RATE_LIMIT" Default="1000" Mode="" Description="🚦 API rate limit per hour" Type="Variable" Display="always" Required="false" Mask="false"/>
-
-  <!-- Container Labels for Organization -->
-  <Config Name="Container Label" Target="CONTAINER_LABEL" Default="manga-tracker" Mode="" Description="🏷️ Container label for organization" Type="Variable" Display="always" Required="false" Mask="false"/>
-  <Config Name="Environment" Target="ENVIRONMENT" Default="production" Mode="" Description="🌍 Environment (production, staging, development)" Type="Variable" Display="always" Required="false" Mask="false"/>
 
 </Container>
