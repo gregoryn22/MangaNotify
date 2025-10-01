@@ -14,6 +14,14 @@ build/
 .env
 .env.*
 .envrc
+.env.local
+.env.prod
+.env.staging
+.env.dev
+
+# --- Development data ---
+dev-data/
+dev-data/*
 
 # --- Tools / editors ---
 .pytest_cache/
@@ -22,11 +30,19 @@ coverage.*
 htmlcov/
 .cache/
 .idea/
-.vscode/
+.vscode/settings.json
+.vscode/launch.json
+*.swp
+*.swo
 
 # --- OS noise ---
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# --- Temporary files ---
+tmp/
+temp/
 
 # --- App data (keep folder, ignore contents) ---
 data/*
