@@ -119,7 +119,9 @@ export const auth = {
       
       return true;
     } catch (e) {
-      toast("Login failed: " + (e.message || "Invalid credentials"), 3000, "error");
+      // Don't show toast here - let the caller handle it
+      // This prevents duplicate error messages
+      console.error("Login failed:", e);
       return false;
     }
   },

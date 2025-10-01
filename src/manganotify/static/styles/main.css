@@ -862,6 +862,23 @@ dialog::backdrop {
   margin-bottom: 20px;
 }
 
+.login-help {
+  margin-top: 12px;
+  text-align: center;
+}
+
+.login-help .help-text {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 /* Form styles consolidated - see main form-input definition above */
 
 .form-actions {
