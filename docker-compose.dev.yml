@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  manganotify-dev:
+    # Build from local source for development
+    build: .
+    container_name: manganotify-dev
+
+    ports:
+      - "${HOST_PORT:-8999}:8999"
+
+    # Use development environment file
+    env_file:
+      - env.dev.example
+
+    environment:
+      # Override specific settings for development
+      - PYTHONPATH=/app/src
+      - DATA_DIR=/data
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+
+    # Development volumes for live reloading
+    volumes:
+      # Mount source code for live reloading (read-only for safety)
+      - ./src:/app/src:ro
+      # Mount development data directory
+      - ./dev-data:/data
+      # Mount static files for live editing
+      - ./src/manganotify/static:/app/src/manganotify/static:ro
+
+    # Development command with auto-reload
+    command: ["uvicorn", "manganotify.main:app", "--host", "0.0.0.0", "--port", "8999", "--reload"]
+
+    # No restart policy for development (manual control)
+    # restart: unless-stopped
+
+    # Development-friendly settings
+    security_opt:
+      - no-new-privileges:true
+    read_only: false
+    tmpfs:
+      - /tmp
+
+    # Healthcheck for development
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python - << 'PY'\nimport urllib.request, sys\ntry:\n  urllib.request.urlopen('http://localhost:8999/api/health', timeout=5)\n  sys.exit(0)\nexcept Exception:\n  sys.exit(1)\nPY"
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+    # Graceful shutdowns
+    stop_grace_period: 20s
+
+    # Development logging
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    # Development labels
+    labels:
+      - "com.manganotify.environment=development"
+      - "com.manganotify.purpose=development"
+
+# Development volumes
+volumes:
+  manganotify-dev-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./dev-data
