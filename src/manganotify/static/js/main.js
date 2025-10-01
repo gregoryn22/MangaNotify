@@ -180,10 +180,46 @@ queueMicrotask(async () => {
     
     $("#login-form")?.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const username = $("#login-username")?.value;
+      const username = $("#login-username")?.value?.trim();
       const password = $("#login-password")?.value;
-      if (username && password) {
-        await auth.login(username, password);
+      const loginBtn = $("#login-form button[type='submit']");
+      
+      // Basic validation
+      if (!username) {
+        toast("Please enter a username", 2000, "error");
+        $("#login-username")?.focus();
+        return;
+      }
+      
+      if (!password) {
+        toast("Please enter a password", 2000, "error");
+        $("#login-password")?.focus();
+        return;
+      }
+      
+      // Show loading state
+      const originalText = loginBtn.innerHTML;
+      loginBtn.disabled = true;
+      loginBtn.innerHTML = '<span class="btn-icon">⏳</span>Logging in...';
+      
+      try {
+        const success = await auth.login(username, password);
+        if (!success) {
+          // Reset button state on failure
+          loginBtn.disabled = false;
+          loginBtn.innerHTML = originalText;
+          // Clear password field for security
+          $("#login-password").value = "";
+          $("#login-password").focus();
+        }
+      } catch (error) {
+        // Reset button state on error
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = originalText;
+        // Clear password field for security
+        $("#login-password").value = "";
+        $("#login-password").focus();
+        toast("Login failed: " + (error.message || "Unknown error"), 3000, "error");
       }
     });
     

@@ -16,6 +16,7 @@ export function initSettings(){
       localStorage.setItem("mn-theme", next);
     };
     $("#theme-alt")?.addEventListener("click", toggle);
+  $("#theme")?.addEventListener("click", toggle);
   })();
 
   /* Network chip + enable/disable some buttons */
@@ -135,7 +136,9 @@ export function initSettings(){
 
   // Hide dropped toggle
   $("#hide-dropped") && ($("#hide-dropped").checked = state.hideDropped);
+  $("#hide-dropped-settings") && ($("#hide-dropped-settings").checked = state.hideDropped);
   $("#hide-dropped")?.addEventListener("change", e=>{ state.hideDropped = !!e.target.checked; localStorage.setItem("mn-hide-dropped", String(state.hideDropped)); loadWatchlist(); });
+  $("#hide-dropped-settings")?.addEventListener("change", e=>{ state.hideDropped = !!e.target.checked; localStorage.setItem("mn-hide-dropped", String(state.hideDropped)); loadWatchlist(); });
 
   // Emoji toggle
   $("#use-emojis") && ($("#use-emojis").checked = state.useEmojis);
