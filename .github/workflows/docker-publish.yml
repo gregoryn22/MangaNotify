@@ -44,6 +44,11 @@ jobs:
           python scripts/run_tests.py --coverage
           # Specifically test the poller functionality
           pytest tests/test_poller.py::TestMissedNotificationScenario -v
+          
+          # Run new API integration tests (critical for Docker publishing)
+          pytest tests/test_real_api.py -v
+          pytest tests/test_notifications_simple.py -v
+          pytest tests/test_integration_api_notifications.py -v
 
   docker:
     name: Build & push image

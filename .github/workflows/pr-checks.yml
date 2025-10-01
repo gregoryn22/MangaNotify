@@ -46,6 +46,10 @@ jobs:
         pytest tests/test_poller.py::TestPollerLogic -v
         pytest tests/test_api_endpoints.py::TestWatchlistEndpoints::test_get_watchlist -v
         pytest tests/test_config.py::TestConfiguration::test_default_settings -v
+        
+        # Run fast API tests (no external dependencies)
+        pytest tests/test_notifications_simple.py::TestNotificationLogic -v
+        pytest tests/test_real_api.py::TestRealMangaBakaAPI::test_real_api_search_basic -v
     
     - name: Run Chainsaw Man scenario test
       env:
