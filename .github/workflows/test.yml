@@ -38,6 +38,11 @@ jobs:
       run: |
         # Run the comprehensive test suite
         python scripts/run_tests.py --coverage --verbose
+        
+        # Run new API integration tests
+        pytest tests/test_real_api.py -v
+        pytest tests/test_notifications_simple.py -v
+        pytest tests/test_integration_api_notifications.py -v
     
     - name: Run specific poller tests (critical for notifications)
       env:
