@@ -21,10 +21,10 @@ COPY requirements.in requirements.txt ./
 RUN pip install --no-cache-dir pip-tools && pip-compile requirements.in && pip install --no-cache-dir -r requirements.txt
 
 # app code (src layout)
-COPY --chown=appuser:appuser src/ ./src/
+COPY --chown=99:100 src/ ./src/
 
 # runtime data dir
-RUN mkdir -p /data && chown -R appuser:appuser /data
+RUN mkdir -p /data && chown -R 99:100 /data
 VOLUME ["/data"]
 
 EXPOSE 8999
