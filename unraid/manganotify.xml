@@ -4,48 +4,43 @@
   <Repository>ghcr.io/gregoryn22/manganotify:latest</Repository>
   <Registry>https://github.com/gregoryn22/MangaNotify/pkgs/container/manganotify</Registry>
   <Network>bridge</Network>
-  <MyIP/>
+  <MyIP></MyIP>
   <Shell>bash</Shell>
   <Privileged>false</Privileged>
   <Support>https://github.com/gregoryn22/MangaNotify</Support>
   <Project>https://github.com/gregoryn22/MangaNotify</Project>
   <Overview>
-    🎌 MangaNotify - Advanced manga tracking and notification system
-    
-    Features:
-    • 📚 Track manga updates from MangaBaka API
-    • 🔔 Push notifications via Pushover & Discord
-    • 🔐 Optional authentication & security
-    • 📱 Modern responsive web interface
-    • ⚡ Real-time polling and updates
-    • 🎨 Customizable themes and layouts
-    • 📊 Comprehensive watchlist management
-    
-    Perfect for manga enthusiasts who want to stay updated on their favorite series!
+MangaNotify - Advanced manga tracking and notification system
+
+Features:
+• Track manga updates from MangaBaka API
+• Push notifications via Pushover &amp; Discord
+• Optional authentication &amp; security
+• Modern responsive web interface
+• Real-time polling and updates
+• Customizable themes and layouts
+• Comprehensive watchlist management
+
+Perfect for manga enthusiasts who want to stay updated on their favorite series!
   </Overview>
   <Category>MediaServer:Tools</Category>
   <WebUI>http://[IP]:[PORT:8999]</WebUI>
   <Icon>https://raw.githubusercontent.com/gregoryn22/MangaNotify/master/images/manganotify_logo.png</Icon>
 
-  <!-- Essential Configuration Only -->
-  <Config Name="AppData Config Path" Target="/data" Default="/mnt/user/appdata/manganotify" Mode="rw" Description="📁 App storage directory for watchlist, notifications, and settings" Type="Path" Display="always" Required="true" Mask="false"/>
-  <Config Name="Web Port" Target="8999" Default="8999" Mode="tcp" Description="🌐 Web UI Port (change if 8999 conflicts)" Type="Port" Display="always" Required="true" Mask="false"/>
+  <Config Name="AppData Config Path" Target="/data" Default="/mnt/user/appdata/manganotify" Mode="rw" Description="App storage directory for watchlist, notifications, and settings" Type="Path" Display="always" Required="true" Mask="false"/>
+  <Config Name="Web Port" Target="8999" Default="8999" Mode="tcp" Description="Web UI Port (change if 8999 conflicts)" Type="Port" Display="always" Required="true" Mask="false"/>
   
-  <!-- User Permissions (CRITICAL for proper operation) -->
-  <Config Name="User ID" Target="PUID" Default="10001" Mode="" Description="👤 User ID for file permissions (keep default unless you know what you're doing)" Type="Variable" Display="always" Required="false" Mask="false"/>
-  <Config Name="Group ID" Target="PGID" Default="10001" Mode="" Description="👥 Group ID for file permissions (keep default unless you know what you're doing)" Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="User ID" Target="PUID" Default="10001" Mode="" Description="User ID for file permissions (keep default unless you know what you're doing)" Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="Group ID" Target="PGID" Default="10001" Mode="" Description="Group ID for file permissions (keep default unless you know what you're doing)" Type="Variable" Display="always" Required="false" Mask="false"/>
 
-  <!-- Authentication (Optional but Recommended) -->
-  <Config Name="Enable Authentication" Target="AUTH_ENABLED" Default="false" Mode="" Description="🔐 Enable login protection (recommended for production)" Type="Variable" Display="always" Required="false" Mask="false"/>
-  <Config Name="Admin Username" Target="AUTH_USERNAME" Default="admin" Mode="" Description="👤 Admin username (only used if auth enabled)" Type="Variable" Display="always" Required="false" Mask="false"/>
-  <Config Name="Admin Password" Target="AUTH_PASSWORD" Default="" Mode="" Description="🔑 Admin password (only used if auth enabled)" Type="Variable" Display="always" Required="false" Mask="true"/>
+  <Config Name="Enable Authentication" Target="AUTH_ENABLED" Default="false" Mode="" Description="Enable login protection (recommended for production)" Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="Admin Username" Target="AUTH_USERNAME" Default="admin" Mode="" Description="Admin username (only used if auth enabled)" Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="Admin Password" Target="AUTH_PASSWORD" Default="" Mode="" Description="Admin password (only used if auth enabled)" Type="Variable" Display="always" Required="false" Mask="true"/>
 
-  <!-- Notification Services (Optional) -->
-  <Config Name="Pushover App Token" Target="PUSHOVER_APP_TOKEN" Default="" Mode="" Description="📱 Pushover app token for mobile notifications" Type="Variable" Display="always" Required="false" Mask="true"/>
-  <Config Name="Pushover User Key" Target="PUSHOVER_USER_KEY" Default="" Mode="" Description="👤 Pushover user key for mobile notifications" Type="Variable" Display="always" Required="false" Mask="true"/>
-  <Config Name="Discord Webhook URL" Target="DISCORD_WEBHOOK_URL" Default="" Mode="" Description="💬 Discord webhook URL for server notifications" Type="Variable" Display="always" Required="false" Mask="true"/>
+  <Config Name="Pushover App Token" Target="PUSHOVER_APP_TOKEN" Default="" Mode="" Description="Pushover app token for mobile notifications" Type="Variable" Display="always" Required="false" Mask="true"/>
+  <Config Name="Pushover User Key" Target="PUSHOVER_USER_KEY" Default="" Mode="" Description="Pushover user key for mobile notifications" Type="Variable" Display="always" Required="false" Mask="true"/>
+  <Config Name="Discord Webhook URL" Target="DISCORD_WEBHOOK_URL" Default="" Mode="" Description="Discord webhook URL for server notifications" Type="Variable" Display="always" Required="false" Mask="true"/>
 
-  <!-- System Configuration -->
-  <Config Name="Timezone" Target="TZ" Default="America/New_York" Mode="" Description="🌍 Timezone (e.g., America/New_York, Europe/London, Asia/Tokyo)" Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="Timezone" Target="TZ" Default="America/New_York" Mode="" Description="Timezone (e.g., America/New_York, Europe/London, Asia/Tokyo)" Type="Variable" Display="always" Required="false" Mask="false"/>
 
 </Container>
