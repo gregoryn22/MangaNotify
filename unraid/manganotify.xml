@@ -30,8 +30,8 @@ Perfect for manga enthusiasts who want to stay updated on their favorite series!
   <Config Name="AppData Config Path" Target="/data" Default="/mnt/user/appdata/manganotify" Mode="rw" Description="App storage directory for watchlist, notifications, and settings" Type="Path" Display="always" Required="true" Mask="false"/>
   <Config Name="Web Port" Target="8999" Default="8999" Mode="tcp" Description="Web UI Port (change if 8999 conflicts)" Type="Port" Display="always" Required="true" Mask="false"/>
   
-  <Config Name="User ID" Target="PUID" Default="10001" Mode="" Description="User ID for file permissions (keep default unless you know what you're doing)" Type="Variable" Display="always" Required="false" Mask="false"/>
-  <Config Name="Group ID" Target="PGID" Default="10001" Mode="" Description="Group ID for file permissions (keep default unless you know what you're doing)" Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="User ID" Target="PUID" Default="99" Mode="" Description="User ID for file permissions (keep default unless you know what you're doing)" Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="Group ID" Target="PGID" Default="100" Mode="" Description="Group ID for file permissions (keep default unless you know what you're doing)" Type="Variable" Display="always" Required="false" Mask="false"/>
 
   <Config Name="Enable Authentication" Target="AUTH_ENABLED" Default="false" Mode="" Description="Enable login protection (recommended for production)" Type="Variable" Display="always" Required="false" Mask="false"/>
   <Config Name="Admin Username" Target="AUTH_USERNAME" Default="admin" Mode="" Description="Admin username (only used if auth enabled)" Type="Variable" Display="always" Required="false" Mask="false"/>
