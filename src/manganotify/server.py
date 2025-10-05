@@ -407,8 +407,9 @@ async def lifespan(app: FastAPI):
     app.state.poller_task = None
     app.state.push_func = pushover  # allow tests to override
 
-    if POLL_INTERVAL_SEC > 0:
-        app.state.poller_task = asyncio.create_task(poll_watchlist_loop(app))
+    # Disabled old poller - using new poller system in main.py instead
+    # if POLL_INTERVAL_SEC > 0:
+    #     app.state.poller_task = asyncio.create_task(poll_watchlist_loop(app))
 
     try:
         yield
@@ -651,8 +652,9 @@ async def mark_next(series_id: int):
 
 @app.post("/api/watchlist/refresh")
 async def trigger_refresh(request: Request):
-    # Run the one-shot processor and return counts
-    stats = await process_watchlist_once(request.app)
+    # Run the new poller's process_once function and return counts
+    from .services.poller import process_once
+    stats = await process_once(request.app)
     return stats
 
 # ------------------------------------------------------------

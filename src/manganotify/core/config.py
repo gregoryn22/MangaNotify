@@ -77,7 +77,7 @@ class Settings(BaseSettings):
     PUSHOVER_APP_TOKEN: Optional[str] = Field(default=None, description="Pushover app token")
     DISCORD_WEBHOOK_URL: Optional[str] = Field(default=None, description="Discord webhook URL")
     DISCORD_ENABLED: bool = Field(default=False, description="Enable Discord notifications")
-    POLL_INTERVAL_SEC: int = 1800
+    POLL_INTERVAL_SEC: int = 600  # 10 minutes default
     PORT: int = 8999
 
     # CORS
