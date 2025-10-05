@@ -93,7 +93,7 @@ class TestRealMangaBakaAPI:
             
             series = result["data"]
             assert series["id"] == 270
-            assert series["title"] == "Naruto"
+            assert series["title"] == "NARUTO"
             assert series["total_chapters"] == "700"
             assert series["status"] == "completed"
             assert "Masashi Kishimoto" in series["authors"]

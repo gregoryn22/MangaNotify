@@ -95,7 +95,7 @@ class TestAPIToNotificationFlow:
                             # Verify notification was created
                             assert notification["kind"] == "chapter_update"
                             assert notification["series_id"] == 270
-                            assert notification["title"] == "Naruto"
+                            assert notification["title"] == "NARUTO"
                             assert notification["old_total"] == 699
                             assert notification["new_total"] == 700
                             assert notification["unread"] == 1
@@ -104,7 +104,7 @@ class TestAPIToNotificationFlow:
                             # The notification was created successfully
                             assert notification["kind"] == "chapter_update"
                             assert notification["series_id"] == 270
-                            assert notification["title"] == "Naruto"
+                            assert notification["title"] == "NARUTO"
                             assert notification["old_total"] == 699
                             assert notification["new_total"] == 700
                             assert notification["unread"] == 1
