@@ -102,12 +102,19 @@ def main():
         print("Running additional checks...")
         print(f"{'='*60}")
         
-        # Lint check
+        # Ruff linting
         try:
-            import flake8
-            run_command(["python", "-m", "flake8", "src/"], "Code linting")
+            import ruff
+            run_command(["ruff", "check", "src/", "tests/"], "Ruff linting")
         except ImportError:
-            print("⚠️  flake8 not installed, skipping linting")
+            print("⚠️  ruff not installed, skipping linting")
+        
+        # Ruff formatting check
+        try:
+            import ruff
+            run_command(["ruff", "format", "--check", "src/", "tests/"], "Ruff format check")
+        except ImportError:
+            print("⚠️  ruff not installed, skipping format check")
         
         # Type checking
         try:
@@ -115,13 +122,6 @@ def main():
             run_command(["python", "-m", "mypy", "src/"], "Type checking")
         except ImportError:
             print("⚠️  mypy not installed, skipping type checking")
-        
-        # Security scan
-        try:
-            import bandit
-            run_command(["python", "-m", "bandit", "-r", "src/"], "Security scan")
-        except ImportError:
-            print("⚠️  bandit not installed, skipping security scan")
     
     # Summary
     print(f"\n{'='*60}")

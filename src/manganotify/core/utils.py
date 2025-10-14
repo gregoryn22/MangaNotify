@@ -1,8 +1,11 @@
-from datetime import datetime, timezone
-import json, logging, sys
+import json
+import logging
+import sys
+from datetime import UTC, datetime
+
 
 def now_utc_iso() -> str:
-    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 
 class JsonFormatter(logging.Formatter):
@@ -30,26 +33,38 @@ def setup_logging(level: str = "INFO", fmt: str = "plain") -> None:
     if fmt == "json":
         handler.setFormatter(JsonFormatter())
     else:
-        handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
+        handler.setFormatter(
+            logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s")
+        )
     root.addHandler(handler)
 
+
 def to_int(v):
-    if v is None: return None
+    if v is None:
+        return None
     try:
         s = str(v).strip()
-        if s == "": return None
+        if s == "":
+            return None
         return int(float(s)) if "." in s else int(s)
     except Exception:
         return None
 
+
 def to_bool_or_none(v):
-    if v is None: return None
-    if isinstance(v, bool): return v
+    if v is None:
+        return None
+    if isinstance(v, bool):
+        return v
     s = str(v).strip().lower()
-    if s in {"1","true","yes","on"}: return True
-    if s in {"0","false","no","off"}: return False
+    if s in {"1", "true", "yes", "on"}:
+        return True
+    if s in {"0", "false", "no", "off"}:
+        return False
     return None
 
+
 def str_eq(a, b: str | None) -> bool:
-    if not b: return True
+    if not b:
+        return True
     return (a is not None) and (str(a).lower() == str(b).lower())

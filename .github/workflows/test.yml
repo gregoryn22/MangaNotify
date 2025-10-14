@@ -26,6 +26,14 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements-dev.txt
     
+    - name: Run ruff linter
+      run: |
+        ruff check src/ tests/
+    
+    - name: Run ruff formatter check
+      run: |
+        ruff format --check src/ tests/
+    
     - name: Run comprehensive test suite
       env:
         PYTHONPATH: ${{ github.workspace }}/src

@@ -32,6 +32,14 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements-dev.txt
     
+    - name: Run ruff linter
+      run: |
+        ruff check src/ tests/
+    
+    - name: Run ruff formatter check
+      run: |
+        ruff format --check src/ tests/
+    
     - name: Run critical tests (fast)
       env:
         PYTHONPATH: ${{ github.workspace }}/src
@@ -127,16 +135,13 @@ jobs:
     - name: Install linting tools
       run: |
         python -m pip install --upgrade pip
-        pip install flake8 black isort mypy
+        pip install -r requirements-dev.txt
     
-    - name: Run Black formatter check
-      run: black --check src/ tests/
+    - name: Run ruff linter (replaces flake8, isort)
+      run: ruff check src/ tests/
     
-    - name: Run isort import sorting check
-      run: isort --check-only src/ tests/
-    
-    - name: Run flake8 linting
-      run: flake8 src/ tests/ --max-line-length=88 --extend-ignore=E203
+    - name: Run ruff formatter check (replaces black)
+      run: ruff format --check src/ tests/
     
     - name: Run mypy type checking
       run: mypy src/ --ignore-missing-imports || true

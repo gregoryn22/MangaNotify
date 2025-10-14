@@ -26,6 +26,8 @@ colorama==0.4.6
     #   click
     #   pytest
     #   uvicorn
+coverage[toml]==7.10.7
+    # via pytest-cov
 cryptography==46.0.1
     # via
     #   -r requirements.in
@@ -76,6 +78,7 @@ pytest==8.4.2
     #   -r requirements-dev.in
     #   -r requirements.in
     #   pytest-asyncio
+    #   pytest-cov
 pytest-asyncio==1.2.0
     # via -r requirements-dev.in
 pytest-cov==6.0.0
@@ -91,6 +94,8 @@ respx==0.22.0
     # via
     #   -r requirements-dev.in
     #   -r requirements.in
+ruff==0.14.0
+    # via -r requirements-dev.in
 sniffio==1.3.1
     # via anyio
 starlette==0.48.0
@@ -113,4 +118,3 @@ watchfiles==1.1.0
     # via uvicorn
 websockets==15.0.1
     # via uvicorn
-pytest-asyncio

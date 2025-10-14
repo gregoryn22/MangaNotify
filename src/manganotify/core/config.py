@@ -1,82 +1,109 @@
 # src/manganotify/core/config.py
 from __future__ import annotations
-import os
+
 from pathlib import Path
-from typing import Optional
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Compute a package-relative default: <repo>/src/manganotify/data
-PKG_ROOT = Path(__file__).resolve().parents[1]      # .../src/manganotify
+PKG_ROOT = Path(__file__).resolve().parents[1]  # .../src/manganotify
 PKG_DATA = (PKG_ROOT / "data").resolve()
+
 
 def create_settings():
     """Create a new Settings instance (useful for testing)."""
+
     # Create a new Settings instance that only uses environment variables
     # Don't load from .env file to avoid conflicts with test environment variables
     class TestSettings(BaseSettings):
         # Copy all fields from Settings class
-        MANGABAKA_BASE: str = Field(default="https://api.mangabaka.dev", pattern=r"^https?://[a-zA-Z0-9.-]+")
+        MANGABAKA_BASE: str = Field(
+            default="https://api.mangabaka.dev", pattern=r"^https?://[a-zA-Z0-9.-]+"
+        )
         DATA_DIR: Path = Field(default=PKG_DATA)
-        PUSHOVER_APP_TOKEN: Optional[str] = Field(default=None, description="Pushover app token")
-        PUSHOVER_USER_KEY: Optional[str] = Field(default=None, description="Pushover user key")
-        DISCORD_WEBHOOK_URL: Optional[str] = Field(default=None, description="Discord webhook URL")
-        DISCORD_ENABLED: bool = Field(default=False, description="Enable Discord notifications")
-        POLL_INTERVAL_SEC: int = Field(default=600, ge=0, description="Polling interval in seconds")
+        PUSHOVER_APP_TOKEN: str | None = Field(
+            default=None, description="Pushover app token"
+        )
+        PUSHOVER_USER_KEY: str | None = Field(
+            default=None, description="Pushover user key"
+        )
+        DISCORD_WEBHOOK_URL: str | None = Field(
+            default=None, description="Discord webhook URL"
+        )
+        DISCORD_ENABLED: bool = Field(
+            default=False, description="Enable Discord notifications"
+        )
+        POLL_INTERVAL_SEC: int = Field(
+            default=600, ge=0, description="Polling interval in seconds"
+        )
         CORS_ALLOW_ORIGINS: str = Field(default="*", description="CORS allowed origins")
         LOG_LEVEL: str = Field(default="INFO", description="Logging level")
         LOG_FORMAT: str = Field(default="plain", description="Logging format")
         AUTH_ENABLED: bool = Field(default=False, description="Enable authentication")
-        AUTH_SECRET_KEY: Optional[str] = Field(default=None, description="JWT secret key")
+        AUTH_SECRET_KEY: str | None = Field(default=None, description="JWT secret key")
         AUTH_USERNAME: str = Field(default="admin", description="Admin username")
-        AUTH_PASSWORD: Optional[str] = Field(default=None, description="Admin password")
-        AUTH_TOKEN_EXPIRE_HOURS: int = Field(default=24, ge=1, le=8760, description="Token expiration in hours")
-        PORT: int = Field(default=8999, ge=1, le=65535, description="Port number")
-        TZ: Optional[str] = Field(default=None, description="Timezone")
-        PYTHONDONTWRITEBYTECODE: Optional[str] = Field(default=None, description="Python bytecode setting")
-        
-        model_config = SettingsConfigDict(
-            env_file=None, 
-            env_file_encoding='utf-8', 
-            case_sensitive=False, 
-            extra="ignore",
-            env_ignore_empty=True
+        AUTH_PASSWORD: str | None = Field(default=None, description="Admin password")
+        AUTH_TOKEN_EXPIRE_HOURS: int = Field(
+            default=24, ge=1, le=8760, description="Token expiration in hours"
         )
-        
+        PORT: int = Field(default=8999, ge=1, le=65535, description="Port number")
+        TZ: str | None = Field(default=None, description="Timezone")
+        PYTHONDONTWRITEBYTECODE: str | None = Field(
+            default=None, description="Python bytecode setting"
+        )
+
+        model_config = SettingsConfigDict(
+            env_file=None,
+            env_file_encoding="utf-8",
+            case_sensitive=False,
+            extra="ignore",
+            env_ignore_empty=True,
+        )
+
         @property
         def BASE(self) -> str:
             return self.MANGABAKA_BASE.rstrip("/")
-        
+
         @property
         def cors_allow_origins_list(self) -> list[str]:
             if self.CORS_ALLOW_ORIGINS == "*":
                 return ["*"]
             return [origin.strip() for origin in self.CORS_ALLOW_ORIGINS.split(",")]
-        
+
         def get_decrypted_pushover_app_token(self) -> str:
             return self.PUSHOVER_APP_TOKEN or ""
-        
+
         def get_decrypted_pushover_user_key(self) -> str:
             return self.PUSHOVER_USER_KEY or ""
-        
+
         def get_decrypted_discord_webhook_url(self) -> str:
             return self.DISCORD_WEBHOOK_URL or ""
-    
+
     return TestSettings()
+
 
 class Settings(BaseSettings):
     # Upstream API base
-    MANGABAKA_BASE: str = Field(default="https://api.mangabaka.dev", pattern=r"^https?://[a-zA-Z0-9.-]+")
+    MANGABAKA_BASE: str = Field(
+        default="https://api.mangabaka.dev", pattern=r"^https?://[a-zA-Z0-9.-]+"
+    )
 
     # Storage: prefer env, else package-relative default
     DATA_DIR: Path = Field(default=PKG_DATA)
 
     # Push + polling
     # It is recommended to set all secrets (including Pushover and Discord) in a .env file, not in code.
-    PUSHOVER_USER_KEY: Optional[str] = Field(default=None, description="Pushover user key")
-    PUSHOVER_APP_TOKEN: Optional[str] = Field(default=None, description="Pushover app token")
-    DISCORD_WEBHOOK_URL: Optional[str] = Field(default=None, description="Discord webhook URL")
-    DISCORD_ENABLED: bool = Field(default=False, description="Enable Discord notifications")
+    PUSHOVER_USER_KEY: str | None = Field(default=None, description="Pushover user key")
+    PUSHOVER_APP_TOKEN: str | None = Field(
+        default=None, description="Pushover app token"
+    )
+    DISCORD_WEBHOOK_URL: str | None = Field(
+        default=None, description="Discord webhook URL"
+    )
+    DISCORD_ENABLED: bool = Field(
+        default=False, description="Enable Discord notifications"
+    )
     POLL_INTERVAL_SEC: int = 600  # 10 minutes default
     PORT: int = 8999
 
@@ -91,17 +118,27 @@ class Settings(BaseSettings):
 
     # Auth (optional)
     AUTH_ENABLED: bool = Field(default=False, description="Enable authentication")
-    AUTH_SECRET_KEY: Optional[str] = Field(default=None, description="JWT secret key (required if auth enabled)")
+    AUTH_SECRET_KEY: str | None = Field(
+        default=None, description="JWT secret key (required if auth enabled)"
+    )
     AUTH_USERNAME: str = Field(default="admin", description="Login username")
-    AUTH_PASSWORD: str = Field(default="", description="Login password (required if auth enabled)")
-    AUTH_TOKEN_EXPIRE_HOURS: int = Field(default=24, description="JWT token expiration in hours")
+    AUTH_PASSWORD: str = Field(
+        default="", description="Login password (required if auth enabled)"
+    )
+    AUTH_TOKEN_EXPIRE_HOURS: int = Field(
+        default=24, description="JWT token expiration in hours"
+    )
 
     # Encryption
-    MASTER_KEY: Optional[str] = Field(default=None, description="Master key for credential encryption")
+    MASTER_KEY: str | None = Field(
+        default=None, description="Master key for credential encryption"
+    )
 
     # System/Environment variables (optional)
-    TZ: Optional[str] = Field(default=None, description="Timezone")
-    PYTHONDONTWRITEBYTECODE: Optional[str] = Field(default=None, description="Python bytecode setting")
+    TZ: str | None = Field(default=None, description="Timezone")
+    PYTHONDONTWRITEBYTECODE: str | None = Field(
+        default=None, description="Python bytecode setting"
+    )
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
@@ -117,32 +154,37 @@ class Settings(BaseSettings):
         if raw == "*" or raw == "":
             return ["*"]
         return [s.strip() for s in raw.split(",") if s.strip()]
-    
-    def get_decrypted_pushover_app_token(self) -> Optional[str]:
+
+    def get_decrypted_pushover_app_token(self) -> str | None:
         """Get decrypted Pushover app token."""
         if not self.PUSHOVER_APP_TOKEN or not self.MASTER_KEY:
             return self.PUSHOVER_APP_TOKEN
-        
+
         from .crypto import decrypt_credential
+
         return decrypt_credential(self.PUSHOVER_APP_TOKEN, self.MASTER_KEY)
-    
-    def get_decrypted_pushover_user_key(self) -> Optional[str]:
+
+    def get_decrypted_pushover_user_key(self) -> str | None:
         """Get decrypted Pushover user key."""
         if not self.PUSHOVER_USER_KEY or not self.MASTER_KEY:
             return self.PUSHOVER_USER_KEY
-        
+
         from .crypto import decrypt_credential
+
         return decrypt_credential(self.PUSHOVER_USER_KEY, self.MASTER_KEY)
-    
-    def get_decrypted_discord_webhook_url(self) -> Optional[str]:
+
+    def get_decrypted_discord_webhook_url(self) -> str | None:
         """Get decrypted Discord webhook URL."""
         if not self.DISCORD_WEBHOOK_URL or not self.MASTER_KEY:
             return self.DISCORD_WEBHOOK_URL
-        
+
         from .crypto import decrypt_credential
+
         return decrypt_credential(self.DISCORD_WEBHOOK_URL, self.MASTER_KEY)
 
+
 settings = Settings()
+
 
 # Ensure the directory exists and is writable
 def _ensure_data_dir(p: Path) -> Path:
@@ -152,9 +194,10 @@ def _ensure_data_dir(p: Path) -> Path:
         test.write_text("ok", encoding="utf-8")
         test.unlink(missing_ok=True)
     except Exception as e:
-        raise RuntimeError(f"DATA_DIR not writable: {p} ({e})")
+        raise RuntimeError(f"DATA_DIR not writable: {p} ({e})") from e
     return p
+
 
 DATA_DIR = _ensure_data_dir(settings.DATA_DIR)
 WATCHLIST_PATH = DATA_DIR / "watchlist.json"
-NOTIFY_PATH   = DATA_DIR / "notifications.json"
+NOTIFY_PATH = DATA_DIR / "notifications.json"
