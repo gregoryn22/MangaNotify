@@ -50,7 +50,7 @@ async def add_watch(item: WatchlistAdd, request: Request, current_user: dict = D
     }
     
     # Use provided preferences or defaults
-    notifications = default_notifications
+    notifications = default_notifications.copy()
     if item.notifications:
         notifications.update(item.notifications.dict())
     

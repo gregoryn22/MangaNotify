@@ -211,6 +211,17 @@ See `LICENSE` file for details.
 
 ## Development
 
+### Local environment setup
+
+Install both the runtime and development dependencies to ensure the full test suite (including async tests) is available:
+
+```bash
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+```
+
+This installs tooling such as `pytest-asyncio`, which is required for the asynchronous tests in this project.
+
 ### Project Structure
 ```
 src/manganotify/

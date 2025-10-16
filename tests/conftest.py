@@ -1,14 +1,44 @@
 # tests/conftest.py
+import asyncio
+import importlib
+import inspect
 import os
 import sys
-import importlib
 import tempfile
-import pytest
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 # Add src to Python path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
+try:
+    import pytest_asyncio  # type: ignore
+    _HAS_PYTEST_ASYNCIO = True
+except ImportError:  # pragma: no cover - exercised when plugin missing
+    _HAS_PYTEST_ASYNCIO = False
+
+
+if not _HAS_PYTEST_ASYNCIO:
+    def pytest_configure(config):  # type: ignore[override]
+        config.addinivalue_line("markers", "asyncio: mark test as async")
+
+
+    @pytest.hookimpl(tryfirst=True)
+    def pytest_pyfunc_call(pyfuncitem):  # type: ignore[override]
+        if "asyncio" in pyfuncitem.keywords and inspect.iscoroutinefunction(pyfuncitem.obj):
+            signature = inspect.signature(pyfuncitem.obj)
+            call_kwargs = {}
+            for name, param in signature.parameters.items():
+                if param.kind in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD):
+                    # Fall back to pytest's default handling for varargs/kwargs
+                    return None
+                if name in pyfuncitem.funcargs:
+                    call_kwargs[name] = pyfuncitem.funcargs[name]
+            asyncio.run(pyfuncitem.obj(**call_kwargs))
+            return True
+        return None
 
 
 @pytest.fixture(autouse=True)

@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, Literal
 
 
-StatusLiteral = Literal["reading", "to-read", "on-hold", "finished", "dropped"]
+StatusLiteral = Literal["reading", "releasing", "to-read", "on-hold", "finished", "dropped"]
 
 
 class NotificationPreferences(BaseModel):
